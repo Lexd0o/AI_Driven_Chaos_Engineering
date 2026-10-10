@@ -1,28 +1,75 @@
-"""One chaos run: plan -> validate -> inject -> clean up -> report. Ported from P1's controller.py.
+"""One chaos run: plan -> validate -> inject -> guard -> clean up -> measure -> report.
+Ported from P1's controller.py; Stage 2 (D-025) wires in the guardian and P2's sampler and run metrics.
 
 Run from the repo folder:
   python -m src.chaos.controller --mock --skip-plan      manifest only, no cluster
-  python -m src.chaos.controller --preview --skip-plan   server-side dry run
-Reports: data/chaos/reports/<run_id>.json   Lock: data/chaos/.controller.lock
+  python -m src.chaos.controller --preview --skip-plan   server-side dry run, nothing created
+  python -m src.chaos.controller --execute --skip-plan   REAL fault, watched by the guardian
 
-WARNING: --execute in this version injects WITHOUT the guardian watching (same as P1's committed branch).
-Only the Chaos Mesh duration limits a network fault. Do not use --execute until the guardian is wired in.
+Options for --execute:
+  --pre-seconds N   healthy observation before injecting (default 30)
+  --budget N        recovery budget in seconds (default 120, Architecture.md 4.3)
+  --force-breach    lower the guardian thresholds so the kill switch fires (G3 test). The report says so.
+  --yes             skip the typed confirmation
+
+Before --execute (PowerShell, repo folder, venv active):
+  python -m src.chaos.k8s_monitor --baseline 60    guard baseline, must be less than 30 min old
+  frontend-proxy and prometheus port-forwards running, env vars set (D-026), so P2's probes can reach the shop
+
+One live run, in order. The experiment id is the run id everywhere (reports, samples, runs row):
+  checks (target ready, no chaos objects, guard baseline, no other sampler running) -> confirm -> P2 sampler thread starts
+  -> pre-observation + shop health gate -> submit -> t_inject (Chaos Mesh confirms injection)
+  -> guardian.guard (kill switch on breach / max time / Ctrl+C / error) -> t_clear (kill switch verified)
+  -> cleanup confirmed -> keep sampling budget + 30 s -> collect_run_metrics + collect_evidence
+  -> runs row + JSON report.
+
+Recovery in scores = Architecture.md 7, computed by P2 from the samples (D-024). The guardian's own recovery
+check only decides when cleanup is done; it is kept under report["guard"] and never enters a score.
+
+Reports: data/chaos/reports/<run_id>.json   Lock: data/chaos/.controller.lock   Samples + runs: data/runs.db
 """
 import argparse
 import json
 import os
 import subprocess
 import sys
+import threading
 import time
 from datetime import datetime, timezone
 from uuid import uuid4
 
 from src.chaos import DATA_DIR, EXPERIMENT_PATH, ROOT, SETTINGS_PATH
+from src.chaos import guardian
 from src.chaos.executor import ExperimentPlan, build_manifest, kubectl
+from src.evidence import collect_evidence
+from src.observe import connect, latest_sli, run_sampler, save_run
+from src.runmetrics import collect_run_metrics, make_slos
+
+CONFIRM_WORD = "reslab-experiment"        # typed by hand before a real injection (P1's design)
+MAX_BASELINE_AGE_S = 30 * 60              # Experiments.md: baseline fresh < 30 min
+MIN_BASELINE_SUCCESS = 0.9                # P1's pre-flight rule
+RECOVERY_BUDGET_S = 120                   # Architecture.md 4.3
+SUSTAIN_S = 30                            # healthy window length used by P2's recovery detection
+GATE_WINDOW_S = 20                        # shop health gate looks at P2's samples of the last 20 s
+OTHER_SAMPLER_WINDOW_S = 15               # any journey row this recent means another sampler is running
+SAMPLER_STOP_WAIT_S = 20                  # a probe tick can take up to ~10 s when requests time out
+FORCE_BREACH = {"latency_floor_ms": 1, "latency_multiplier": 0}   # P1's definition: every probe counts as slow
+GUARD_NOTE = (
+    "guard.recovery_seconds is the guardian's cleanup check (D-024). "
+    "Scores use run_metrics (Architecture.md 7), never this number."
+)
 
 
 def utc_now():
     return datetime.now(timezone.utc).isoformat()
+
+
+def now():
+    return time.time()
+
+
+def sleep(seconds):
+    time.sleep(seconds)
 
 
 def read_json(path):
@@ -119,15 +166,314 @@ def wait_for(settings, resource, name, predicate, timeout):
     )
 
 
-def main():
+# ------------------------------------------------------------------ Stage 2: pre-flight
+# Which of P2's journeys depend on the target. Set by hand in config/chaos_settings.json (target_journeys).
+def journeys_for(settings, target_service):
+    journeys = (settings.get("target_journeys") or {}).get(target_service)
+
+    if not journeys:
+        raise ValueError(
+            f"No target_journeys entry for '{target_service}' in config/chaos_settings.json."
+        )
+
+    known = make_slos()
+    unknown = [j for j in journeys if j not in known]
+
+    if unknown:
+        raise ValueError(
+            f"Unknown journeys {unknown}; known journeys: {sorted(known)}."
+        )
+
+    return list(journeys)
+
+
+# Reasons the guardian baseline cannot be used. Empty list = fine.
+def baseline_problems(baseline, error_ratio_max, now_dt=None):
+    problems = []
+    now_dt = now_dt or datetime.now(timezone.utc)
+
+    try:
+        age = (
+            now_dt - datetime.fromisoformat(baseline["captured_at"])
+        ).total_seconds()
+
+        if age > MAX_BASELINE_AGE_S:
+            problems.append(
+                f"it is {age / 60:.0f} min old (limit {MAX_BASELINE_AGE_S // 60})"
+            )
+
+    except (KeyError, TypeError, ValueError):
+        problems.append("captured_at is missing or unreadable")
+
+    if not isinstance(baseline.get("probe_p95_ms"), (int, float)):
+        problems.append("probe_p95_ms is missing")
+
+    rate = baseline.get("probe_success_rate")
+
+    if rate is None or rate < MIN_BASELINE_SUCCESS:
+        problems.append(
+            f"probe success rate {rate} is below {MIN_BASELINE_SUCCESS}"
+        )
+
+    ratio = (baseline.get("prometheus") or {}).get("error_ratio")
+
+    if ratio is not None and ratio > error_ratio_max:
+        problems.append(
+            f"error ratio {ratio:.3f} is already above {error_ratio_max}"
+        )
+
+    return problems
+
+
+def load_guard_baseline(error_ratio_max):
+    path = DATA_DIR / "baseline.json"
+
+    if not path.is_file():
+        raise RuntimeError(
+            "No guard baseline. Run first: "
+            "python -m src.chaos.k8s_monitor --baseline 60"
+        )
+
+    baseline = read_json(path)
+    problems = baseline_problems(baseline, error_ratio_max)
+
+    if problems:
+        raise RuntimeError(
+            "Guard baseline not usable (" + "; ".join(problems) + "). "
+            "Re-run: python -m src.chaos.k8s_monitor --baseline 60"
+        )
+
+    return baseline
+
+
+# Is the shop healthy right now, judged by P2's own samples? Checked just before injecting.
+def shop_gate():
+    journeys = {}
+    problems = []
+
+    for name, slo in make_slos().items():
+        sli = latest_sli(name, GATE_WINDOW_S)
+        journeys[name] = sli
+
+        if sli["n"] < slo["min_n"]:
+            problems.append(
+                f"{name}: only {sli['n']} samples in the last {GATE_WINDOW_S} s"
+            )
+        elif sli["success_rate"] < slo["min_success"]:
+            problems.append(
+                f"{name}: success {sli['success_rate']:.2f} "
+                f"is below {slo['min_success']}"
+            )
+        elif sli["p95_ms"] is not None and sli["p95_ms"] > slo["max_p95_ms"]:
+            problems.append(
+                f"{name}: p95 {sli['p95_ms']:.0f} ms "
+                f"is above {slo['max_p95_ms']} ms"
+            )
+
+    return {
+        "ok": not problems,
+        "window_s": GATE_WINDOW_S,
+        "journeys": journeys,
+        "problems": problems,
+    }
+
+
+# Journey rows written by ANY sampler in the last window_s seconds (data/runs.db).
+def recent_sample_count(window_s):
+    con = connect()
+
+    try:
+        return con.execute(
+            "SELECT COUNT(*) FROM samples WHERE journey IS NOT NULL AND ts >= ?",
+            (now() - window_s,),
+        ).fetchone()[0]
+    finally:
+        con.close()
+
+
+# A second sampler doubles the load on the shop and races our probe users' carts.
+# It only sees samplers that write to the same database file (the default data/runs.db).
+def check_no_other_sampler():
+    rows = recent_sample_count(OTHER_SAMPLER_WINDOW_S)
+
+    if rows:
+        raise RuntimeError(
+            f"Another sampler is writing to the samples database ({rows} rows in the "
+            f"last {OTHER_SAMPLER_WINDOW_S} s). Stop it first (for example a window "
+            f"running python -m src.observe). If a run just finished, wait "
+            f"{OTHER_SAMPLER_WINDOW_S} s and try again. Nothing was injected."
+        )
+
+
+def confirm(args):
+    if args.yes:
+        return
+
+    typed = input(
+        f"This injects a REAL fault into the cluster. "
+        f"Type {CONFIRM_WORD} to continue: "
+    )
+
+    if typed.strip() != CONFIRM_WORD:
+        raise RuntimeError("Not confirmed. Nothing was injected.")
+
+
+# ------------------------------------------------------------------ Stage 2: P2 sampler thread
+# Ctrl+C never reaches a background thread, so it is stopped with an event instead.
+def start_sampler(run_id):
+    # Create the tables first, here, so the thread and this thread never race to set up a fresh database.
+    connect().close()
+
+    stop = threading.Event()
+    errors = []
+
+    def work():
+        try:
+            run_sampler(run_id, None, None, stop)
+        except Exception as error:  # noqa: BLE001 - reported, never silent
+            errors.append(str(error))
+
+    thread = threading.Thread(target=work, name="p2-sampler", daemon=True)
+    thread.start()
+
+    return {"thread": thread, "stop": stop, "errors": errors}
+
+
+def stop_sampler(sampler):
+    if sampler is None:
+        return
+
+    sampler["stop"].set()
+    sampler["thread"].join(timeout=SAMPLER_STOP_WAIT_S)
+
+
+def check_sampler(sampler):
+    if not sampler["thread"].is_alive():
+        raise RuntimeError(
+            "Sampler stopped unexpectedly: "
+            + ("; ".join(sampler["errors"]) or "no error recorded")
+        )
+
+
+def wait_until(epoch, sampler):
+    while now() < epoch:
+        check_sampler(sampler)
+        sleep(1)
+
+
+# ------------------------------------------------------------------ Stage 2: run record
+# One `runs` row (Architecture.md 4.4). Numbers come from P2's metrics; the guardian only adds t_detect and the abort reason.
+def build_run_record(report, plan, metrics, guard_result, evidence, report_path):
+    aborted = guard_result["outcome"] != "completed"
+    reason = None
+
+    if aborted:
+        reason = guard_result["breach"]["reason"] or guard_result["outcome"]
+
+    evidence = evidence or {}
+    outcome = metrics["outcome"]
+    quality = metrics["quality"]
+
+    if report["forced_breach"]:
+        # The fault was cut short on purpose, so the run cannot be judged (inconclusive stays inconclusive).
+        # P2's computed numbers stay untouched in report["run_metrics"].
+        outcome = "inconclusive"
+        quality = "inconclusive"
+
+    return {
+        "experiment_id": report["run_id"],
+        "repeat": 1,
+        "mode": report["mode"],
+        "target": plan.target_service,
+        "fault_type": plan.fault_type,
+        "t_start": report["t_start_epoch"],
+        "t_inject": metrics["t_inject"],
+        "t_breach": metrics["t_breach"],
+        "t_detect": guard_result.get("detected_epoch"),
+        "t_clear": metrics["t_clear"],
+        "t_healthy": metrics["t_healthy"],
+        "aborted": aborted,
+        "abort_reason": reason,
+        "outcome": outcome,
+        "quality": quality,
+        "peak_error_rate": metrics["peak_error_rate"],
+        "peak_p95_ms": metrics["peak_p95_ms"],
+        "impact_recovery_s": metrics["impact_recovery_s"],
+        "post_fault_recovery_s": metrics["post_fault_recovery_s"],
+        "containment_C": metrics["containment_C"],
+        "forced_breach": report["forced_breach"],
+        "journeys": metrics["journeys"],
+        "evidence": {
+            "trace_ids": evidence.get("trace_ids", []),
+            "prom_queries": evidence.get("prom_queries", []),
+            "quality": evidence.get("quality"),
+        },
+        "report_path": str(report_path),
+    }
+
+
+def fmt(value):
+    return "n/a" if value is None else f"{value:.2f}"
+
+
+def print_summary(report):
+    guard_result = report.get("guard")
+    metrics = report.get("run_metrics")
+
+    print("\n=== Run summary ===")
+    print(f"run id: {report['run_id']}   status: {report['status']}")
+
+    if report["forced_breach"]:
+        print(
+            "FORCED BREACH run: guardian thresholds were lowered. "
+            "It tests the stop path; it is not a resilience result."
+        )
+
+    if guard_result:
+        print(
+            f"guardian: {guard_result['outcome']} "
+            f"(breach reason: {guard_result['breach']['reason']}); "
+            f"kill switch verified gone: "
+            f"{guard_result['kill_switch']['verified_gone']}"
+        )
+
+    if metrics:
+        print(
+            f"run metrics: outcome={metrics['outcome']} "
+            f"quality={metrics['quality']}"
+        )
+
+        for name, values in metrics["journeys"].items():
+            print(
+                f"  {name}: A={fmt(values['A'])} "
+                f"L={fmt(values['L'])} n={values['n']}"
+            )
+
+        print(
+            f"  containment C={fmt(metrics['containment_C'])}  "
+            f"impact recovery={fmt(metrics['impact_recovery_s'])} s"
+        )
+
+        for issue in metrics["issues"]:
+            print(f"  issue: {issue}")
+
+    elif report["fault_injected"]:
+        print("run metrics: none (the run stopped before measurement)")
+
+
+def main(argv=None):
     parser = argparse.ArgumentParser(
-        description="Plan, validate, and run a bounded chaos experiment."
+        description="Plan, validate, and run a bounded, guarded chaos experiment."
     )
 
     modes = parser.add_mutually_exclusive_group()
     modes.add_argument("--mock", action="store_true")
     modes.add_argument("--preview", action="store_true")
-    modes.add_argument("--execute", action="store_true")
+    modes.add_argument(
+        "--execute",
+        action="store_true",
+        help="REAL fault, watched by the guardian.",
+    )
 
     parser.add_argument(
         "--skip-plan",
@@ -136,16 +482,41 @@ def main():
     )
 
     parser.add_argument(
-        "--observe-seconds",
+        "--pre-seconds",
         type=int,
-        default=15,
-        help="Post-injection observation window for pod kill.",
+        default=30,
+        help="--execute: healthy observation before injecting.",
     )
 
-    args = parser.parse_args()
+    parser.add_argument(
+        "--budget",
+        type=int,
+        default=RECOVERY_BUDGET_S,
+        help="--execute: recovery budget in seconds.",
+    )
 
-    if not 1 <= args.observe_seconds <= 120:
-        parser.error("--observe-seconds must be between 1 and 120.")
+    parser.add_argument(
+        "--force-breach",
+        action="store_true",
+        help="--execute: lower guardian thresholds so the kill switch fires.",
+    )
+
+    parser.add_argument(
+        "--yes",
+        action="store_true",
+        help="--execute: skip the typed confirmation.",
+    )
+
+    args = parser.parse_args(argv)
+
+    if not 10 <= args.pre_seconds <= 300:
+        parser.error("--pre-seconds must be between 10 and 300.")
+
+    if not 30 <= args.budget <= 600:
+        parser.error("--budget must be between 30 and 600.")
+
+    if args.force_breach and not args.execute:
+        parser.error("--force-breach only applies to --execute.")
 
     mode = (
         "execute" if args.execute
@@ -183,7 +554,14 @@ def main():
         "fault_injected": False,
         "cleanup_confirmed": None,
         "deployment_ready_after": None,
-        "recovery_seconds": None,
+        "forced_breach": args.force_breach,
+        "t_start_epoch": None,
+        "t_inject_epoch": None,
+        "t_clear_epoch": None,
+        "guard": None,
+        "run_metrics": None,
+        "evidence": None,
+        "run_record": None,
     }
 
     settings = None
@@ -191,6 +569,7 @@ def main():
     resource_type = None
     submission_attempted = False
     failed = False
+    sampler = None
 
     def save_report():
         report_path.write_text(
@@ -206,6 +585,80 @@ def main():
         })
         save_report()
         print(f"\nSTAGE: {stage}")
+
+    # Confirms the chaos object is gone and the target is ready again.
+    # Safe to call twice: the second call does nothing.
+    def cleanup():
+        nonlocal failed
+
+        if report["cleanup_confirmed"] is not None:
+            return
+
+        event("cleanup")
+
+        try:
+            current = get_resource(
+                settings, resource_type, resource_name
+            )
+
+            if current is not None:
+                owner = current["metadata"].get(
+                    "labels", {}
+                ).get("reslab-run-id")
+
+                if owner != run_id:
+                    raise RuntimeError(
+                        "Ownership mismatch; refusing cleanup."
+                    )
+
+                kubectl(
+                    settings,
+                    [
+                        "delete", resource_type, resource_name,
+                        "--wait=true", "--timeout=20s",
+                    ],
+                )
+
+            remaining = get_resource(
+                settings, resource_type, resource_name
+            )
+
+            if remaining is not None:
+                raise RuntimeError(
+                    "Experiment resource still exists."
+                )
+
+            report["cleanup_confirmed"] = True
+            report["cleanup_observed_at"] = utc_now()
+            report["cleanup_observed_epoch"] = now()
+
+        except Exception as error:
+            failed = True
+            report["cleanup_confirmed"] = False
+            report["cleanup_error"] = str(error)
+            print(f"Cleanup failed: {error}")
+            print(
+                "THE FAULT MAY STILL BE ACTIVE. Run: "
+                "python -m src.chaos.guardian --abort --all"
+            )
+
+        if report["cleanup_confirmed"]:
+            try:
+                wait_for(
+                    settings,
+                    "deployment",
+                    deployment_name,
+                    deployment_ready,
+                    timeout=120,
+                )
+
+                report["deployment_ready_after"] = True
+                report["deployment_ready_observed_at"] = utc_now()
+
+            except Exception as error:
+                failed = True
+                report["deployment_ready_after"] = False
+                report["deployment_check_error"] = str(error)
 
     try:
         event("planning" if not args.skip_plan else "using_saved_plan")
@@ -307,6 +760,55 @@ def main():
                         "Existing chaos resources found. Inspect them first."
                     )
 
+                # ---- Pre-flight: nothing is injected until all of this passes ----
+                event("checking_guard_baseline")
+
+                safety = dict(settings.get("safety", {}))
+                max_seconds = safety.pop("max_experiment_seconds", 90)
+                limits = {**guardian.DEFAULT_THRESHOLDS, **safety}
+
+                guard_baseline = load_guard_baseline(
+                    limits["error_ratio_max"]
+                )
+                report["guard_baseline"] = guard_baseline
+
+                targets = journeys_for(settings, plan.target_service)
+                report["target_journeys"] = targets
+
+                thresholds = dict(safety)
+
+                if args.force_breach:
+                    thresholds.update(FORCE_BREACH)
+                    report["forced_breach_thresholds"] = FORCE_BREACH
+                    print(
+                        "\nFORCE BREACH: guardian thresholds lowered "
+                        f"({FORCE_BREACH}). The kill switch should fire "
+                        "within a few probes."
+                    )
+
+                event("checking_other_samplers")
+                check_no_other_sampler()
+
+                confirm(args)
+
+                event("starting_sampler")
+                sampler = start_sampler(run_id)
+                report["t_start_epoch"] = now()
+
+                event("pre_observation")
+                wait_until(report["t_start_epoch"] + args.pre_seconds, sampler)
+
+                event("checking_shop_health")
+                gate = shop_gate()
+                report["shop_gate"] = gate
+
+                if not gate["ok"]:
+                    raise RuntimeError(
+                        "Shop not healthy before injection; nothing injected. "
+                        + "; ".join(gate["problems"])
+                    )
+
+                # ---- Inject ----
                 event("submitting")
 
                 # Set before the API call, so cleanup is attempted
@@ -335,30 +837,105 @@ def main():
                     timeout=60,
                 )
 
+                t_inject = now()
                 report["fault_injected"] = True
+                report["t_inject_epoch"] = t_inject
                 report["fault_confirmed_at"] = utc_now()
                 report["injection_status"] = injected.get("status", {})
                 event("injection_confirmed")
 
-                if plan.fault_type == "pod_kill":
-                    # Pod kill is a one-time action.
-                    time.sleep(args.observe_seconds)
+                # ---- Guard: kill switch on breach / max time / Ctrl+C / error ----
+                event("guarding")
+
+                kind = (
+                    "PodChaos" if plan.fault_type == "pod_kill"
+                    else "NetworkChaos"
+                )
+
+                guard_result = guardian.guard(
+                    resource_name,
+                    kind,
+                    guard_baseline,
+                    thresholds,
+                    max_seconds,
+                    settings=settings,
+                    deployment=deployment_name,
+                )
+
+                report["guard"] = guard_result
+                report["guard_note"] = GUARD_NOTE
+                event("guard_finished")
+
+                print(
+                    f"Guardian outcome: {guard_result['outcome']} "
+                    f"(breach: {guard_result['breach']['reason']})"
+                )
+
+                if guard_result["outcome"] in ("interrupted", "guardian_error"):
+                    failed = True
+                    report["error"] = (
+                        f"Guardian ended with {guard_result['outcome']}."
+                    )
+
+                # ---- Cleanup, then t_clear ----
+                cleanup()
+
+                if report["cleanup_confirmed"] is not True:
+                    raise RuntimeError(
+                        "Cleanup not confirmed; stopping before measurement."
+                    )
+
+                kill = guard_result["kill_switch"]
+
+                t_clear = (
+                    kill["at_epoch"] if kill["verified_gone"]
+                    else report["cleanup_observed_epoch"]
+                )
+                report["t_clear_epoch"] = t_clear
+
+                # ---- Recovery observation (P2's samples keep coming) ----
+                if guard_result["outcome"] == "interrupted":
+                    report["observation_skipped"] = "interrupted"
 
                 else:
-                    event("waiting_for_fault_restoration")
+                    event("post_observation")
 
-                    restored = wait_for(
-                        settings,
-                        resource_type,
-                        resource_name,
-                        lambda obj: condition_true(obj, "AllRecovered"),
-                        timeout=plan.duration_seconds + 60,
-                    )
+                    try:
+                        wait_until(
+                            t_clear + args.budget + SUSTAIN_S, sampler
+                        )
+                    except (KeyboardInterrupt, RuntimeError) as problem:
+                        report["observation_problem"] = (
+                            str(problem) or "Interrupted by user."
+                        )
+                        print(
+                            "Observation ended early; the run metrics will "
+                            "probably be inconclusive."
+                        )
 
-                    report["restoration_status"] = restored.get(
-                        "status", {}
-                    )
-                    report["fault_restoration_observed_at"] = utc_now()
+                # ---- Measure ----
+                stop_sampler(sampler)
+                event("collecting_metrics")
+
+                metrics = collect_run_metrics(
+                    run_id,
+                    targets,
+                    t_inject,
+                    t_clear,
+                    recovery_budget_s=args.budget,
+                )
+
+                evidence = collect_evidence(run_id, t_inject - 5, now())
+
+                report["run_metrics"] = metrics
+                report["evidence"] = evidence
+
+                record = build_run_record(
+                    report, plan, metrics, guard_result, evidence, report_path
+                )
+                report["run_record"] = record
+                save_run(record)
+                event("metrics_saved")
 
                 event("observation_completed")
 
@@ -371,66 +948,12 @@ def main():
     finally:
         try:
             if submission_attempted:
-                event("cleanup")
+                cleanup()
 
-                try:
-                    current = get_resource(
-                        settings, resource_type, resource_name
-                    )
+            stop_sampler(sampler)
 
-                    if current is not None:
-                        owner = current["metadata"].get(
-                            "labels", {}
-                        ).get("reslab-run-id")
-
-                        if owner != run_id:
-                            raise RuntimeError(
-                                "Ownership mismatch; refusing cleanup."
-                            )
-
-                        kubectl(
-                            settings,
-                            [
-                                "delete", resource_type, resource_name,
-                                "--wait=true", "--timeout=20s",
-                            ],
-                        )
-
-                    remaining = get_resource(
-                        settings, resource_type, resource_name
-                    )
-
-                    if remaining is not None:
-                        raise RuntimeError(
-                            "Experiment resource still exists."
-                        )
-
-                    report["cleanup_confirmed"] = True
-                    report["cleanup_observed_at"] = utc_now()
-
-                except Exception as error:
-                    failed = True
-                    report["cleanup_confirmed"] = False
-                    report["cleanup_error"] = str(error)
-                    print(f"Cleanup failed: {error}")
-
-                if report["cleanup_confirmed"]:
-                    try:
-                        wait_for(
-                            settings,
-                            "deployment",
-                            deployment_name,
-                            deployment_ready,
-                            timeout=120,
-                        )
-
-                        report["deployment_ready_after"] = True
-                        report["deployment_ready_observed_at"] = utc_now()
-
-                    except Exception as error:
-                        failed = True
-                        report["deployment_ready_after"] = False
-                        report["deployment_check_error"] = str(error)
+            if sampler is not None:
+                report["sampler_errors"] = sampler["errors"]
 
             report["status"] = (
                 "failed" if failed
@@ -441,6 +964,9 @@ def main():
             save_report()
             print(f"\nReport saved: {report_path}")
 
+            if mode == "execute":
+                print_summary(report)
+
         finally:
             lock_path.unlink(missing_ok=True)
 
@@ -449,4 +975,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()  
+    main()

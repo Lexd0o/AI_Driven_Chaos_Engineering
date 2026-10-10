@@ -4,12 +4,17 @@ Table `samples` (one row per probe result):
   ts REAL (UTC epoch s, VM clock) | experiment_id TEXT NULL | journey TEXT | ok INT | latency_ms REAL | status INT
   service TEXT | metric TEXT | value REAL      <- per-service rows (added later); NULL for journey rows
 
+Table `runs` (one row per chaos run, Architecture.md 4.4; written by src/chaos/controller.py via save_run):
+  see RUN_COLUMNS below. experiment_id = the chaos run id (D-025).
+
 Run alone:  python -m src.observe --seconds 30 [--experiment EXP_ID]
 """
 from __future__ import annotations
 
 import argparse
+import json
 import sqlite3
+import threading
 import time
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
@@ -26,7 +31,25 @@ CREATE TABLE IF NOT EXISTS samples (
 );
 CREATE INDEX IF NOT EXISTS idx_samples_j_ts ON samples(journey, ts);
 CREATE INDEX IF NOT EXISTS idx_samples_exp ON samples(experiment_id);
+CREATE TABLE IF NOT EXISTS runs (
+  experiment_id TEXT PRIMARY KEY, repeat INTEGER, mode TEXT, target TEXT, fault_type TEXT,
+  t_start REAL, t_inject REAL, t_breach REAL, t_detect REAL, t_clear REAL, t_healthy REAL,
+  aborted INTEGER, abort_reason TEXT,
+  outcome TEXT, quality TEXT,
+  peak_error_rate REAL, peak_p95_ms REAL, impact_recovery_s REAL, post_fault_recovery_s REAL, containment_C REAL,
+  forced_breach INTEGER,
+  journeys TEXT, evidence TEXT, report_path TEXT
+);
 """
+
+RUN_COLUMNS = [
+    "experiment_id", "repeat", "mode", "target", "fault_type",
+    "t_start", "t_inject", "t_breach", "t_detect", "t_clear", "t_healthy",
+    "aborted", "abort_reason", "outcome", "quality",
+    "peak_error_rate", "peak_p95_ms", "impact_recovery_s", "post_fault_recovery_s", "containment_C",
+    "forced_breach", "journeys", "evidence", "report_path",
+]
+RUN_JSON_COLUMNS = ("journeys", "evidence")
 
 
 def connect(db_path: str | None = None) -> sqlite3.Connection:
@@ -55,8 +78,11 @@ def sample_services(cfg: dict, ts: float, experiment_id: str | None) -> list[tup
 
 
 def run_sampler(experiment_id: str | None = None, stop_after_s: int | None = None,
-                db_path: str | None = None) -> None:
-    """Probe every journey each interval (in parallel) and write rows. Ctrl+C to stop."""
+                db_path: str | None = None, stop_event: threading.Event | None = None) -> None:
+    """Probe every journey each interval (in parallel) and write rows.
+
+    Stops on Ctrl+C, after stop_after_s seconds, or when stop_event is set (used when the sampler runs in a
+    background thread, where Ctrl+C never reaches it)."""
     cfg = load_config()
     interval = cfg.get("sample_interval_s", 2)
     names = list(cfg["journeys"])
@@ -66,6 +92,8 @@ def run_sampler(experiment_id: str | None = None, stop_after_s: int | None = Non
     try:
         with ThreadPoolExecutor(max_workers=len(names)) as pool:
             while stop_after_s is None or time.time() - start < stop_after_s:
+                if stop_event is not None and stop_event.is_set():
+                    break
                 tick = time.time()
                 results = list(pool.map(lambda n: (n, run_journey(n, cfg)), names))
                 rows = [(tick, experiment_id, n, int(r["ok"]), r["latency_ms"], r["status"],
@@ -75,7 +103,11 @@ def run_sampler(experiment_id: str | None = None, stop_after_s: int | None = Non
                     last_svc = tick
                 con.executemany("INSERT INTO samples VALUES (?,?,?,?,?,?,?,?,?)", rows)
                 con.commit()
-                time.sleep(max(0.0, interval - (time.time() - tick)))
+                pause = max(0.0, interval - (time.time() - tick))
+                if stop_event is not None:
+                    stop_event.wait(pause)   # wakes at once when stop_event is set
+                else:
+                    time.sleep(pause)
     except KeyboardInterrupt:
         pass
     finally:
@@ -87,6 +119,40 @@ def read_samples(experiment_id: str, db_path: str | None = None) -> list[dict]:
     rows = con.execute("SELECT * FROM samples WHERE experiment_id=? ORDER BY ts", (experiment_id,)).fetchall()
     con.close()
     return [dict(r) for r in rows]
+
+
+# ---- runs table (Architecture.md 4.4) ----
+def save_run(record: dict, db_path: str | None = None) -> None:
+    """Insert or replace one run row. Keys = RUN_COLUMNS (missing -> NULL). dict/list values are stored as JSON text."""
+    values = []
+    for col in RUN_COLUMNS:
+        v = record.get(col)
+        if isinstance(v, (dict, list)):
+            v = json.dumps(v)
+        elif isinstance(v, bool):
+            v = int(v)
+        values.append(v)
+    con = connect(db_path)
+    try:
+        con.execute(f"INSERT OR REPLACE INTO runs ({','.join(RUN_COLUMNS)}) "
+                    f"VALUES ({','.join('?' * len(RUN_COLUMNS))})", values)
+        con.commit()
+    finally:
+        con.close()
+
+
+def read_runs(db_path: str | None = None) -> list[dict]:
+    """All run rows, oldest first; the JSON columns (journeys, evidence) come back as dicts."""
+    con = connect(db_path)
+    try:
+        rows = [dict(r) for r in con.execute("SELECT * FROM runs ORDER BY t_start")]
+    finally:
+        con.close()
+    for r in rows:
+        for col in RUN_JSON_COLUMNS:
+            if r.get(col):
+                r[col] = json.loads(r[col])
+    return rows
 
 
 def _stats(rows: list[dict]) -> dict:

@@ -1,9 +1,14 @@
 """Safety loop, kill switch and recovery check (no LLM). Ported from P1's guardian.py.
 
 Kill switch from the repo folder:
-  python -m src.chaos.guardian --abort          delete podchaos/networkchaos reslab-experiment
+  python -m src.chaos.guardian --abort          delete OUR chaos objects: reslab-experiment and reslab-run-<id>
   python -m src.chaos.guardian --abort --all    delete every podchaos/networkchaos in the namespace
 The guard loop itself is called by the controller.
+
+Stage 2 changes (D-025, safety change -> P4 veto check):
+  - --abort matches the controller's objects (name reslab-run-<id> or label reslab-run-id), not only reslab-experiment.
+  - kill_switch["at_epoch"] and result["detected_epoch"] are UTC epoch seconds, so P2 can use them as t_clear / t_detect.
+  - recovery_seconds here is only the cleanup check (D-024); it never enters a score.
 """
 import argparse
 import json
@@ -13,6 +18,8 @@ from datetime import datetime, timezone
 from src.chaos import k8s_monitor as monitor
 
 EXPERIMENT_NAME = "reslab-experiment"
+RUN_PREFIX = "reslab-run-"        # the controller names its objects reslab-run-<id> ...
+RUN_LABEL = "reslab-run-id"       # ... and labels them with the run id
 CHAOS_KINDS = "podchaos,networkchaos"
 
 DEFAULT_THRESHOLDS = {
@@ -120,6 +127,7 @@ def kill_switch(kind, name, namespace, deps, timeline, reason):
         "command": "kubectl " + " ".join(args),
         "reason": reason,
         "at": utc_now(),
+        "at_epoch": time.time(),   # after the delete and the check that the object is gone = t_clear for P2
         "verified_gone": gone,
         "error": error,
     }
@@ -300,6 +308,9 @@ def guard(experiment_name, kind, baseline, thresholds, max_seconds,
             "event": "guardian_error", "at": utc_now(), "error": str(exc),
         })
 
+    # The loop ends the moment a breach is found, so this is the detection time (P2's t_detect).
+    detected_epoch = time.time() if outcome == "breach" else None
+
     action, killed_at = kill_switch(
         kind.lower(), experiment_name, settings["namespace"],
         deps, timeline, breach["reason"] or outcome,
@@ -321,11 +332,25 @@ def guard(experiment_name, kind, baseline, thresholds, max_seconds,
         "outcome": outcome,
         "interrupted": interrupted,
         "breach": breach,
+        "detected_epoch": detected_epoch,
         "kill_switch": action,
         "recovery": recovery,
         "recovery_seconds": recovery["recovery_seconds"],
         "timeline": timeline,
     }
+
+
+# True for the chaos objects this project creates (see the controller), False for anything else.
+def is_ours(item):
+    meta = item.get("metadata", {})
+    name = meta.get("name", "")
+    labels = meta.get("labels") or {}
+
+    return (
+        name == EXPERIMENT_NAME
+        or name.startswith(RUN_PREFIX)
+        or RUN_LABEL in labels
+    )
 
 
 def abort(settings, delete_all=False):
@@ -335,7 +360,7 @@ def abort(settings, delete_all=False):
 
     targets = [
         item for item in existing
-        if delete_all or item["metadata"]["name"] == EXPERIMENT_NAME
+        if delete_all or is_ours(item)
     ]
 
     if not targets:
@@ -361,7 +386,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "--abort", action="store_true",
-        help="delete the reslab-experiment chaos object",
+        help="delete our chaos objects (reslab-experiment, reslab-run-<id>)",
     )
     parser.add_argument(
         "--all", action="store_true",

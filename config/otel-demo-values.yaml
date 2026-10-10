@@ -1,0 +1,45 @@
+# Helm values for the OpenTelemetry Demo used by ChaosPilot (chart opentelemetry-demo 0.42.3, app 3.1.0).
+# Keeps the cluster in the state the chaos runs were measured on, so a helm upgrade cannot undo it.
+#
+# Use it INSTEAD of --reuse-values / --set (PowerShell, repo folder):
+#   helm upgrade otel-demo open-telemetry/opentelemetry-demo -n otel-demo --version 0.42.3 -f config/otel-demo-values.yaml
+# Undo: helm rollback otel-demo <previous revision> -n otel-demo   (see: helm history otel-demo -n otel-demo)
+#
+# Key names checked against the chart's own values.yaml at tag opentelemetry-demo-0.42.3.
+
+# --- Joy's original install values (unchanged) ---
+opensearch:
+  enabled: false
+
+opentelemetry-collector:
+  presets:
+    hostMetrics:
+      enabled: false
+  resources:
+    limits:
+      memory: 900Mi
+  # The chart sends logs to opensearch even when opensearch is disabled. Every log export then fails,
+  # and quote (single-threaded PHP) blocked on it, which broke checkout. Logs go to debug only.
+  config:
+    service:
+      pipelines:
+        logs:
+          exporters: [debug]
+
+# --- Optional services, off: not on any probed journey (browse, cart, checkout); frees memory on one node ---
+components:
+  accounting:
+    enabled: false
+  agent:
+    enabled: false
+  chatbot:
+    enabled: false
+  fraud-detection:
+    enabled: false
+  mcp:
+    enabled: false
+  load-generator:      # no background traffic: the only load is P2's probes
+    enabled: false
+
+grafana:
+  enabled: false
