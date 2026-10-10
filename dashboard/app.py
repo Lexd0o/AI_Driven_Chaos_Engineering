@@ -235,6 +235,10 @@ def render_map() -> None:
     if not edges:
         st.info("No dependency data yet. P3 writes `data/graph.json`, or load edges from Jaeger once it is reachable.")
         return
+    # accept both formats: P3 contract (from/to) and Jaeger helper (source/target)
+    edges = [{"source": e.get("source", e.get("from")), "target": e.get("target", e.get("to")),
+              **{k: v for k, v in e.items() if k not in ("source", "target", "from", "to")}} for e in edges]
+    edges = [e for e in edges if e["source"] and e["target"]]
     st.caption(f"Source: {source}")
     nodes = sorted({e["source"] for e in edges} | {e["target"] for e in edges})
     pos = {n: (math.cos(2 * math.pi * i / len(nodes)), math.sin(2 * math.pi * i / len(nodes))) for i, n in enumerate(nodes)}
@@ -294,9 +298,9 @@ with tab_runs:
 
 # ----------------------------------------------------------------- Findings
 with tab_find:
-    for p in (ROOT / "data" / "findings_report.md", ROOT / "findings_report.md"):
+    for p in (ROOT / "reports" / "findings_report.md", ROOT / "data" / "findings_report.md", ROOT / "findings_report.md"):
         if p.exists():
             st.markdown(p.read_text(encoding="utf-8"))
             break
     else:
-        st.info("No findings report yet. P5's report generator writes `findings_report.md`.")
+        st.info("No findings report yet. P5's report generator writes `reports/findings_report.md`.")
