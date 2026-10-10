@@ -1,0 +1,17 @@
+# Fix for R-shipping-no_liveness_probe (medium, status=predicted)
+# Evidence: has_liveness=False - a hung (not crashed) process won't be auto-restarted
+# Apply:    kubectl -n otel-demo patch deployment shipping --patch-file reports/fixes/R-shipping-no_liveness_probe.yaml
+# Not applied automatically (Decisions.md D-007).
+spec:
+  template:
+    spec:
+      containers:
+      - name: shipping
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: service
+          initialDelaySeconds: 30
+          periodSeconds: 20
+          timeoutSeconds: 3
+          failureThreshold: 3

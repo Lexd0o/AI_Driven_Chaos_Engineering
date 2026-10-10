@@ -1,0 +1,16 @@
+# Fix for R-kafka-no_liveness_probe (low, status=predicted)
+# Evidence: has_liveness=False - a hung (not crashed) process won't be auto-restarted
+# Apply:    kubectl -n otel-demo patch deployment kafka --patch-file reports/fixes/R-kafka-no_liveness_probe.yaml
+# Not applied automatically (Decisions.md D-007).
+spec:
+  template:
+    spec:
+      containers:
+      - name: kafka
+        livenessProbe:
+          tcpSocket:
+            port: plaintext
+          initialDelaySeconds: 30
+          periodSeconds: 20
+          timeoutSeconds: 3
+          failureThreshold: 3

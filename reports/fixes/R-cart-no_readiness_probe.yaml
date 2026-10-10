@@ -1,0 +1,16 @@
+# Fix for R-cart-no_readiness_probe (medium, status=predicted)
+# Evidence: has_readiness=False - a restarted pod may receive traffic before it's ready
+# Apply:    kubectl -n otel-demo patch deployment cart --patch-file reports/fixes/R-cart-no_readiness_probe.yaml
+# Not applied automatically (Decisions.md D-007).
+spec:
+  template:
+    spec:
+      containers:
+      - name: cart
+        readinessProbe:
+          grpc:
+            port: 8080
+          initialDelaySeconds: 5
+          periodSeconds: 10
+          timeoutSeconds: 3
+          failureThreshold: 3

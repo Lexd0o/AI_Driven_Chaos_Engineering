@@ -1,0 +1,378 @@
+{
+  "generated_at": "2026-10-10T18:20:14.404423+00:00",
+  "nodes": [
+    {
+      "name": "accounting",
+      "kind": "service",
+      "replicas": 1,
+      "stateful": false,
+      "has_readiness": false,
+      "has_liveness": false,
+      "has_limits": true,
+      "has_pdb": false,
+      "has_hpa": false,
+      "criticality": 0.1
+    },
+    {
+      "name": "ad",
+      "kind": "service",
+      "replicas": 1,
+      "stateful": false,
+      "has_readiness": false,
+      "has_liveness": false,
+      "has_limits": true,
+      "has_pdb": false,
+      "has_hpa": false,
+      "criticality": 0.2
+    },
+    {
+      "name": "astronomy-db",
+      "kind": "service",
+      "replicas": 1,
+      "stateful": true,
+      "has_readiness": false,
+      "has_liveness": false,
+      "has_limits": true,
+      "has_pdb": false,
+      "has_hpa": false,
+      "criticality": 0.3
+    },
+    {
+      "name": "cart",
+      "kind": "service",
+      "replicas": 1,
+      "stateful": false,
+      "has_readiness": false,
+      "has_liveness": false,
+      "has_limits": true,
+      "has_pdb": false,
+      "has_hpa": false,
+      "criticality": 0.3
+    },
+    {
+      "name": "checkout",
+      "kind": "service",
+      "replicas": 1,
+      "stateful": false,
+      "has_readiness": false,
+      "has_liveness": false,
+      "has_limits": true,
+      "has_pdb": false,
+      "has_hpa": false,
+      "criticality": 0.4
+    },
+    {
+      "name": "currency",
+      "kind": "service",
+      "replicas": 1,
+      "stateful": false,
+      "has_readiness": false,
+      "has_liveness": false,
+      "has_limits": true,
+      "has_pdb": false,
+      "has_hpa": false,
+      "criticality": 0.3
+    },
+    {
+      "name": "email",
+      "kind": "service",
+      "replicas": 1,
+      "stateful": false,
+      "has_readiness": false,
+      "has_liveness": false,
+      "has_limits": true,
+      "has_pdb": false,
+      "has_hpa": false,
+      "criticality": 0.2
+    },
+    {
+      "name": "fraud-detection",
+      "kind": "service",
+      "replicas": 1,
+      "stateful": false,
+      "has_readiness": false,
+      "has_liveness": false,
+      "has_limits": true,
+      "has_pdb": false,
+      "has_hpa": false,
+      "criticality": 0.1
+    },
+    {
+      "name": "frontend",
+      "kind": "service",
+      "replicas": 1,
+      "stateful": false,
+      "has_readiness": false,
+      "has_liveness": false,
+      "has_limits": true,
+      "has_pdb": false,
+      "has_hpa": false,
+      "criticality": 0.4
+    },
+    {
+      "name": "frontend-proxy",
+      "kind": "service",
+      "replicas": 1,
+      "stateful": false,
+      "has_readiness": false,
+      "has_liveness": false,
+      "has_limits": true,
+      "has_pdb": false,
+      "has_hpa": false,
+      "criticality": 0.4
+    },
+    {
+      "name": "image-provider",
+      "kind": "service",
+      "replicas": 1,
+      "stateful": false,
+      "has_readiness": false,
+      "has_liveness": false,
+      "has_limits": true,
+      "has_pdb": false,
+      "has_hpa": false,
+      "criticality": 0.1
+    },
+    {
+      "name": "kafka",
+      "kind": "service",
+      "replicas": 1,
+      "stateful": true,
+      "has_readiness": false,
+      "has_liveness": false,
+      "has_limits": true,
+      "has_pdb": false,
+      "has_hpa": false,
+      "criticality": 0.1
+    },
+    {
+      "name": "payment",
+      "kind": "service",
+      "replicas": 1,
+      "stateful": false,
+      "has_readiness": false,
+      "has_liveness": false,
+      "has_limits": true,
+      "has_pdb": false,
+      "has_hpa": false,
+      "criticality": 0.4
+    },
+    {
+      "name": "product-catalog",
+      "kind": "service",
+      "replicas": 1,
+      "stateful": false,
+      "has_readiness": false,
+      "has_liveness": false,
+      "has_limits": true,
+      "has_pdb": false,
+      "has_hpa": false,
+      "criticality": 0.3
+    },
+    {
+      "name": "quote",
+      "kind": "service",
+      "replicas": 1,
+      "stateful": false,
+      "has_readiness": false,
+      "has_liveness": false,
+      "has_limits": true,
+      "has_pdb": false,
+      "has_hpa": false,
+      "criticality": 0.1
+    },
+    {
+      "name": "recommendation",
+      "kind": "service",
+      "replicas": 1,
+      "stateful": false,
+      "has_readiness": false,
+      "has_liveness": false,
+      "has_limits": true,
+      "has_pdb": false,
+      "has_hpa": false,
+      "criticality": 0.2
+    },
+    {
+      "name": "shipping",
+      "kind": "service",
+      "replicas": 1,
+      "stateful": false,
+      "has_readiness": false,
+      "has_liveness": false,
+      "has_limits": true,
+      "has_pdb": false,
+      "has_hpa": false,
+      "criticality": 0.3
+    },
+    {
+      "name": "valkey-cart",
+      "kind": "service",
+      "replicas": 1,
+      "stateful": true,
+      "has_readiness": false,
+      "has_liveness": false,
+      "has_limits": true,
+      "has_pdb": false,
+      "has_hpa": false,
+      "criticality": 0.3
+    }
+  ],
+  "edges": [
+    {
+      "from": "frontend-proxy",
+      "to": "frontend",
+      "protocol": "http",
+      "source": "jaeger",
+      "calls": 801
+    },
+    {
+      "from": "frontend",
+      "to": "ad",
+      "protocol": "grpc",
+      "source": "jaeger",
+      "calls": 57
+    },
+    {
+      "from": "frontend",
+      "to": "cart",
+      "protocol": "http",
+      "source": "jaeger",
+      "calls": 262
+    },
+    {
+      "from": "frontend",
+      "to": "product-catalog",
+      "protocol": "unknown",
+      "source": "jaeger",
+      "calls": 885
+    },
+    {
+      "from": "checkout",
+      "to": "email",
+      "protocol": "http",
+      "source": "jaeger",
+      "calls": 17
+    },
+    {
+      "from": "frontend",
+      "to": "checkout",
+      "protocol": "unknown",
+      "source": "jaeger",
+      "calls": 17
+    },
+    {
+      "from": "checkout",
+      "to": "product-catalog",
+      "protocol": "unknown",
+      "source": "jaeger",
+      "calls": 35
+    },
+    {
+      "from": "checkout",
+      "to": "currency",
+      "protocol": "unknown",
+      "source": "jaeger",
+      "calls": 52
+    },
+    {
+      "from": "checkout",
+      "to": "shipping",
+      "protocol": "http",
+      "source": "jaeger",
+      "calls": 34
+    },
+    {
+      "from": "checkout",
+      "to": "cart",
+      "protocol": "http",
+      "source": "jaeger",
+      "calls": 34
+    },
+    {
+      "from": "shipping",
+      "to": "quote",
+      "protocol": "http",
+      "source": "jaeger",
+      "calls": 44
+    },
+    {
+      "from": "checkout",
+      "to": "payment",
+      "protocol": "grpc",
+      "source": "jaeger",
+      "calls": 17
+    },
+    {
+      "from": "frontend",
+      "to": "currency",
+      "protocol": "unknown",
+      "source": "jaeger",
+      "calls": 169
+    },
+    {
+      "from": "frontend",
+      "to": "shipping",
+      "protocol": "http",
+      "source": "jaeger",
+      "calls": 27
+    },
+    {
+      "from": "recommendation",
+      "to": "product-catalog",
+      "protocol": "unknown",
+      "source": "jaeger",
+      "calls": 174
+    },
+    {
+      "from": "frontend",
+      "to": "recommendation",
+      "protocol": "grpc",
+      "source": "jaeger",
+      "calls": 175
+    },
+    {
+      "from": "frontend-proxy",
+      "to": "image-provider",
+      "protocol": "http",
+      "source": "jaeger",
+      "calls": 185
+    },
+    {
+      "from": "checkout",
+      "to": "kafka",
+      "protocol": "kafka",
+      "source": "override"
+    },
+    {
+      "from": "accounting",
+      "to": "kafka",
+      "protocol": "kafka",
+      "source": "override"
+    },
+    {
+      "from": "fraud-detection",
+      "to": "kafka",
+      "protocol": "kafka",
+      "source": "override"
+    },
+    {
+      "from": "cart",
+      "to": "valkey-cart",
+      "protocol": "redis",
+      "source": "override"
+    },
+    {
+      "from": "product-catalog",
+      "to": "astronomy-db",
+      "protocol": "postgres",
+      "source": "override"
+    },
+    {
+      "from": "accounting",
+      "to": "astronomy-db",
+      "protocol": "postgres",
+      "source": "override"
+    }
+  ]
+}

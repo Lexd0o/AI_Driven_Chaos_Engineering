@@ -1,0 +1,42 @@
+flowchart LR
+  accounting["accounting"]
+  ad["ad"]
+  astronomy_db[("astronomy-db")]
+  cart["cart"]
+  checkout["checkout"]
+  currency["currency"]
+  email["email"]
+  fraud_detection["fraud-detection"]
+  frontend["frontend"]
+  frontend_proxy["frontend-proxy"]
+  image_provider["image-provider"]
+  kafka[("kafka")]
+  payment["payment"]
+  product_catalog["product-catalog"]
+  quote["quote"]
+  recommendation["recommendation"]
+  shipping["shipping"]
+  valkey_cart[("valkey-cart")]
+  frontend_proxy -->|http| frontend
+  frontend -->|grpc| ad
+  frontend -->|http| cart
+  frontend -->|unknown| product_catalog
+  checkout -->|http| email
+  frontend -->|unknown| checkout
+  checkout -->|unknown| product_catalog
+  checkout -->|unknown| currency
+  checkout -->|http| shipping
+  checkout -->|http| cart
+  shipping -->|http| quote
+  checkout -->|grpc| payment
+  frontend -->|unknown| currency
+  frontend -->|http| shipping
+  recommendation -->|unknown| product_catalog
+  frontend -->|grpc| recommendation
+  frontend_proxy -->|http| image_provider
+  checkout -.->|kafka override| kafka
+  accounting -.->|kafka override| kafka
+  fraud_detection -.->|kafka override| kafka
+  cart -.->|redis override| valkey_cart
+  product_catalog -.->|postgres override| astronomy_db
+  accounting -.->|postgres override| astronomy_db

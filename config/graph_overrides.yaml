@@ -1,0 +1,63 @@
+# Manual corrections to the discovered graph.
+# Source of truth for the expected edges: the demo's own compose.yaml / compose.full.yaml
+# (service env vars such as CART_ADDR, PAYMENT_ADDR, KAFKA_ADDR, VALKEY_ADDR, DB_CONNECTION_STRING).
+# Edge direction: "from" depends on / calls "to".
+
+# Where user traffic enters the app (browsers + load generator call these; both are outside
+# the graph). rank.py's gateway share is measured from here - without it an entry point has
+# no in-cluster callers and scores 0 (Decisions.md D-015). Verified live: Jaeger shows
+# frontend-web -> frontend-proxy.
+entry_points:
+  - frontend-proxy
+
+# Not part of the app's call graph (they would distort fan-in / centrality)
+ignore_nodes:
+  - flagd             # every service reads flags; not a call dependency
+  - flagd-ui
+  - load-generator    # traffic source
+  - telemetry-docs
+  - otel-collector    # telemetry plumbing
+  - jaeger
+  - prometheus
+  - grafana
+  - opensearch
+  - opamp-server
+
+# Gaps traces usually can't see: async messaging and uninstrumented data stores.
+# [verify] on the cluster: names of the stores (kubectl -n otel-demo get deploy,sts). The Helm
+# chart may call the Postgres workload "postgresql" instead of "astronomy-db".
+add_edges:
+  - {from: checkout,        to: kafka,        protocol: kafka}     # producer
+  - {from: accounting,      to: kafka,        protocol: kafka}     # consumer
+  - {from: fraud-detection, to: kafka,        protocol: kafka}     # consumer
+  - {from: cart,            to: valkey-cart,  protocol: redis}     # VALKEY_ADDR
+  - {from: product-catalog, to: astronomy-db, protocol: postgres}  # DB_CONNECTION_STRING
+  - {from: accounting,      to: astronomy-db, protocol: postgres}  # DB_CONNECTION_STRING
+  - {from: shipping,        to: quote,        protocol: http}      # QUOTE_ADDR
+  - {from: frontend-proxy,  to: image-provider, protocol: http}    # Envoy routes product images
+
+remove_edges: []
+
+node_fixes:
+  kafka: {stateful: true}
+  valkey-cart: {stateful: true}
+  astronomy-db: {stateful: true}
+
+# discover.py warns if any of these is missing from the final graph.
+expected_edges:
+  - {from: frontend-proxy,  to: frontend}
+  - {from: frontend,        to: ad}
+  - {from: frontend,        to: cart}
+  - {from: frontend,        to: checkout}
+  - {from: frontend,        to: currency}
+  - {from: frontend,        to: product-catalog}
+  - {from: frontend,        to: recommendation}
+  - {from: frontend,        to: shipping}
+  - {from: checkout,        to: cart}
+  - {from: checkout,        to: currency}
+  - {from: checkout,        to: email}
+  - {from: checkout,        to: payment}
+  - {from: checkout,        to: product-catalog}
+  - {from: checkout,        to: shipping}
+  - {from: recommendation,  to: product-catalog}
+  - {from: shipping,        to: quote}

@@ -1,0 +1,14 @@
+# Fix for R-currency-single_replica_no_pdb (high, status=predicted)
+# Evidence: replicas=1, has_pdb=False, stateful=False, fan_in=2
+# Apply:    kubectl apply -f reports/fixes/R-currency-single_replica_no_pdb.pdb.yaml
+# Not applied automatically (Decisions.md D-007).
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: currency-pdb
+  namespace: otel-demo
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      opentelemetry.io/name: currency
