@@ -5,6 +5,9 @@ Each probe returns {"ok": bool, "latency_ms": float, "status": int}
   latency_ms  total time for the whole journey
   status      HTTP status of the last step run (the failing one if it failed); 0 = no response/timeout
 
+Each journey uses its own fake user: "<probe_user>-<journey>" (e.g. probe-user-p2-checkout), so one journey
+can never empty or change another journey's cart while they run in parallel.
+
 Run alone:  python -m src.probe
 """
 from __future__ import annotations
@@ -27,11 +30,16 @@ def _fill(obj, user: str, product: str):
     return obj
 
 
+def journey_user(name: str, cfg: dict) -> str:
+    """One user per journey, derived from probe_user."""
+    return f"{cfg['probe_user']}-{name}"
+
+
 def run_journey(name: str, cfg: dict | None = None) -> dict:
     cfg = cfg or load_config()
     steps = cfg["journeys"][name]["steps"]
-    user, product = cfg["probe_user"], cfg["probe_product_id"]
-    base, timeout = cfg["base_url"].rstrip("/"), cfg.get("timeout_s", 3)
+    user, product = journey_user(name, cfg), cfg["probe_product_id"]
+    base, timeout = cfg["base_url"].rstrip("/"), cfg.get("timeout_s", 5)
 
     status, ok = 0, True
     t0 = time.perf_counter()
