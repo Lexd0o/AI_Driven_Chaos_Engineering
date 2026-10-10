@@ -82,7 +82,7 @@ Placement: the controller (our Python code), dashboard and SQLite run **outside*
   ]
 }
 ```
-`calls` is optional (D-013): times the edge appeared in sampled Jaeger traces; absent on override edges, treat as 0.
+`calls` is optional (D-029): times the edge appeared in sampled Jaeger traces; absent on override edges, treat as 0.
 
 ### 4.2 `data/risks.json` (static audit = predictions)
 ```json
@@ -205,9 +205,9 @@ Why these weights: availability matters most to users; latency and recovery equa
 ## 9. Planner logic
 
 1. Risk score per candidate = `criticality(service) × centrality(service) × (1 + Σ static_risk_flags)`.
-   - centrality = `max(normalised fan-in, gateway share)` + "on checkout path" bonus, capped at 1 (D-015).
+   - centrality = `max(normalised fan-in, gateway share)` + "on checkout path" bonus, capped at 1 (D-031).
    - gateway share = fraction of the app users can no longer reach from `entry_points` (config/graph_overrides.yaml) if this service is down. Without it an entry point (frontend-proxy) has no in-cluster callers and scores 0.
-   - Ties: blast radius → inbound `calls` → high-severity risks → name (D-014).
+   - Ties: blast radius → inbound `calls` → high-severity risks → name (D-030).
 2. Map each top risk to an allowed fault from `fault_catalog.yaml`.
 3. LLM receives: graph summary, risk list, baseline, catalog. Returns plan items (schema in §4.3). Validated with pydantic; invalid → dropped with reason.
 4. Fallback: if the LLM fails, use template hypotheses and the same ranking.
