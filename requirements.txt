@@ -11,7 +11,9 @@ streamlit
 pandas
 plotly
 
-# Chaos agent (src/chaos, ported from P1)
+# Chaos run path (src/chaos, src/run.py) + P3 pipeline (src/discover..fixes, pydantic validation)
 pydantic
 python-dotenv
-groq
+
+# Optional: P3's LLM planner writes hypothesis text only (D-028); without it plan.py keeps template text
+anthropic
