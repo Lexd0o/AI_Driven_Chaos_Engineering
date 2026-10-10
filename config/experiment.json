@@ -1,0 +1,8 @@
+{
+  "target_service": "catalog",
+  "fault_type": "packet_loss",
+  "hypothesis": "During a 30‑second 10% packet loss on the catalog service, product listings may appear stale or incomplete, causing a noticeable delay or missing items in the user’s product browsing journey. This hypothesis is based on mock data.",
+  "duration_seconds": 30,
+  "latency_ms": 0,
+  "loss_percent": 10
+}

@@ -1,0 +1,16 @@
+{
+  "data_source": "cluster_snapshot",
+  "services": [
+    {
+      "id": "catalog",
+      "description": "Provides product information through the product-catalog gRPC service. Called by: checkout, frontend, recommendation. Calls: none observed.",
+      "replicas": 1,
+      "journey": "product_browsing"
+    }
+  ],
+  "allowed_faults": [
+    "pod_kill",
+    "network_delay",
+    "packet_loss"
+  ]
+}

@@ -1,8 +1,18 @@
+# Generated data and local databases (never committed)
 data/
 *.db
 *.db-wal
 *.db-shm
+
+# Python
 __pycache__/
 *.pyc
+
+# Virtual environments
 .venv/
+.venv*/
+venv/
+
+# Secrets (GROQ_API_KEY etc.)
 .env
+.env.*

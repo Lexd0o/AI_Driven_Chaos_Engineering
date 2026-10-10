@@ -1,0 +1,17 @@
+# ChaosPilot Python dependencies. Install: pip install -r requirements.txt
+# Versions are not pinned yet (open decision O-4, P1) [verify].
+
+# P2 observability: probes, sampler, telemetry, baseline, run metrics
+numpy
+requests
+pyyaml
+
+# Dashboard
+streamlit
+pandas
+plotly
+
+# Chaos agent (src/chaos, ported from P1)
+pydantic
+python-dotenv
+groq
