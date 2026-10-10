@@ -51,6 +51,9 @@ Why: tie order was arbitrary (k8s list order), which would weaken the ranked-vs-
 **D-015 · 10 Oct · Centrality = max(normalised fan-in, gateway share) + checkout bonus (changes frozen §9 formula).**
 Why: fan-in only measures in-cluster callers. frontend-proxy's callers (browsers, load generator) are outside the graph, so it scored 0 (rank 16) despite fronting 100% of traffic - true since the first fixture run, unnoticed because only #1 was printed and the plan takes the top 8. Gateway share = fraction of the app unreachable from `entry_points` if the service is down. max() so nothing is double-counted; every service's score is unchanged except frontend-proxy (0 → 1.6, #1) and frontend (0.53 → 1.4, #7). Consequence: exp-001 is now pod_kill on frontend-proxy = a full outage the guardrail should abort; a valid single-point-of-failure finding. To skip it, add frontend-proxy to `forbidden_targets` in config/policy.yaml. Checkout drops to #9 and out of the top-8 plan.
 
+**D-016 · 11 Oct · Executor = vendored third-party agent (`agents/chaos_agent_expanded`) driven by `src/run.py`.**
+Why: its Chaos Mesh lifecycle already has the safety pieces P4 needs. That means server dry-run, `can-i delete` check, healthy baseline, `AllInjected` confirmation, owned-only cleanup in `finally`, and a detached watchdog. We dropped its Groq planner (D-005), added StressChaos for `cpu_stress`, and moved its 45 s cap to `policy.yaml`. Run record (§4.4) gains additive fields: `run_id`, `fault_type`, `target`, `stop_reason`, `error`, `impact_recovery_s`, `post_fault_recovery_s`, `uncovered_journeys`, `journeys.*.samples`. Numbers are from journey GET probes, not Prometheus; checkout has no GET probe, so it is listed as uncovered. Refused in --execute: frontend-proxy (carries the probe port-forward) and checkout-only targets (payment). Run records are JSON in `data/runs/`, not SQLite yet (rule 17 open).
+
 ---
 
 ## Open decisions (resolve ASAP, then move above)

@@ -78,6 +78,7 @@ Update rule: move a task when you start/finish it; add a log line; flag blockers
 - (none)
 
 ### DONE
+- [x] S2/S3 · P4 · `src/run.py` + vendored injector `agents/chaos_agent_expanded` (PodChaos/NetworkChaos/StressChaos, guardian, watchdog, recovery watch, `--stop-all`) - 11 Oct. Mock 8/8, server dry-run 3/3 kinds, 15 unit tests pass. **No live injection yet**; G1/G2/G3 still open.
 - [x] S5 · P3 · LLM planner + pydantic validation + `policy.py`; deterministic fallback — P3, 10 Oct. Code done and offline-tested; **live LLM run waits on O-2 key** (`ANTHROPIC_API_KEY`), until then `plan.py` falls back automatically.
 - [x] S6 · P3 · Fix-as-code `fixes.py` + `config/fixes.yaml` → `reports/fixes/*.yaml` + `index.json` (60 findings, 66 patches all pass `--dry-run=server`, 9 manual) — P3, 10 Oct. P5: link patches from `index.json` in the findings report.
 - [x] S1 · P3 · `discover.py` + `audit.py` on fixtures; `graph_overrides.yaml` — P3, 10 Oct

@@ -8,3 +8,8 @@ __pycache__/
 
 # Secrets
 .env
+
+# run.py runtime state (run records in data/runs/ are kept)
+data/run.lock
+data/STOP
+data/runs/operations/
