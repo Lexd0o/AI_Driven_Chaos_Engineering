@@ -1,5 +1,3 @@
-# Upstream demo clone (has its own git history; not needed to run the pipeline)
-opentelemetry-demo/
 
 # Python
 __pycache__/
