@@ -1,0 +1,28 @@
+{
+  "run_id": "run-0cc53be9db09",
+  "mode": "mock",
+  "status": "mock_completed",
+  "started_at": "2026-10-10T08:17:57.390269+00:00",
+  "events": [
+    {
+      "stage": "plan_saved",
+      "timestamp": "2026-10-10T08:17:58.706988+00:00"
+    },
+    {
+      "stage": "mock_manifest_generated",
+      "timestamp": "2026-10-10T08:17:59.091878+00:00"
+    }
+  ],
+  "fault_injected": false,
+  "recovery_seconds": null,
+  "plan": {
+    "target_service": "catalog",
+    "fault_type": "packet_loss",
+    "hypothesis": "During a 30‑second 10% packet loss on the catalog service, product listings may appear stale or incomplete, causing a noticeable delay or missing items in the user’s product browsing journey. This hypothesis is based on mock data.",
+    "duration_seconds": 30,
+    "latency_ms": 0,
+    "loss_percent": 10
+  },
+  "executor_output": "Validated request:\n{\n  \"target_service\": \"catalog\",\n  \"fault_type\": \"packet_loss\",\n  \"hypothesis\": \"During a 30‑second 10% packet loss on the catalog service, product listings may appear stale or incomplete, causing a noticeable delay or missing items in the user’s product browsing journey. This hypothesis is based on mock data.\",\n  \"duration_seconds\": 30,\n  \"latency_ms\": 0,\n  \"loss_percent\": 10\n}\n\nMOCK MODE: using sample deployment data.\n\nChaos Mesh manifest:\n{\n  \"apiVersion\": \"chaos-mesh.org/v1alpha1\",\n  \"kind\": \"NetworkChaos\",\n  \"metadata\": {\n    \"name\": \"reslab-experiment\",\n    \"namespace\": \"otel-demo\"\n  },\n  \"spec\": {\n    \"mode\": \"one\",\n    \"selector\": {\n      \"namespaces\": [\n        \"otel-demo\"\n      ],\n      \"labelSelectors\": {\n        \"app\": \"mock-catalog\"\n      }\n    },\n    \"action\": \"loss\",\n    \"duration\": \"30s\",\n    \"loss\": {\n      \"loss\": \"10\",\n      \"correlation\": \"0\"\n    }\n  }\n}\n\nMOCK MODE: experiment generated locally.\nNo Kubernetes connection or failure injection occurred.\n",
+  "finished_at": "2026-10-10T08:17:59.091878+00:00"
+}

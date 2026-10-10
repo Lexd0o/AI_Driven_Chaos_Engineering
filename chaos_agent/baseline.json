@@ -1,0 +1,20 @@
+{
+  "captured_at": "2026-10-10T09:49:19.022184+00:00",
+  "seconds": 30,
+  "probe_count": 15,
+  "probe_success_rate": 1.0,
+  "probe_p50_ms": 511.7,
+  "probe_p95_ms": 723.2,
+  "prometheus": {
+    "error_ratio": 0.0,
+    "p95_ms": 291.25,
+    "rps": 1.7838090157375301
+  },
+  "pod_health": {
+    "desired": 1,
+    "ready": 1,
+    "restarts": 0,
+    "pods": 1,
+    "fully_ready": true
+  }
+}

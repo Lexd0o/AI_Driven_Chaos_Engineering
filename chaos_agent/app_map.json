@@ -1,0 +1,615 @@
+{
+  "generated_at": "2026-10-10T09:52:26.154833+00:00",
+  "namespace": "otel-demo",
+  "lookback": "1h",
+  "services": {
+    "accounting": {
+      "workload": {
+        "kind": "deployment",
+        "replicas": 1,
+        "ready": 1,
+        "healthy": true
+      },
+      "upstream": [],
+      "downstream": [],
+      "note": null
+    },
+    "ad": {
+      "workload": {
+        "kind": "deployment",
+        "replicas": 1,
+        "ready": 1,
+        "healthy": true,
+        "service_ports": [
+          9465,
+          8080
+        ]
+      },
+      "upstream": [
+        "frontend"
+      ],
+      "downstream": [
+        "flagd"
+      ],
+      "note": null
+    },
+    "astronomy-db": {
+      "workload": {
+        "kind": "deployment",
+        "replicas": 1,
+        "ready": 1,
+        "healthy": true,
+        "service_ports": [
+          5432
+        ]
+      },
+      "upstream": [],
+      "downstream": [],
+      "note": null
+    },
+    "cart": {
+      "workload": {
+        "kind": "deployment",
+        "replicas": 1,
+        "ready": 1,
+        "healthy": true,
+        "service_ports": [
+          8080
+        ]
+      },
+      "upstream": [
+        "checkout",
+        "frontend"
+      ],
+      "downstream": [
+        "flagd"
+      ],
+      "note": null
+    },
+    "checkout": {
+      "workload": {
+        "kind": "deployment",
+        "replicas": 1,
+        "ready": 1,
+        "healthy": true,
+        "service_ports": [
+          8080
+        ]
+      },
+      "upstream": [
+        "frontend"
+      ],
+      "downstream": [
+        "cart",
+        "currency",
+        "email",
+        "payment",
+        "product-catalog",
+        "shipping"
+      ],
+      "note": null
+    },
+    "currency": {
+      "workload": {
+        "kind": "deployment",
+        "replicas": 1,
+        "ready": 1,
+        "healthy": true,
+        "service_ports": [
+          8080
+        ]
+      },
+      "upstream": [
+        "checkout",
+        "frontend"
+      ],
+      "downstream": [],
+      "note": null
+    },
+    "email": {
+      "workload": {
+        "kind": "deployment",
+        "replicas": 1,
+        "ready": 1,
+        "healthy": true,
+        "service_ports": [
+          8080
+        ]
+      },
+      "upstream": [
+        "checkout"
+      ],
+      "downstream": [],
+      "note": null
+    },
+    "flagd": {
+      "workload": {
+        "kind": "deployment",
+        "replicas": 1,
+        "ready": 1,
+        "healthy": true,
+        "service_ports": [
+          8013,
+          8016,
+          4000
+        ]
+      },
+      "upstream": [
+        "ad",
+        "cart",
+        "fraud-detection",
+        "frontend-proxy",
+        "payment",
+        "recommendation"
+      ],
+      "downstream": [],
+      "note": null
+    },
+    "fraud-detection": {
+      "workload": {
+        "kind": "deployment",
+        "replicas": 1,
+        "ready": 1,
+        "healthy": true
+      },
+      "upstream": [],
+      "downstream": [
+        "flagd"
+      ],
+      "note": null
+    },
+    "frontend": {
+      "workload": {
+        "kind": "deployment",
+        "replicas": 1,
+        "ready": 1,
+        "healthy": true,
+        "service_ports": [
+          8080
+        ]
+      },
+      "upstream": [
+        "frontend-proxy"
+      ],
+      "downstream": [
+        "ad",
+        "cart",
+        "checkout",
+        "currency",
+        "product-catalog",
+        "recommendation",
+        "shipping"
+      ],
+      "note": null
+    },
+    "frontend-proxy": {
+      "workload": {
+        "kind": "deployment",
+        "replicas": 1,
+        "ready": 1,
+        "healthy": true,
+        "service_ports": [
+          8080
+        ]
+      },
+      "upstream": [
+        "frontend-web"
+      ],
+      "downstream": [
+        "flagd",
+        "frontend",
+        "image-provider"
+      ],
+      "note": null
+    },
+    "frontend-web": {
+      "workload": null,
+      "upstream": [],
+      "downstream": [
+        "frontend-proxy"
+      ],
+      "note": null
+    },
+    "grafana": {
+      "workload": {
+        "kind": "deployment",
+        "replicas": 1,
+        "ready": 1,
+        "healthy": true,
+        "service_ports": [
+          80
+        ]
+      },
+      "upstream": [],
+      "downstream": [],
+      "note": null
+    },
+    "image-provider": {
+      "workload": {
+        "kind": "deployment",
+        "replicas": 1,
+        "ready": 1,
+        "healthy": true,
+        "service_ports": [
+          8081
+        ]
+      },
+      "upstream": [
+        "frontend-proxy"
+      ],
+      "downstream": [],
+      "note": null
+    },
+    "jaeger": {
+      "workload": {
+        "kind": "deployment",
+        "replicas": 1,
+        "ready": 1,
+        "healthy": true,
+        "service_ports": [
+          5775,
+          5778,
+          6831,
+          6832,
+          9411,
+          14250,
+          14267,
+          14268,
+          4317,
+          4318,
+          16686,
+          16685,
+          8888,
+          8889
+        ]
+      },
+      "upstream": [],
+      "downstream": [],
+      "note": null
+    },
+    "kafka": {
+      "workload": {
+        "kind": "deployment",
+        "replicas": 1,
+        "ready": 1,
+        "healthy": true,
+        "service_ports": [
+          9092,
+          9093
+        ]
+      },
+      "upstream": [],
+      "downstream": [],
+      "note": null
+    },
+    "load-generator": {
+      "workload": {
+        "kind": "deployment",
+        "replicas": 1,
+        "ready": 1,
+        "healthy": true,
+        "service_ports": [
+          8089
+        ]
+      },
+      "upstream": [],
+      "downstream": [],
+      "note": null
+    },
+    "opamp-server": {
+      "workload": {
+        "kind": "deployment",
+        "replicas": 1,
+        "ready": 1,
+        "healthy": true,
+        "service_ports": [
+          4320,
+          4321
+        ]
+      },
+      "upstream": [],
+      "downstream": [],
+      "note": null
+    },
+    "opensearch": {
+      "workload": {
+        "kind": "statefulset",
+        "replicas": 1,
+        "ready": 1,
+        "healthy": true,
+        "service_ports": [
+          9200,
+          9300,
+          9600
+        ]
+      },
+      "upstream": [],
+      "downstream": [],
+      "note": null
+    },
+    "opensearch-headless": {
+      "workload": {
+        "kind": "service_only",
+        "service_ports": [
+          9200,
+          9300,
+          9600
+        ]
+      },
+      "upstream": [],
+      "downstream": [],
+      "note": null
+    },
+    "otel-collector": {
+      "workload": {
+        "kind": "service_only",
+        "service_ports": [
+          6831,
+          14250,
+          14268,
+          8888,
+          4317,
+          4318,
+          9411
+        ]
+      },
+      "upstream": [],
+      "downstream": [],
+      "note": null
+    },
+    "payment": {
+      "workload": {
+        "kind": "deployment",
+        "replicas": 1,
+        "ready": 1,
+        "healthy": true,
+        "service_ports": [
+          8080
+        ]
+      },
+      "upstream": [
+        "checkout"
+      ],
+      "downstream": [
+        "flagd"
+      ],
+      "note": null
+    },
+    "product-catalog": {
+      "workload": {
+        "kind": "deployment",
+        "replicas": 1,
+        "ready": 1,
+        "healthy": true,
+        "service_ports": [
+          8080
+        ]
+      },
+      "upstream": [
+        "checkout",
+        "frontend",
+        "recommendation"
+      ],
+      "downstream": [],
+      "note": null
+    },
+    "prometheus": {
+      "workload": {
+        "kind": "deployment",
+        "replicas": 1,
+        "ready": 1,
+        "healthy": true,
+        "service_ports": [
+          9090
+        ]
+      },
+      "upstream": [],
+      "downstream": [],
+      "note": null
+    },
+    "quote": {
+      "workload": {
+        "kind": "deployment",
+        "replicas": 1,
+        "ready": 1,
+        "healthy": true,
+        "service_ports": [
+          8080
+        ]
+      },
+      "upstream": [
+        "shipping"
+      ],
+      "downstream": [],
+      "note": null
+    },
+    "recommendation": {
+      "workload": {
+        "kind": "deployment",
+        "replicas": 1,
+        "ready": 1,
+        "healthy": true,
+        "service_ports": [
+          8080
+        ]
+      },
+      "upstream": [
+        "frontend"
+      ],
+      "downstream": [
+        "flagd",
+        "product-catalog"
+      ],
+      "note": null
+    },
+    "shipping": {
+      "workload": {
+        "kind": "deployment",
+        "replicas": 1,
+        "ready": 1,
+        "healthy": true,
+        "service_ports": [
+          8080
+        ]
+      },
+      "upstream": [
+        "checkout",
+        "frontend"
+      ],
+      "downstream": [
+        "quote"
+      ],
+      "note": null
+    },
+    "telemetry-docs": {
+      "workload": {
+        "kind": "deployment",
+        "replicas": 1,
+        "ready": 1,
+        "healthy": true,
+        "service_ports": [
+          8000
+        ]
+      },
+      "upstream": [],
+      "downstream": [],
+      "note": null
+    },
+    "valkey-cart": {
+      "workload": {
+        "kind": "deployment",
+        "replicas": 1,
+        "ready": 1,
+        "healthy": true,
+        "service_ports": [
+          6379
+        ]
+      },
+      "upstream": [],
+      "downstream": [],
+      "note": null
+    }
+  },
+  "edges": [
+    {
+      "parent": "ad",
+      "child": "flagd",
+      "call_count": 5
+    },
+    {
+      "parent": "cart",
+      "child": "flagd",
+      "call_count": 204
+    },
+    {
+      "parent": "checkout",
+      "child": "cart",
+      "call_count": 210
+    },
+    {
+      "parent": "checkout",
+      "child": "currency",
+      "call_count": 297
+    },
+    {
+      "parent": "checkout",
+      "child": "email",
+      "call_count": 105
+    },
+    {
+      "parent": "checkout",
+      "child": "payment",
+      "call_count": 105
+    },
+    {
+      "parent": "checkout",
+      "child": "product-catalog",
+      "call_count": 192
+    },
+    {
+      "parent": "checkout",
+      "child": "shipping",
+      "call_count": 210
+    },
+    {
+      "parent": "fraud-detection",
+      "child": "flagd",
+      "call_count": 5
+    },
+    {
+      "parent": "frontend",
+      "child": "ad",
+      "call_count": 449
+    },
+    {
+      "parent": "frontend",
+      "child": "cart",
+      "call_count": 1814
+    },
+    {
+      "parent": "frontend",
+      "child": "checkout",
+      "call_count": 105
+    },
+    {
+      "parent": "frontend",
+      "child": "currency",
+      "call_count": 837
+    },
+    {
+      "parent": "frontend",
+      "child": "product-catalog",
+      "call_count": 5320
+    },
+    {
+      "parent": "frontend",
+      "child": "recommendation",
+      "call_count": 926
+    },
+    {
+      "parent": "frontend",
+      "child": "shipping",
+      "call_count": 146
+    },
+    {
+      "parent": "frontend-proxy",
+      "child": "flagd",
+      "call_count": 522
+    },
+    {
+      "parent": "frontend-proxy",
+      "child": "frontend",
+      "call_count": 13169
+    },
+    {
+      "parent": "frontend-proxy",
+      "child": "image-provider",
+      "call_count": 4639
+    },
+    {
+      "parent": "frontend-web",
+      "child": "frontend-proxy",
+      "call_count": 5537
+    },
+    {
+      "parent": "payment",
+      "child": "flagd",
+      "call_count": 15
+    },
+    {
+      "parent": "recommendation",
+      "child": "flagd",
+      "call_count": 5
+    },
+    {
+      "parent": "recommendation",
+      "child": "product-catalog",
+      "call_count": 926
+    },
+    {
+      "parent": "shipping",
+      "child": "quote",
+      "call_count": 251
+    }
+  ]
+}
