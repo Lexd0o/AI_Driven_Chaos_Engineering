@@ -400,6 +400,40 @@ class LiveRunTests(unittest.TestCase):
         self.assertEqual(len(self.samplers), 1)               # the sampler had started and was stopped again
         self.assert_nothing_injected(report)
 
+    def test_one_blip_then_healthy_passes_on_recheck(self):
+        calls = []
+
+        def blip_then_healthy(journey, window):
+            calls.append(journey)
+            return BROKEN_SLI if len(calls) <= 3 else HEALTHY_SLI      # first gate (3 journeys) fails, then clean
+
+        with mock.patch.object(controller, "latest_sli", blip_then_healthy):
+            code, report = self.run_controller()
+
+        self.assertEqual(code, 0, self.output)
+        self.assertEqual(report["shop_gate"]["attempts"], 2)
+        self.assertEqual(len(report["shop_gate"]["earlier_problems"]), 1)
+        self.assertTrue(report["shop_gate"]["ok"])
+        self.assertTrue(self.kube.created)                             # the fault was injected after the re-check
+
+    def test_really_unhealthy_shop_is_checked_three_times_then_refused(self):
+        calls = []
+        start = self.clock[0]
+
+        def always_broken(journey, window):
+            calls.append(journey)
+            return BROKEN_SLI
+
+        with mock.patch.object(controller, "latest_sli", always_broken):
+            code, report = self.run_controller()
+
+        self.assertEqual(code, 1)
+        self.assertEqual(len(calls), 3 * (controller.GATE_RETRIES + 1))    # 3 journeys x 3 checks
+        self.assertEqual(report["shop_gate"]["attempts"], controller.GATE_RETRIES + 1)
+        self.assertFalse(report["shop_gate"]["ok"])
+        self.assertGreaterEqual(self.clock[0] - start, controller.GATE_RETRIES * controller.GATE_RETRY_WAIT_S)
+        self.assert_nothing_injected(report)
+
     def test_existing_chaos_object_blocks(self):
         self.kube.existing = [{"metadata": {"name": "someone-elses-chaos"}}]
 

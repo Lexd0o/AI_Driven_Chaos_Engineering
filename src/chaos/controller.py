@@ -51,6 +51,8 @@ MIN_BASELINE_SUCCESS = 0.9                # P1's pre-flight rule
 RECOVERY_BUDGET_S = 120                   # Architecture.md 4.3
 SUSTAIN_S = 30                            # healthy window length used by P2's recovery detection
 GATE_WINDOW_S = 20                        # shop health gate looks at P2's samples of the last 20 s
+GATE_RETRIES = 2                          # re-checks after a failed gate, each on a fresh window (so at most 3 checks)
+GATE_RETRY_WAIT_S = GATE_WINDOW_S         # wait one full window, so a re-check never reuses the blip's samples
 OTHER_SAMPLER_WINDOW_S = 15               # any journey row this recent means another sampler is running
 SAMPLER_STOP_WAIT_S = 20                  # a probe tick can take up to ~10 s when requests time out
 STOP_PATH = ROOT / "data" / "STOP"         # P4's manual stop file (python -m src.run --stop-all creates it)
@@ -400,6 +402,27 @@ def wait_until(epoch, sampler):
     while now() < epoch:
         check_sampler(sampler)
         sleep(1)
+
+
+# The shop has a low background error rate (a lone fast 503 about every 100 s on any journey, seen
+# live on 11 Oct, cause not found). One such blip in the 20 s window gives success 0.89 and used to refuse
+# the run 3 times in a row. So: when the check fails, look again on a completely fresh window, up to
+# GATE_RETRIES more times. A shop that is really unhealthy fails every window and is still refused.
+def shop_gate_with_retry(sampler, retries=GATE_RETRIES, wait_s=GATE_RETRY_WAIT_S):
+    gate = shop_gate()
+    earlier = []
+
+    for _ in range(retries):
+        if gate["ok"]:
+            break
+        earlier.append(gate["problems"])
+        print(f"Shop check failed ({'; '.join(gate['problems'])}); looking again in {wait_s} s.")
+        wait_until(now() + wait_s, sampler)
+        gate = shop_gate()
+
+    gate["attempts"] = len(earlier) + 1
+    gate["earlier_problems"] = earlier
+    return gate
 
 
 # ------------------------------------------------------------------ Stage 2: run record
@@ -864,7 +887,7 @@ def run_experiment(args, plan=None, settings=None, meta=None):
                 wait_until(report["t_start_epoch"] + args.pre_seconds, sampler)
 
                 event("checking_shop_health")
-                gate = shop_gate()
+                gate = shop_gate_with_retry(sampler)
                 report["shop_gate"] = gate
 
                 if not gate["ok"]:
