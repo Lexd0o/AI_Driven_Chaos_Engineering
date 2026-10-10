@@ -66,7 +66,7 @@ def _max_gap(rows, t0, t1):
 
 def compute_run_metrics(rows, targets, slos, t_inject, t_clear, recovery_budget_s=120,
                         observed_until=None, sample_interval_s=2, min_coverage=0.8,
-                        max_gap_s=10, sustain_s=30):
+                        max_gap_s=10, sustain_s=30, breach_grace_s=None):
     """rows = journey rows from the samples table (dicts with ts, journey, ok, latency_ms, status)."""
     rows = [r for r in rows if r.get("journey")]
     if observed_until is None:
@@ -101,6 +101,14 @@ def compute_run_metrics(rows, targets, slos, t_inject, t_clear, recovery_budget_
     breaches = [find_breach(after, slos[j]) for j in targets]
     breaches = [b for b in breaches if b is not None]
     t_breach = min(breaches) if breaches else None
+
+    # A breach that first appears long after the fault was cleared is not fault impact (found live on
+    # exp-006: healthy for the whole 60 s fault, a blip 67 s after clear was scored degraded_recovered).
+    # The grace covers the trailing SLO window, so a breach caused by the fault but seen a little late still counts.
+    late_breach = None
+    grace = breach_grace_s if breach_grace_s is not None else max((slos[j]["window_s"] for j in targets), default=10)
+    if t_breach is not None and t_breach > t_clear + grace:
+        late_breach, t_breach = t_breach, None
 
     t_healthy = None
     if t_breach is not None:
@@ -140,8 +148,9 @@ def compute_run_metrics(rows, targets, slos, t_inject, t_clear, recovery_budget_
 
     # --- peaks over target journeys ---
     peak_err, peak_p95 = 0.0, None
+    peaks_until = observed_until if t_breach is not None else t_clear   # no fault impact -> peaks of the fault window only
     for j in targets:
-        e, p = _peaks(_rows_for(rows, j, t_inject, observed_until), slos[j]["window_s"], slos[j]["min_n"])
+        e, p = _peaks(_rows_for(rows, j, t_inject, peaks_until), slos[j]["window_s"], slos[j]["min_n"])
         peak_err = max(peak_err, e)
         if p is not None and (peak_p95 is None or p > peak_p95):
             peak_p95 = p
@@ -150,6 +159,7 @@ def compute_run_metrics(rows, targets, slos, t_inject, t_clear, recovery_budget_
         "targets": targets,
         "t_inject": t_inject, "t_clear": t_clear,
         "t_breach": t_breach, "t_healthy": t_healthy,
+        "late_breach_ts": late_breach,             # first breach after t_clear + grace: reported, not scored
         "outcome": outcome,
         "impact_recovery_s": impact_recovery,      # t_healthy - t_breach
         "post_fault_recovery_s": post_fault,       # max(0, t_healthy - t_clear)

@@ -86,6 +86,21 @@ def test_gap_in_samples_is_inconclusive():
     assert m["outcome"] == "inconclusive", m
 
 
+def test_late_blip_after_fault_is_not_fault_impact():
+    # healthy for the whole fault window; cart fails 70-110 s after t_clear (exp-006 on 11 Oct)
+    m = run(all_journeys(1300.0, cart_bad=(1130.0, 1170.0)))
+    assert m["outcome"] == "survived", m
+    assert m["t_breach"] is None and m["late_breach_ts"] is not None, m
+    assert m["peak_error_rate"] == 0.0, m
+
+
+def test_breach_just_after_clear_still_counts():
+    # fault effect seen a few seconds after t_clear (inside the grace) is still the fault's
+    m = run(all_journeys(1300.0, cart_bad=(1058.0, 1090.0)))
+    assert m["outcome"] == "degraded_recovered", m
+    assert m["late_breach_ts"] is None, m
+
+
 def test_no_rows_never_crashes():
     m = run([])
     assert m["outcome"] == "inconclusive"
@@ -94,7 +109,8 @@ def test_no_rows_never_crashes():
 TESTS = [test_survived, test_degraded_recovered, test_not_recovered,
          test_too_short_to_call_not_recovered, test_missing_journey_is_inconclusive,
          test_containment_drops_when_other_journey_breaks,
-         test_gap_in_samples_is_inconclusive, test_no_rows_never_crashes]
+         test_gap_in_samples_is_inconclusive, test_late_blip_after_fault_is_not_fault_impact,
+         test_breach_just_after_clear_still_counts, test_no_rows_never_crashes]
 
 if __name__ == "__main__":
     failed = 0
