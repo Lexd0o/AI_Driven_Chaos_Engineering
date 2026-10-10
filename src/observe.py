@@ -17,7 +17,7 @@ from pathlib import Path
 import numpy as np
 
 from src.probe import run_journey
-from src.telemetry import ROOT, load_config
+from src.telemetry import ROOT, load_config, prom_query
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS samples (
@@ -39,6 +39,21 @@ def connect(db_path: str | None = None) -> sqlite3.Connection:
     return con
 
 
+def sample_services(cfg: dict, ts: float, experiment_id: str | None) -> list[tuple]:
+    """One row per (service, metric) from Prometheus. Returns [] if Prometheus is unreachable (never raises)."""
+    rows: list[tuple] = []
+    try:
+        for metric, promql in cfg.get("service_queries", {}).items():
+            for series in prom_query(promql):
+                svc = series["metric"].get("service_name")
+                val = float(series["value"][1])
+                if svc and val == val:  # skip NaN (e.g. p95 with no traffic)
+                    rows.append((ts, experiment_id, None, None, None, None, svc, metric, val))
+    except Exception:  # noqa: BLE001 - journey sampling must keep running
+        return []
+    return rows
+
+
 def run_sampler(experiment_id: str | None = None, stop_after_s: int | None = None,
                 db_path: str | None = None) -> None:
     """Probe every journey each interval (in parallel) and write rows. Ctrl+C to stop."""
@@ -47,6 +62,7 @@ def run_sampler(experiment_id: str | None = None, stop_after_s: int | None = Non
     names = list(cfg["journeys"])
     con = connect(db_path)
     start = time.time()
+    last_svc = 0.0
     try:
         with ThreadPoolExecutor(max_workers=len(names)) as pool:
             while stop_after_s is None or time.time() - start < stop_after_s:
@@ -54,6 +70,9 @@ def run_sampler(experiment_id: str | None = None, stop_after_s: int | None = Non
                 results = list(pool.map(lambda n: (n, run_journey(n, cfg)), names))
                 rows = [(tick, experiment_id, n, int(r["ok"]), r["latency_ms"], r["status"],
                          None, None, None) for n, r in results]
+                if tick - last_svc >= cfg.get("service_sample_interval_s", 10):
+                    rows += sample_services(cfg, tick, experiment_id)
+                    last_svc = tick
                 con.executemany("INSERT INTO samples VALUES (?,?,?,?,?,?,?,?,?)", rows)
                 con.commit()
                 time.sleep(max(0.0, interval - (time.time() - tick)))

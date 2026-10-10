@@ -5,9 +5,17 @@
 base_url: http://localhost:8080        # frontend-proxy [verify port/tunnel with P1]
 prometheus_url: http://localhost:9090  # [verify]
 jaeger_url: http://localhost:16686     # [verify; may also be behind frontend-proxy]
-timeout_s: 3
+timeout_s: 5
 sample_interval_s: 2
 db_path: data/runs.db
+service_sample_interval_s: 10          # per-service Prometheus sampling (journey probes stay at sample_interval_s)
+
+# Per-service queries (instant, one value per service_name). Confirmed labels: service_name, span_kind, status_code.
+# Only SERVER spans = requests the service handled. Error metric is per-second (no series when there are no errors -> treated as 0).
+service_queries:
+  rps: 'sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind="SPAN_KIND_SERVER"}[2m]))'
+  errors_per_s: 'sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind="SPAN_KIND_SERVER",status_code="STATUS_CODE_ERROR"}[2m]))'
+  p95_ms: 'histogram_quantile(0.95, sum by (le, service_name) (rate(traces_span_metrics_duration_milliseconds_bucket{span_kind="SPAN_KIND_SERVER"}[2m])))'
 
 # Fixed fake user so probe traffic is recognisable and does not pollute real sessions.
 probe_user: probe-user-p2
@@ -41,3 +49,6 @@ journeys:
           address: {streetAddress: 1600 Amphitheatre Parkway, city: Mountain View, state: CA, country: United States, zipCode: "94043"}
           userCurrency: USD
           creditCard: {creditCardNumber: "4432-8015-6152-0454", creditCardCvv: 672, creditCardExpirationYear: 2030, creditCardExpirationMonth: 1}
+
+# Dashboard STOP button runs this (must work without the LLM). P1 owns the real target [verify].
+stop_command: make stop-all
