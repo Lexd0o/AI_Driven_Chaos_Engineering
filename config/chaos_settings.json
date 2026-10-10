@@ -9,6 +9,11 @@
       "browse",
       "cart",
       "checkout"
+    ],
+    "product-catalog": [
+      "browse",
+      "cart",
+      "checkout"
     ]
   },
   "safety": {

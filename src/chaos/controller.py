@@ -40,7 +40,7 @@ from uuid import uuid4
 
 from src.chaos import DATA_DIR, EXPERIMENT_PATH, ROOT, SETTINGS_PATH
 from src.chaos import guardian
-from src.chaos.executor import ExperimentPlan, build_manifest, kubectl
+from src.chaos.executor import CHAOS_KINDS, ExperimentPlan, build_manifest, chaos_kind, kubectl
 from src.evidence import collect_evidence
 from src.observe import connect, latest_sli, run_sampler, save_run
 from src.runmetrics import collect_run_metrics, make_slos
@@ -53,6 +53,8 @@ SUSTAIN_S = 30                            # healthy window length used by P2's r
 GATE_WINDOW_S = 20                        # shop health gate looks at P2's samples of the last 20 s
 OTHER_SAMPLER_WINDOW_S = 15               # any journey row this recent means another sampler is running
 SAMPLER_STOP_WAIT_S = 20                  # a probe tick can take up to ~10 s when requests time out
+STOP_PATH = ROOT / "data" / "STOP"         # P4's manual stop file (python -m src.run --stop-all creates it)
+WATCHDOG_GRACE_S = 60                     # watchdog deletes our object this long after the guard's own time limit
 FORCE_BREACH = {"latency_floor_ms": 1, "latency_multiplier": 0}   # P1's definition: every probe counts as slow
 GUARD_NOTE = (
     "guard.recovery_seconds is the guardian's cleanup check (D-024). "
@@ -305,6 +307,45 @@ def check_no_other_sampler():
         )
 
 
+# ------------------------------------------------------------------ P4's safety pieces (hybrid run path)
+def check_stop_file():
+    if STOP_PATH.exists():
+        raise RuntimeError(
+            f"Manual stop is active ({STOP_PATH}). Check the app, delete the file, then retry. "
+            "Nothing was injected."
+        )
+
+
+def check_can_delete(settings, resource_type):
+    # Never create what we may not be able to delete (P4's agent: can-i delete before injecting).
+    try:
+        answer = kubectl(settings, ["auth", "can-i", "delete", resource_type]).strip()
+    except RuntimeError as error:
+        answer = str(error)
+
+    if answer != "yes":
+        raise RuntimeError(
+            f"kubectl cannot delete {resource_type} in this namespace ({answer}); refusing to inject."
+        )
+
+
+# A separate process that deletes our object at the deadline even if this program dies (P4's watchdog, layer L2).
+def arm_watchdog(settings, resource_type, resource_name, run_id, deadline_epoch):
+    from agents.chaos_agent_expanded.watchdog import start_watchdog
+
+    ops_dir = DATA_DIR / "operations"
+    ops_dir.mkdir(parents=True, exist_ok=True)
+    cluster = {"context": settings["context"], "namespace": settings["namespace"]}
+    return str(start_watchdog(cluster, resource_type, resource_name, run_id, deadline_epoch, ops_dir))
+
+
+def disarm_watchdog(path):
+    if path:
+        from agents.chaos_agent_expanded.watchdog import cancel_watchdog
+
+        cancel_watchdog(path)
+
+
 def confirm(args):
     if args.yes:
         return
@@ -363,7 +404,7 @@ def wait_until(epoch, sampler):
 
 # ------------------------------------------------------------------ Stage 2: run record
 # One `runs` row (Architecture.md 4.4). Numbers come from P2's metrics; the guardian only adds t_detect and the abort reason.
-def build_run_record(report, plan, metrics, guard_result, evidence, report_path):
+def build_run_record(report, plan, metrics, guard_result, evidence, report_path, meta=None):
     aborted = guard_result["outcome"] != "completed"
     reason = None
 
@@ -380,9 +421,12 @@ def build_run_record(report, plan, metrics, guard_result, evidence, report_path)
         outcome = "inconclusive"
         quality = "inconclusive"
 
+    meta = meta or {}
+
     return {
         "experiment_id": report["run_id"],
-        "repeat": 1,
+        "plan_experiment_id": meta.get("plan_experiment_id"),   # P3's exp-00N when started by src.run
+        "repeat": meta.get("repeat", 1),
         "mode": report["mode"],
         "target": plan.target_service,
         "fault_type": plan.fault_type,
@@ -478,7 +522,7 @@ def main(argv=None):
     parser.add_argument(
         "--skip-plan",
         action="store_true",
-        help="Use the saved experiment.json without calling Groq.",
+        help="Use config/experiment.json (required: the Groq planner is retired; normal runs use python -m src.run).",
     )
 
     parser.add_argument(
@@ -518,6 +562,15 @@ def main(argv=None):
     if args.force_breach and not args.execute:
         parser.error("--force-breach only applies to --execute.")
 
+    report = run_experiment(args)
+
+    if report["status"] == "failed":
+        raise SystemExit(1)
+
+
+# One run. args = parsed CLI options (mock/preview/execute, skip_plan, pre_seconds, budget, force_breach, yes).
+# src.run passes plan + settings + meta (P3's plan item); the CLI passes none and uses config/experiment.json.
+def run_experiment(args, plan=None, settings=None, meta=None):
     mode = (
         "execute" if args.execute
         else "preview" if args.preview
@@ -547,6 +600,7 @@ def main(argv=None):
 
     report = {
         "run_id": run_id,
+        "plan_experiment_id": (meta or {}).get("plan_experiment_id"),
         "mode": mode,
         "status": "starting",
         "started_at": utc_now(),
@@ -564,8 +618,8 @@ def main(argv=None):
         "run_record": None,
     }
 
-    settings = None
     deployment_name = None
+    watchdog_path = None
     resource_type = None
     submission_attempted = False
     failed = False
@@ -643,6 +697,8 @@ def main(argv=None):
             )
 
         if report["cleanup_confirmed"]:
+            disarm_watchdog(watchdog_path)
+
             try:
                 wait_for(
                     settings,
@@ -661,17 +717,27 @@ def main(argv=None):
                 report["deployment_check_error"] = str(error)
 
     try:
-        event("planning" if not args.skip_plan else "using_saved_plan")
+        if plan is not None:
+            event("using_plan_item")
 
-        if not args.skip_plan:
-            run_planner()
+        else:
+            if not args.skip_plan:
+                # P1's Groq planner chose targets and faults itself; retired at integration (D-005, D-012).
+                raise RuntimeError(
+                    "The LLM planner is retired: plans come from P3's pipeline. "
+                    "Use python -m src.run --exp <id>, or --skip-plan with config/experiment.json."
+                )
 
-        settings = read_json(SETTINGS_PATH)
-        plan = ExperimentPlan.model_validate_json(
-            EXPERIMENT_PATH.read_text(
-                encoding="utf-8"
+            event("using_saved_plan")
+
+            plan = ExperimentPlan.model_validate_json(
+                EXPERIMENT_PATH.read_text(
+                    encoding="utf-8"
+                )
             )
-        )
+
+        if settings is None:
+            settings = read_json(SETTINGS_PATH)
 
         if plan.target_service not in settings["targets"]:
             raise ValueError("Target service is not approved.")
@@ -717,11 +783,7 @@ def main(argv=None):
             "reslab-run-id": run_id
         }
 
-        resource_type = (
-            "podchaos"
-            if plan.fault_type == "pod_kill"
-            else "networkchaos"
-        )
+        kind, resource_type = chaos_kind(plan.fault_type)
 
         report["manifest"] = manifest
         report["resource_name"] = resource_name
@@ -751,7 +813,7 @@ def main(argv=None):
                 existing = json.loads(
                     kubectl(
                         settings,
-                        ["get", "podchaos,networkchaos", "-o", "json"],
+                        ["get", CHAOS_KINDS, "-o", "json"],
                     )
                 )
 
@@ -761,6 +823,9 @@ def main(argv=None):
                     )
 
                 # ---- Pre-flight: nothing is injected until all of this passes ----
+                check_stop_file()
+                check_can_delete(settings, resource_type)
+
                 event("checking_guard_baseline")
 
                 safety = dict(settings.get("safety", {}))
@@ -808,7 +873,16 @@ def main(argv=None):
                         + "; ".join(gate["problems"])
                     )
 
+                check_stop_file()   # someone may have pressed stop during pre-observation
+
                 # ---- Inject ----
+                event("arming_watchdog")
+                watchdog_path = arm_watchdog(
+                    settings, resource_type, resource_name, run_id,
+                    now() + max_seconds + WATCHDOG_GRACE_S,
+                )
+                report["watchdog"] = watchdog_path
+
                 event("submitting")
 
                 # Set before the API call, so cleanup is attempted
@@ -846,11 +920,6 @@ def main(argv=None):
 
                 # ---- Guard: kill switch on breach / max time / Ctrl+C / error ----
                 event("guarding")
-
-                kind = (
-                    "PodChaos" if plan.fault_type == "pod_kill"
-                    else "NetworkChaos"
-                )
 
                 guard_result = guardian.guard(
                     resource_name,
@@ -931,7 +1000,7 @@ def main(argv=None):
                 report["evidence"] = evidence
 
                 record = build_run_record(
-                    report, plan, metrics, guard_result, evidence, report_path
+                    report, plan, metrics, guard_result, evidence, report_path, meta
                 )
                 report["run_record"] = record
                 save_run(record)
@@ -955,6 +1024,10 @@ def main(argv=None):
             if sampler is not None:
                 report["sampler_errors"] = sampler["errors"]
 
+            # A failed cleanup keeps the watchdog armed: it is the backstop that deletes the fault.
+            if report["cleanup_confirmed"] is not False:
+                disarm_watchdog(watchdog_path)
+
             report["status"] = (
                 "failed" if failed
                 else f"{mode}_completed"
@@ -970,8 +1043,7 @@ def main(argv=None):
         finally:
             lock_path.unlink(missing_ok=True)
 
-    if failed:
-        raise SystemExit(1)
+    return report
 
 
 if __name__ == "__main__":

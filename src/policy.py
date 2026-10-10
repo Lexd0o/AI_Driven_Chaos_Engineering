@@ -56,6 +56,10 @@ def check_item(item: dict, policy: dict) -> list[str]:
         latency = item.get("params", {}).get("latency_ms", 0)
         if latency > spec.get("max_latency_ms", 0):
             problems.append(f"latency_ms={latency} exceeds max_latency_ms={spec.get('max_latency_ms')}")
+    if fault_type == "packet_loss":
+        loss = item.get("params", {}).get("loss_percent", 0)
+        if loss > spec.get("max_loss_percent", 0):
+            problems.append(f"loss_percent={loss} exceeds max_loss_percent={spec.get('max_loss_percent')}")
     if fault_type == "cpu_stress":
         workers = item.get("params", {}).get("cpu_workers", 0)
         if workers > spec.get("max_cpu_workers", 0):

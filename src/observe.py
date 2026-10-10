@@ -38,7 +38,8 @@ CREATE TABLE IF NOT EXISTS runs (
   outcome TEXT, quality TEXT,
   peak_error_rate REAL, peak_p95_ms REAL, impact_recovery_s REAL, post_fault_recovery_s REAL, containment_C REAL,
   forced_breach INTEGER,
-  journeys TEXT, evidence TEXT, report_path TEXT
+  journeys TEXT, evidence TEXT, report_path TEXT,
+  plan_experiment_id TEXT
 );
 """
 
@@ -48,6 +49,7 @@ RUN_COLUMNS = [
     "aborted", "abort_reason", "outcome", "quality",
     "peak_error_rate", "peak_p95_ms", "impact_recovery_s", "post_fault_recovery_s", "containment_C",
     "forced_breach", "journeys", "evidence", "report_path",
+    "plan_experiment_id",            # P3's exp-00N when the run came from src.run (added later, see connect)
 ]
 RUN_JSON_COLUMNS = ("journeys", "evidence")
 
@@ -59,6 +61,11 @@ def connect(db_path: str | None = None) -> sqlite3.Connection:
     con.row_factory = sqlite3.Row
     con.execute("PRAGMA journal_mode=WAL")  # readers (P4 guardrail, dashboard) don't block the writer
     con.executescript(SCHEMA)
+    # Databases made before a column existed get it added (CREATE TABLE IF NOT EXISTS never changes a table).
+    have = {r["name"] for r in con.execute("PRAGMA table_info(runs)")}
+    for col in RUN_COLUMNS:
+        if col not in have:
+            con.execute(f"ALTER TABLE runs ADD COLUMN {col}")
     return con
 
 

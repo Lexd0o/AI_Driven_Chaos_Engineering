@@ -17,6 +17,18 @@ from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from src.chaos import EXPERIMENT_PATH, SETTINGS_PATH
 
+# Every Chaos Mesh kind this project can create (used by the "nothing else running" checks and --abort).
+CHAOS_KINDS = "podchaos,networkchaos,stresschaos"
+
+
+# fault_type -> (manifest kind, kubectl resource type)
+def chaos_kind(fault_type):
+    if fault_type == "pod_kill":
+        return "PodChaos", "podchaos"
+    if fault_type == "cpu_stress":
+        return "StressChaos", "stresschaos"
+    return "NetworkChaos", "networkchaos"
+
 
 # Validate the experiment request and its parameters.
 class ExperimentPlan(BaseModel):
@@ -28,6 +40,7 @@ class ExperimentPlan(BaseModel):
         "pod_kill",
         "network_delay",
         "packet_loss",
+        "cpu_stress",          # from P4's agent (StressChaos), used by P3's fault catalog
     ]
 
     hypothesis: str = Field(min_length=10, max_length=500)
@@ -35,9 +48,13 @@ class ExperimentPlan(BaseModel):
     duration_seconds: int = Field(default=0, ge=0, le=60)
     latency_ms: int = Field(default=0, ge=0, le=1000)
     loss_percent: int = Field(default=0, ge=0, le=30)
+    cpu_workers: int = Field(default=0, ge=0, le=4)   # policy.yaml max_cpu_workers = 4
 
     @model_validator(mode="after")
     def check_fault_parameters(self):
+        if self.fault_type != "cpu_stress" and self.cpu_workers:
+            raise ValueError("cpu_workers is only for cpu_stress.")
+
         if self.fault_type == "pod_kill":
             if any([
                 self.duration_seconds,
@@ -68,6 +85,17 @@ class ExperimentPlan(BaseModel):
             if self.latency_ms != 0:
                 raise ValueError(
                     "packet_loss requires latency_ms=0."
+                )
+
+        elif self.fault_type == "cpu_stress":
+            if self.duration_seconds < 1 or self.cpu_workers < 1:
+                raise ValueError(
+                    "cpu_stress requires a positive duration and cpu_workers."
+                )
+
+            if self.latency_ms or self.loss_percent:
+                raise ValueError(
+                    "cpu_stress requires latency_ms=0 and loss_percent=0."
                 )
 
         return self
@@ -102,11 +130,7 @@ def kubectl(settings, arguments, body=None):
 def build_manifest(plan, namespace, labels):
     manifest = {
         "apiVersion": "chaos-mesh.org/v1alpha1",
-        "kind": (
-            "PodChaos"
-            if plan.fault_type == "pod_kill"
-            else "NetworkChaos"
-        ),
+        "kind": chaos_kind(plan.fault_type)[0],
         "metadata": {
             "name": "reslab-experiment",
             "namespace": namespace,
@@ -140,6 +164,13 @@ def build_manifest(plan, namespace, labels):
         spec["loss"] = {
             "loss": str(plan.loss_percent),
             "correlation": "0",
+        }
+
+    elif plan.fault_type == "cpu_stress":
+        # Same spec as P4's agent (agents/chaos_agent_expanded/core.py).
+        spec["duration"] = f"{plan.duration_seconds}s"
+        spec["stressors"] = {
+            "cpu": {"workers": plan.cpu_workers, "load": 100},
         }
 
     return manifest
@@ -256,7 +287,7 @@ def main():
     existing = json.loads(
         kubectl(
             settings,
-            ["get", "podchaos,networkchaos", "-o", "json"],
+            ["get", CHAOS_KINDS, "-o", "json"],
         )
     )
 

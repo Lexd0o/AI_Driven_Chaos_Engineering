@@ -29,6 +29,9 @@ allowed_fault_types:
   network_delay:
     mechanism: chaosmesh
     max_latency_ms: 1000
+  packet_loss:              # added at integration (live run run-44239ec5d896 used it)
+    mechanism: chaosmesh
+    max_loss_percent: 30
   cpu_stress:
     mechanism: chaosmesh
     max_cpu_workers: 4

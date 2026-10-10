@@ -20,7 +20,7 @@ from src.chaos import k8s_monitor as monitor
 EXPERIMENT_NAME = "reslab-experiment"
 RUN_PREFIX = "reslab-run-"        # the controller names its objects reslab-run-<id> ...
 RUN_LABEL = "reslab-run-id"       # ... and labels them with the run id
-CHAOS_KINDS = "podchaos,networkchaos"
+CHAOS_KINDS = "podchaos,networkchaos,stresschaos"
 
 DEFAULT_THRESHOLDS = {
     "latency_multiplier": 3,

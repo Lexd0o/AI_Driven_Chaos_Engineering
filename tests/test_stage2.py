@@ -80,15 +80,21 @@ class FakeKube:
         self.created = []
         self.deleted = []
         self.delete_error = None
+        self.can_delete = "yes"
 
     def __call__(self, settings, args, body=None):
+        if args[:3] == ["auth", "can-i", "delete"]:
+            if self.can_delete != "yes":
+                raise RuntimeError(self.can_delete)
+            return "yes\n"
+
         if args[:2] == ["get", "deployment"]:
             return json.dumps(DEPLOYMENT)
 
         if args[:3] == ["create", "--dry-run=server", "-f"]:
             return "{}"
 
-        if args[:2] == ["get", "podchaos,networkchaos"]:
+        if args[:2] == ["get", controller.CHAOS_KINDS]:
             return json.dumps({"items": self.existing + list(self.objects.values())})
 
         if args[:2] == ["create", "-f"]:
@@ -102,7 +108,7 @@ class FakeKube:
             self.created.append(obj)
             return json.dumps(obj)
 
-        if args[0] == "get" and args[1] in ("networkchaos", "podchaos"):
+        if args[0] == "get" and args[1] in ("networkchaos", "podchaos", "stresschaos"):
             obj = self.objects.get(args[2])
             return json.dumps(obj) if obj else ""
 
@@ -149,6 +155,8 @@ class LiveRunTests(unittest.TestCase):
         self.sampler_runs = []
         self.saved = []
         self.other_rows = 0
+        self.watchdogs = []
+        self.disarmed = []
         self.output = ""
 
         patches = [
@@ -161,6 +169,9 @@ class LiveRunTests(unittest.TestCase):
             mock.patch.object(controller, "start_sampler", self.fake_start_sampler),
             mock.patch.object(controller, "latest_sli", lambda journey, window: self.sli),
             mock.patch.object(controller, "recent_sample_count", lambda window: self.other_rows),
+            mock.patch.object(controller, "STOP_PATH", self.dir / "STOP"),
+            mock.patch.object(controller, "arm_watchdog", self.fake_arm_watchdog),
+            mock.patch.object(controller, "disarm_watchdog", self.disarmed.append),
             mock.patch.object(controller, "collect_run_metrics", self.fake_metrics),
             mock.patch.object(controller, "collect_evidence", self.fake_evidence),
             mock.patch.object(controller, "save_run", self.saved.append),
@@ -171,6 +182,11 @@ class LiveRunTests(unittest.TestCase):
             self.addCleanup(p.stop)
 
     # ---- fakes
+    def fake_arm_watchdog(self, settings, resource_type, name, run_id, deadline):
+        self.watchdogs.append({"type": resource_type, "name": name, "run_id": run_id, "deadline": deadline,
+                               "armed_before_create": not self.kube.created})
+        return f"wd-{run_id}"
+
     def fake_sleep(self, seconds):
         self.clock[0] += seconds
 
@@ -462,6 +478,68 @@ class LiveRunTests(unittest.TestCase):
         self.assertIn("guardian --abort --all", self.output)
         self.assertEqual(self.metrics_calls, [])
         self.assertEqual(self.saved, [])
+
+    # ---- hybrid run path: P4's safety pieces in the controller ----
+    def test_watchdog_armed_before_create_and_disarmed_after_cleanup(self):
+        code, report = self.run_controller()
+
+        self.assertEqual(code, 0, self.output)
+        self.assertEqual(len(self.watchdogs), 1)
+        wd = self.watchdogs[0]
+        self.assertTrue(wd["armed_before_create"])
+        self.assertEqual((wd["type"], wd["run_id"]), ("networkchaos", report["run_id"]))
+        self.assertEqual(wd["deadline"], 1000.0 + 30 + 90 + controller.WATCHDOG_GRACE_S)   # after the guard's limit
+        self.assertIn(f"wd-{report['run_id']}", self.disarmed)
+
+    def test_failed_cleanup_keeps_the_watchdog_armed(self):
+        self.guard_leaves_object = True
+        self.kube.delete_error = "kubectl delete failed"
+
+        code, report = self.run_controller()
+
+        self.assertEqual(code, 1)
+        self.assertEqual(len(self.watchdogs), 1)
+        self.assertNotIn(f"wd-{report['run_id']}", self.disarmed)    # it is the backstop now
+
+    def test_stop_file_blocks_injection(self):
+        (self.dir / "STOP").touch()
+
+        code, report = self.run_controller()
+
+        self.assertEqual(code, 1)
+        self.assertIn("Manual stop", report["error"])
+        self.assertEqual(self.watchdogs, [])
+        self.assert_nothing_injected(report)
+
+    def test_cannot_delete_means_no_injection(self):
+        self.kube.can_delete = "no"
+
+        code, report = self.run_controller()
+
+        self.assertEqual(code, 1)
+        self.assertIn("cannot delete", report["error"])
+        self.assert_nothing_injected(report)
+
+    def test_plan_item_from_run_py_with_cpu_stress(self):
+        plan = controller.ExperimentPlan.model_validate({
+            "target_service": "currency", "fault_type": "cpu_stress",
+            "hypothesis": "CPU stress on currency slows browse.", "duration_seconds": 60, "cpu_workers": 2})
+        settings = {**SETTINGS, "targets": {"currency": "currency"},
+                    "target_journeys": {"currency": ["browse", "checkout"]}}
+        args = controller.argparse.Namespace(mock=False, preview=False, execute=True, skip_plan=True,
+                                             pre_seconds=30, budget=120, force_breach=False, yes=True)
+        buffer = io.StringIO()
+        with contextlib.redirect_stdout(buffer):
+            report = controller.run_experiment(args, plan=plan, settings=settings,
+                                               meta={"plan_experiment_id": "exp-005", "repeat": 3})
+
+        self.assertEqual(report["status"], "execute_completed", buffer.getvalue())
+        self.assertEqual(self.kube.created[0]["kind"], "StressChaos")
+        self.assertEqual(self.guard_calls[0]["kind"], "StressChaos")
+        self.assertEqual(self.watchdogs[0]["type"], "stresschaos")
+        self.assertEqual(self.metrics_calls[0]["targets"], ["browse", "checkout"])
+        self.assertEqual((self.saved[0]["plan_experiment_id"], self.saved[0]["repeat"]), ("exp-005", 3))
+        self.assertEqual(report["plan_experiment_id"], "exp-005")
 
     def test_unverified_kill_switch_uses_cleanup_time_as_t_clear(self):
         self.guard_verified_gone = False
