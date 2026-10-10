@@ -1,0 +1,43 @@
+# config/journeys.yaml - P2 Observability config.
+# Everything marked [verify] must be confirmed on Day 1 (browser network tab / Prometheus / Jaeger).
+# Override base_url without editing: set env PROBE_BASE_URL (e.g. http://localhost:8080)
+
+base_url: http://localhost:8080        # frontend-proxy [verify port/tunnel with P1]
+prometheus_url: http://localhost:9090  # [verify]
+jaeger_url: http://localhost:16686     # [verify; may also be behind frontend-proxy]
+timeout_s: 3
+sample_interval_s: 2
+db_path: data/runs.db
+
+# Fixed fake user so probe traffic is recognisable and does not pollute real sessions.
+probe_user: probe-user-p2
+probe_product_id: OLJCESPC7Z           # a product id from the demo catalogue [verify]
+
+# Each journey = ordered steps. A journey is ok only if EVERY step returns 2xx.
+# {user} and {product} are filled from the values above.
+journeys:
+  browse:
+    steps:
+      - {method: GET, path: /api/products}
+  cart:
+    steps:
+      - method: POST
+        path: /api/cart
+        params: {currencyCode: USD}
+        json: {item: {productId: "{product}", quantity: 1}, userId: "{user}"}
+      - {method: GET, path: /api/cart, params: {sessionId: "{user}", currencyCode: USD}}
+  checkout:
+    steps:
+      - method: POST
+        path: /api/cart
+        params: {currencyCode: USD}
+        json: {item: {productId: "{product}", quantity: 1}, userId: "{user}"}
+      - method: POST
+        path: /api/checkout
+        params: {currencyCode: USD}
+        json:                           # copy the real body from the network tab [verify]
+          userId: "{user}"
+          email: probe@example.com
+          address: {streetAddress: 1600 Amphitheatre Parkway, city: Mountain View, state: CA, country: United States, zipCode: "94043"}
+          userCurrency: USD
+          creditCard: {creditCardNumber: "4432-8015-6152-0454", creditCardCvv: 672, creditCardExpirationYear: 2030, creditCardExpirationMonth: 1}
