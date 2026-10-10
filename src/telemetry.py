@@ -1,13 +1,14 @@
-"""Telemetry access: config, Prometheus, Jaeger. P2 (Observability).
+"""Telemetry access: config, Prometheus, Jaeger (v3 API). P2 (Observability).
 
 Run alone:  python -m src.telemetry        (lists Prometheus metric names + Jaeger services)
-Everything cluster-specific is marked [verify].
+Jaeger: this demo serves the v3 API at <frontend-proxy>/jaeger/ui/api/v3 (OTLP-style JSON). Set jaeger_url to that.
 """
 from __future__ import annotations
 
 import json
 import os
 from collections import Counter
+from datetime import datetime, timezone
 from pathlib import Path
 
 import requests
@@ -15,6 +16,8 @@ import yaml
 
 ROOT = Path(__file__).resolve().parent.parent
 CONFIG_PATH = ROOT / "config" / "journeys.yaml"
+
+ERROR_CODES = (2, "STATUS_CODE_ERROR")   # OTLP span status: 2 = ERROR
 
 
 def load_config() -> dict:
@@ -51,44 +54,85 @@ def prom_range(promql: str, start: float, end: float, step_s: int = 2) -> list[d
 
 
 def prom_metric_names(contains: str = "") -> list[str]:
-    """Use on Day 1 to find the real span-metric names [verify]."""
     data = _get(load_config()["prometheus_url"] + "/api/v1/label/__name__/values")
-    names = data["data"]
-    return [n for n in names if contains in n]
+    return [n for n in data["data"] if contains in n]
 
 
-# -------------------------------------------------------------------- Jaeger
+# -------------------------------------------------------------------- Jaeger v3
+def _iso(ts: float) -> str:
+    return datetime.fromtimestamp(ts, timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.000Z")
+
+
+def _get_v3(path: str, params: dict | None = None):
+    """GET <jaeger_url><path>. Returns parsed JSON (dict, or list of dicts if the reply is one JSON per line).
+    Returns None when Jaeger says 404 'No traces found'."""
+    r = requests.get(load_config()["jaeger_url"].rstrip("/") + path, params=params, timeout=20)
+    if r.status_code == 404:
+        return None
+    r.raise_for_status()
+    try:
+        return r.json()
+    except ValueError:  # streamed: one JSON object per line
+        return [json.loads(line) for line in r.text.splitlines() if line.strip()]
+
+
+def _service_name(resource_spans: dict) -> str | None:
+    for a in resource_spans.get("resource", {}).get("attributes", []):
+        if a.get("key") == "service.name":
+            return a.get("value", {}).get("stringValue")
+    return None
+
+
 def jaeger_services() -> list[str]:
-    return _get(load_config()["jaeger_url"] + "/api/services")["data"] or []
+    data = _get_v3("/services")
+    return (data or {}).get("services", []) if isinstance(data, dict) else []
 
 
 def jaeger_traces(service: str, start: float, end: float, limit: int = 50,
                   error_only: bool = False) -> list[dict]:
-    """start/end are UTC epoch seconds (Jaeger wants microseconds)."""
-    params = {"service": service, "start": int(start * 1e6), "end": int(end * 1e6), "limit": limit}
-    if error_only:
-        params["tags"] = json.dumps({"error": "true"})
-    return _get(load_config()["jaeger_url"] + "/api/traces", params)["data"] or []
+    """start/end are UTC epoch seconds.
+    Returns [{"trace_id", "duration_ms", "error", "spans": [{"span_id","parent_id","service","name","kind","error"}]}]."""
+    params = {"query.service_name": service, "query.start_time_min": _iso(start),
+              "query.start_time_max": _iso(end), "query.num_traces": limit}
+    data = _get_v3("/traces", params)
+    if not data:
+        return []
+    chunks = data if isinstance(data, list) else [data]
+    traces: dict[str, list[dict]] = {}
+    for chunk in chunks:
+        for rs in chunk.get("result", {}).get("resourceSpans", []):
+            svc = _service_name(rs)
+            for ss in rs.get("scopeSpans", []):
+                for s in ss.get("spans", []):
+                    traces.setdefault(s["traceId"], []).append({
+                        "span_id": s["spanId"], "parent_id": s.get("parentSpanId") or None,
+                        "service": svc, "name": s.get("name"), "kind": s.get("kind"),
+                        "start_ns": int(s.get("startTimeUnixNano", 0)), "end_ns": int(s.get("endTimeUnixNano", 0)),
+                        "error": s.get("status", {}).get("code") in ERROR_CODES,
+                    })
+    out = []
+    for tid, spans in traces.items():
+        dur = (max(x["end_ns"] for x in spans) - min(x["start_ns"] for x in spans)) / 1e6
+        out.append({"trace_id": tid, "duration_ms": round(dur, 1),
+                    "error": any(x["error"] for x in spans), "spans": spans})
+    return [t for t in out if t["error"]] if error_only else out
 
 
 def edges_from_traces(start: float, end: float, limit_per_service: int = 50) -> list[dict]:
-    """Caller -> callee edges from parent/child spans in different services.
-
-    Returns [{"source", "target", "count"}]. [verify against Architecture.md 4.1 edge format]
-    """
+    """Caller -> callee edges: a span whose parent span belongs to a different service.
+    Returns [{"source", "target", "count"}] (source/target = caller/callee)."""
     counts: Counter = Counter()
+    seen: set[str] = set()
     for svc in jaeger_services():
         for trace in jaeger_traces(svc, start, end, limit=limit_per_service):
-            procs = {pid: p["serviceName"] for pid, p in trace.get("processes", {}).items()}
-            span_service = {s["spanID"]: procs.get(s["processID"]) for s in trace["spans"]}
+            if trace["trace_id"] in seen:
+                continue
+            seen.add(trace["trace_id"])
+            owner = {s["span_id"]: s["service"] for s in trace["spans"]}
             for s in trace["spans"]:
-                child = procs.get(s["processID"])
-                for ref in s.get("references", []):
-                    if ref.get("refType") != "CHILD_OF":
-                        continue
-                    parent = span_service.get(ref["spanID"])
-                    if parent and child and parent != child:
-                        counts[(parent, child)] += 1
+                parent = owner.get(s["parent_id"])
+                if parent and s["service"] and parent != s["service"]:
+                    counts[(parent, s["service"])] += 1
     return [{"source": a, "target": b, "count": c} for (a, b), c in sorted(counts.items())]
 
 
