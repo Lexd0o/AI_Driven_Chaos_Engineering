@@ -10,14 +10,22 @@ Edge direction: "from" calls "to"  (checkout -> payment).
 import argparse
 import json
 import os
+import time
 from collections import Counter
 from datetime import datetime, timezone
 
 import yaml
 
 NS = os.getenv("NAMESPACE", "otel-demo")
-JAEGER = os.getenv("JAEGER_URL", "http://localhost:8080/jaeger/ui")  # [verify] path via frontend-proxy
+# Query Jaeger directly (kubectl -n otel-demo port-forward svc/jaeger 16686:16686), not through
+# frontend-proxy:8080 - large trace responses pushed the proxy to 88.6/90Mi, nearly OOMKilling it.
+JAEGER = os.getenv("JAEGER_URL", "http://localhost:16686/jaeger/ui")
 MIN_COUNT = 3  # ignore edges seen fewer times than this (noise)
+# Jaeger is in-memory with a 600Mi limit; 200 traces x 1h per service pushed it into an OOMKill
+# (which wipes every trace). Small samples are enough to see every edge >= MIN_COUNT times.
+TRACE_LIMIT = 50
+TRACE_LOOKBACK = "15m"
+PAUSE_S = 0.5  # between per-service queries, so Jaeger isn't hit back to back
 
 OVERRIDES_PATH = "config/graph_overrides.yaml"
 CRITICALITY_PATH = "config/criticality.yaml"
@@ -109,11 +117,17 @@ def edges_from_jaeger(names: set[str]) -> Counter:
     # non-workload end are dropped anyway. Querying frontend-web (browser spans) hung the
     # in-memory Jaeger past its liveness probe, and a restart wipes all stored traces.
     for svc in sorted(s for s in services if s in names):
-        r = requests.get(
-            f"{JAEGER}/api/traces",
-            params={"service": svc, "limit": 200, "lookback": "1h"},
-            timeout=30,
-        )
+        time.sleep(PAUSE_S)
+        try:
+            r = requests.get(
+                f"{JAEGER}/api/traces",
+                params={"service": svc, "limit": TRACE_LIMIT, "lookback": TRACE_LOOKBACK},
+                timeout=30,
+            )
+            r.json()  # force the full body now, inside the try
+        except (requests.RequestException, ValueError) as e:
+            print(f"WARNING: Jaeger traces for '{svc}' failed ({type(e).__name__}) - edges may be missing")
+            continue
         if r.status_code != 200:
             print(f"WARNING: Jaeger traces for '{svc}' returned HTTP {r.status_code} - edges may be missing")
             continue

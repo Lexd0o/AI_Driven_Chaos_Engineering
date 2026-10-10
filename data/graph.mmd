@@ -21,14 +21,14 @@ flowchart LR
   frontend -->|grpc| ad
   frontend -->|http| cart
   frontend -->|unknown| product_catalog
-  checkout -->|http| email
-  frontend -->|unknown| checkout
-  checkout -->|unknown| product_catalog
-  checkout -->|unknown| currency
-  checkout -->|http| shipping
-  checkout -->|http| cart
   shipping -->|http| quote
+  checkout -->|http| cart
+  checkout -->|unknown| currency
+  checkout -->|unknown| product_catalog
+  checkout -->|http| shipping
   checkout -->|grpc| payment
+  frontend -->|unknown| checkout
+  checkout -->|http| email
   frontend -->|unknown| currency
   frontend -->|http| shipping
   recommendation -->|unknown| product_catalog
