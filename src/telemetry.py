@@ -83,6 +83,14 @@ def _service_name(resource_spans: dict) -> str | None:
     return None
 
 
+def _span_url(span: dict) -> str:
+    """http.url / url.full attribute of a span ('' if none). Used to spot our own Jaeger API calls."""
+    for a in span.get("attributes", []):
+        if a.get("key") in ("http.url", "url.full"):
+            return a.get("value", {}).get("stringValue", "")
+    return ""
+
+
 def jaeger_services() -> list[str]:
     data = _get_v3("/services")
     return (data or {}).get("services", []) if isinstance(data, dict) else []
@@ -91,7 +99,8 @@ def jaeger_services() -> list[str]:
 def jaeger_traces(service: str, start: float, end: float, limit: int = 50,
                   error_only: bool = False) -> list[dict]:
     """start/end are UTC epoch seconds.
-    Returns [{"trace_id", "duration_ms", "error", "spans": [{"span_id","parent_id","service","name","kind","error"}]}]."""
+    Returns [{"trace_id", "duration_ms", "error",
+              "spans": [{"span_id","parent_id","service","name","kind","url","error","start_ns","end_ns"}]}]."""
     params = {"query.service_name": service, "query.start_time_min": _iso(start),
               "query.start_time_max": _iso(end), "query.num_traces": limit}
     data = _get_v3("/traces", params)
@@ -107,6 +116,7 @@ def jaeger_traces(service: str, start: float, end: float, limit: int = 50,
                     traces.setdefault(s["traceId"], []).append({
                         "span_id": s["spanId"], "parent_id": s.get("parentSpanId") or None,
                         "service": svc, "name": s.get("name"), "kind": s.get("kind"),
+                        "url": _span_url(s),
                         "start_ns": int(s.get("startTimeUnixNano", 0)), "end_ns": int(s.get("endTimeUnixNano", 0)),
                         "error": s.get("status", {}).get("code") in ERROR_CODES,
                     })
