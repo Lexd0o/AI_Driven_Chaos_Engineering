@@ -1,0 +1,16 @@
+# Fix for R-checkout-no_liveness_probe (high, status=predicted)
+# Evidence: has_liveness=False - a hung (not crashed) process won't be auto-restarted
+# Apply:    kubectl -n otel-demo patch deployment checkout --patch-file reports/fixes/R-checkout-no_liveness_probe.yaml
+# Not applied automatically (Decisions.md D-007).
+spec:
+  template:
+    spec:
+      containers:
+      - name: checkout
+        livenessProbe:
+          grpc:
+            port: 8080
+          initialDelaySeconds: 30
+          periodSeconds: 20
+          timeoutSeconds: 3
+          failureThreshold: 3

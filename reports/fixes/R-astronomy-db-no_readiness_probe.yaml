@@ -1,0 +1,17 @@
+# Fix for R-astronomy-db-no_readiness_probe (medium, status=predicted)
+# Evidence: has_readiness=False - a restarted pod may receive traffic before it's ready
+# Apply:    kubectl -n otel-demo patch deployment astronomy-db --patch-file reports/fixes/R-astronomy-db-no_readiness_probe.yaml
+# Not applied automatically (Decisions.md D-007).
+spec:
+  template:
+    spec:
+      containers:
+      - name: astronomy-db
+        readinessProbe:
+          exec:
+            command:
+            - pg_isready
+          initialDelaySeconds: 5
+          periodSeconds: 10
+          timeoutSeconds: 3
+          failureThreshold: 3

@@ -1,0 +1,542 @@
+[
+  {
+    "risk_id": "R-checkout-single_replica_no_pdb",
+    "service": "checkout",
+    "status": "predicted",
+    "check": "single_replica_no_pdb",
+    "severity": "high",
+    "evidence": "replicas=1, has_pdb=False, stateful=False, fan_in=1",
+    "suggested_experiment": "pod_kill"
+  },
+  {
+    "risk_id": "R-checkout-no_readiness_probe",
+    "service": "checkout",
+    "status": "predicted",
+    "check": "no_readiness_probe",
+    "severity": "high",
+    "evidence": "has_readiness=False - a restarted pod may receive traffic before it's ready",
+    "suggested_experiment": "pod_kill"
+  },
+  {
+    "risk_id": "R-checkout-no_liveness_probe",
+    "service": "checkout",
+    "status": "predicted",
+    "check": "no_liveness_probe",
+    "severity": "high",
+    "evidence": "has_liveness=False - a hung (not crashed) process won't be auto-restarted",
+    "suggested_experiment": "cpu_stress"
+  },
+  {
+    "risk_id": "R-frontend-single_replica_no_pdb",
+    "service": "frontend",
+    "status": "predicted",
+    "check": "single_replica_no_pdb",
+    "severity": "high",
+    "evidence": "replicas=1, has_pdb=False, stateful=False, fan_in=1",
+    "suggested_experiment": "pod_kill"
+  },
+  {
+    "risk_id": "R-frontend-no_readiness_probe",
+    "service": "frontend",
+    "status": "predicted",
+    "check": "no_readiness_probe",
+    "severity": "high",
+    "evidence": "has_readiness=False - a restarted pod may receive traffic before it's ready",
+    "suggested_experiment": "pod_kill"
+  },
+  {
+    "risk_id": "R-frontend-no_liveness_probe",
+    "service": "frontend",
+    "status": "predicted",
+    "check": "no_liveness_probe",
+    "severity": "high",
+    "evidence": "has_liveness=False - a hung (not crashed) process won't be auto-restarted",
+    "suggested_experiment": "cpu_stress"
+  },
+  {
+    "risk_id": "R-frontend-proxy-single_replica_no_pdb",
+    "service": "frontend-proxy",
+    "status": "predicted",
+    "check": "single_replica_no_pdb",
+    "severity": "high",
+    "evidence": "replicas=1, has_pdb=False, stateful=False, fan_in=0",
+    "suggested_experiment": "pod_kill"
+  },
+  {
+    "risk_id": "R-frontend-proxy-no_readiness_probe",
+    "service": "frontend-proxy",
+    "status": "predicted",
+    "check": "no_readiness_probe",
+    "severity": "high",
+    "evidence": "has_readiness=False - a restarted pod may receive traffic before it's ready",
+    "suggested_experiment": "pod_kill"
+  },
+  {
+    "risk_id": "R-frontend-proxy-no_liveness_probe",
+    "service": "frontend-proxy",
+    "status": "predicted",
+    "check": "no_liveness_probe",
+    "severity": "high",
+    "evidence": "has_liveness=False - a hung (not crashed) process won't be auto-restarted",
+    "suggested_experiment": "cpu_stress"
+  },
+  {
+    "risk_id": "R-payment-single_replica_no_pdb",
+    "service": "payment",
+    "status": "predicted",
+    "check": "single_replica_no_pdb",
+    "severity": "high",
+    "evidence": "replicas=1, has_pdb=False, stateful=False, fan_in=1",
+    "suggested_experiment": "pod_kill"
+  },
+  {
+    "risk_id": "R-payment-no_readiness_probe",
+    "service": "payment",
+    "status": "predicted",
+    "check": "no_readiness_probe",
+    "severity": "high",
+    "evidence": "has_readiness=False - a restarted pod may receive traffic before it's ready",
+    "suggested_experiment": "pod_kill"
+  },
+  {
+    "risk_id": "R-payment-no_liveness_probe",
+    "service": "payment",
+    "status": "predicted",
+    "check": "no_liveness_probe",
+    "severity": "high",
+    "evidence": "has_liveness=False - a hung (not crashed) process won't be auto-restarted",
+    "suggested_experiment": "cpu_stress"
+  },
+  {
+    "risk_id": "R-astronomy-db-stateful_single_replica",
+    "service": "astronomy-db",
+    "status": "predicted",
+    "check": "stateful_single_replica",
+    "severity": "high",
+    "evidence": "replicas=1, has_pdb=False, stateful=True, fan_in=2",
+    "suggested_experiment": "pod_kill"
+  },
+  {
+    "risk_id": "R-astronomy-db-no_readiness_probe",
+    "service": "astronomy-db",
+    "status": "predicted",
+    "check": "no_readiness_probe",
+    "severity": "medium",
+    "evidence": "has_readiness=False - a restarted pod may receive traffic before it's ready",
+    "suggested_experiment": "pod_kill"
+  },
+  {
+    "risk_id": "R-astronomy-db-no_liveness_probe",
+    "service": "astronomy-db",
+    "status": "predicted",
+    "check": "no_liveness_probe",
+    "severity": "medium",
+    "evidence": "has_liveness=False - a hung (not crashed) process won't be auto-restarted",
+    "suggested_experiment": "cpu_stress"
+  },
+  {
+    "risk_id": "R-astronomy-db-no_hpa_shared_dependency",
+    "service": "astronomy-db",
+    "status": "predicted",
+    "check": "no_hpa_shared_dependency",
+    "severity": "medium",
+    "evidence": "has_hpa=False, 2 callers - can't absorb a traffic or latency spike",
+    "suggested_experiment": "network_delay"
+  },
+  {
+    "risk_id": "R-cart-single_replica_no_pdb",
+    "service": "cart",
+    "status": "predicted",
+    "check": "single_replica_no_pdb",
+    "severity": "high",
+    "evidence": "replicas=1, has_pdb=False, stateful=False, fan_in=2",
+    "suggested_experiment": "pod_kill"
+  },
+  {
+    "risk_id": "R-cart-no_readiness_probe",
+    "service": "cart",
+    "status": "predicted",
+    "check": "no_readiness_probe",
+    "severity": "medium",
+    "evidence": "has_readiness=False - a restarted pod may receive traffic before it's ready",
+    "suggested_experiment": "pod_kill"
+  },
+  {
+    "risk_id": "R-cart-no_liveness_probe",
+    "service": "cart",
+    "status": "predicted",
+    "check": "no_liveness_probe",
+    "severity": "medium",
+    "evidence": "has_liveness=False - a hung (not crashed) process won't be auto-restarted",
+    "suggested_experiment": "cpu_stress"
+  },
+  {
+    "risk_id": "R-cart-no_hpa_shared_dependency",
+    "service": "cart",
+    "status": "predicted",
+    "check": "no_hpa_shared_dependency",
+    "severity": "medium",
+    "evidence": "has_hpa=False, 2 callers - can't absorb a traffic or latency spike",
+    "suggested_experiment": "network_delay"
+  },
+  {
+    "risk_id": "R-currency-single_replica_no_pdb",
+    "service": "currency",
+    "status": "predicted",
+    "check": "single_replica_no_pdb",
+    "severity": "high",
+    "evidence": "replicas=1, has_pdb=False, stateful=False, fan_in=2",
+    "suggested_experiment": "pod_kill"
+  },
+  {
+    "risk_id": "R-currency-no_readiness_probe",
+    "service": "currency",
+    "status": "predicted",
+    "check": "no_readiness_probe",
+    "severity": "medium",
+    "evidence": "has_readiness=False - a restarted pod may receive traffic before it's ready",
+    "suggested_experiment": "pod_kill"
+  },
+  {
+    "risk_id": "R-currency-no_liveness_probe",
+    "service": "currency",
+    "status": "predicted",
+    "check": "no_liveness_probe",
+    "severity": "medium",
+    "evidence": "has_liveness=False - a hung (not crashed) process won't be auto-restarted",
+    "suggested_experiment": "cpu_stress"
+  },
+  {
+    "risk_id": "R-currency-no_hpa_shared_dependency",
+    "service": "currency",
+    "status": "predicted",
+    "check": "no_hpa_shared_dependency",
+    "severity": "medium",
+    "evidence": "has_hpa=False, 2 callers - can't absorb a traffic or latency spike",
+    "suggested_experiment": "network_delay"
+  },
+  {
+    "risk_id": "R-product-catalog-single_replica_no_pdb",
+    "service": "product-catalog",
+    "status": "predicted",
+    "check": "single_replica_no_pdb",
+    "severity": "high",
+    "evidence": "replicas=1, has_pdb=False, stateful=False, fan_in=3",
+    "suggested_experiment": "pod_kill"
+  },
+  {
+    "risk_id": "R-product-catalog-no_readiness_probe",
+    "service": "product-catalog",
+    "status": "predicted",
+    "check": "no_readiness_probe",
+    "severity": "medium",
+    "evidence": "has_readiness=False - a restarted pod may receive traffic before it's ready",
+    "suggested_experiment": "pod_kill"
+  },
+  {
+    "risk_id": "R-product-catalog-no_liveness_probe",
+    "service": "product-catalog",
+    "status": "predicted",
+    "check": "no_liveness_probe",
+    "severity": "medium",
+    "evidence": "has_liveness=False - a hung (not crashed) process won't be auto-restarted",
+    "suggested_experiment": "cpu_stress"
+  },
+  {
+    "risk_id": "R-product-catalog-no_hpa_shared_dependency",
+    "service": "product-catalog",
+    "status": "predicted",
+    "check": "no_hpa_shared_dependency",
+    "severity": "medium",
+    "evidence": "has_hpa=False, 3 callers - can't absorb a traffic or latency spike",
+    "suggested_experiment": "network_delay"
+  },
+  {
+    "risk_id": "R-shipping-single_replica_no_pdb",
+    "service": "shipping",
+    "status": "predicted",
+    "check": "single_replica_no_pdb",
+    "severity": "high",
+    "evidence": "replicas=1, has_pdb=False, stateful=False, fan_in=2",
+    "suggested_experiment": "pod_kill"
+  },
+  {
+    "risk_id": "R-shipping-no_readiness_probe",
+    "service": "shipping",
+    "status": "predicted",
+    "check": "no_readiness_probe",
+    "severity": "medium",
+    "evidence": "has_readiness=False - a restarted pod may receive traffic before it's ready",
+    "suggested_experiment": "pod_kill"
+  },
+  {
+    "risk_id": "R-shipping-no_liveness_probe",
+    "service": "shipping",
+    "status": "predicted",
+    "check": "no_liveness_probe",
+    "severity": "medium",
+    "evidence": "has_liveness=False - a hung (not crashed) process won't be auto-restarted",
+    "suggested_experiment": "cpu_stress"
+  },
+  {
+    "risk_id": "R-shipping-no_hpa_shared_dependency",
+    "service": "shipping",
+    "status": "predicted",
+    "check": "no_hpa_shared_dependency",
+    "severity": "medium",
+    "evidence": "has_hpa=False, 2 callers - can't absorb a traffic or latency spike",
+    "suggested_experiment": "network_delay"
+  },
+  {
+    "risk_id": "R-valkey-cart-stateful_single_replica",
+    "service": "valkey-cart",
+    "status": "predicted",
+    "check": "stateful_single_replica",
+    "severity": "high",
+    "evidence": "replicas=1, has_pdb=False, stateful=True, fan_in=1",
+    "suggested_experiment": "pod_kill"
+  },
+  {
+    "risk_id": "R-valkey-cart-no_readiness_probe",
+    "service": "valkey-cart",
+    "status": "predicted",
+    "check": "no_readiness_probe",
+    "severity": "medium",
+    "evidence": "has_readiness=False - a restarted pod may receive traffic before it's ready",
+    "suggested_experiment": "pod_kill"
+  },
+  {
+    "risk_id": "R-valkey-cart-no_liveness_probe",
+    "service": "valkey-cart",
+    "status": "predicted",
+    "check": "no_liveness_probe",
+    "severity": "medium",
+    "evidence": "has_liveness=False - a hung (not crashed) process won't be auto-restarted",
+    "suggested_experiment": "cpu_stress"
+  },
+  {
+    "risk_id": "R-ad-single_replica_no_pdb",
+    "service": "ad",
+    "status": "predicted",
+    "check": "single_replica_no_pdb",
+    "severity": "medium",
+    "evidence": "replicas=1, has_pdb=False, stateful=False, fan_in=1",
+    "suggested_experiment": "pod_kill"
+  },
+  {
+    "risk_id": "R-ad-no_readiness_probe",
+    "service": "ad",
+    "status": "predicted",
+    "check": "no_readiness_probe",
+    "severity": "medium",
+    "evidence": "has_readiness=False - a restarted pod may receive traffic before it's ready",
+    "suggested_experiment": "pod_kill"
+  },
+  {
+    "risk_id": "R-ad-no_liveness_probe",
+    "service": "ad",
+    "status": "predicted",
+    "check": "no_liveness_probe",
+    "severity": "medium",
+    "evidence": "has_liveness=False - a hung (not crashed) process won't be auto-restarted",
+    "suggested_experiment": "cpu_stress"
+  },
+  {
+    "risk_id": "R-email-single_replica_no_pdb",
+    "service": "email",
+    "status": "predicted",
+    "check": "single_replica_no_pdb",
+    "severity": "medium",
+    "evidence": "replicas=1, has_pdb=False, stateful=False, fan_in=1",
+    "suggested_experiment": "pod_kill"
+  },
+  {
+    "risk_id": "R-email-no_readiness_probe",
+    "service": "email",
+    "status": "predicted",
+    "check": "no_readiness_probe",
+    "severity": "medium",
+    "evidence": "has_readiness=False - a restarted pod may receive traffic before it's ready",
+    "suggested_experiment": "pod_kill"
+  },
+  {
+    "risk_id": "R-email-no_liveness_probe",
+    "service": "email",
+    "status": "predicted",
+    "check": "no_liveness_probe",
+    "severity": "medium",
+    "evidence": "has_liveness=False - a hung (not crashed) process won't be auto-restarted",
+    "suggested_experiment": "cpu_stress"
+  },
+  {
+    "risk_id": "R-recommendation-single_replica_no_pdb",
+    "service": "recommendation",
+    "status": "predicted",
+    "check": "single_replica_no_pdb",
+    "severity": "medium",
+    "evidence": "replicas=1, has_pdb=False, stateful=False, fan_in=1",
+    "suggested_experiment": "pod_kill"
+  },
+  {
+    "risk_id": "R-recommendation-no_readiness_probe",
+    "service": "recommendation",
+    "status": "predicted",
+    "check": "no_readiness_probe",
+    "severity": "medium",
+    "evidence": "has_readiness=False - a restarted pod may receive traffic before it's ready",
+    "suggested_experiment": "pod_kill"
+  },
+  {
+    "risk_id": "R-recommendation-no_liveness_probe",
+    "service": "recommendation",
+    "status": "predicted",
+    "check": "no_liveness_probe",
+    "severity": "medium",
+    "evidence": "has_liveness=False - a hung (not crashed) process won't be auto-restarted",
+    "suggested_experiment": "cpu_stress"
+  },
+  {
+    "risk_id": "R-accounting-single_replica_no_pdb",
+    "service": "accounting",
+    "status": "predicted",
+    "check": "single_replica_no_pdb",
+    "severity": "low",
+    "evidence": "replicas=1, has_pdb=False, stateful=False, fan_in=0",
+    "suggested_experiment": "pod_kill"
+  },
+  {
+    "risk_id": "R-accounting-no_readiness_probe",
+    "service": "accounting",
+    "status": "predicted",
+    "check": "no_readiness_probe",
+    "severity": "low",
+    "evidence": "has_readiness=False - a restarted pod may receive traffic before it's ready",
+    "suggested_experiment": "pod_kill"
+  },
+  {
+    "risk_id": "R-accounting-no_liveness_probe",
+    "service": "accounting",
+    "status": "predicted",
+    "check": "no_liveness_probe",
+    "severity": "low",
+    "evidence": "has_liveness=False - a hung (not crashed) process won't be auto-restarted",
+    "suggested_experiment": "cpu_stress"
+  },
+  {
+    "risk_id": "R-fraud-detection-single_replica_no_pdb",
+    "service": "fraud-detection",
+    "status": "predicted",
+    "check": "single_replica_no_pdb",
+    "severity": "low",
+    "evidence": "replicas=1, has_pdb=False, stateful=False, fan_in=0",
+    "suggested_experiment": "pod_kill"
+  },
+  {
+    "risk_id": "R-fraud-detection-no_readiness_probe",
+    "service": "fraud-detection",
+    "status": "predicted",
+    "check": "no_readiness_probe",
+    "severity": "low",
+    "evidence": "has_readiness=False - a restarted pod may receive traffic before it's ready",
+    "suggested_experiment": "pod_kill"
+  },
+  {
+    "risk_id": "R-fraud-detection-no_liveness_probe",
+    "service": "fraud-detection",
+    "status": "predicted",
+    "check": "no_liveness_probe",
+    "severity": "low",
+    "evidence": "has_liveness=False - a hung (not crashed) process won't be auto-restarted",
+    "suggested_experiment": "cpu_stress"
+  },
+  {
+    "risk_id": "R-image-provider-single_replica_no_pdb",
+    "service": "image-provider",
+    "status": "predicted",
+    "check": "single_replica_no_pdb",
+    "severity": "low",
+    "evidence": "replicas=1, has_pdb=False, stateful=False, fan_in=1",
+    "suggested_experiment": "pod_kill"
+  },
+  {
+    "risk_id": "R-image-provider-no_readiness_probe",
+    "service": "image-provider",
+    "status": "predicted",
+    "check": "no_readiness_probe",
+    "severity": "low",
+    "evidence": "has_readiness=False - a restarted pod may receive traffic before it's ready",
+    "suggested_experiment": "pod_kill"
+  },
+  {
+    "risk_id": "R-image-provider-no_liveness_probe",
+    "service": "image-provider",
+    "status": "predicted",
+    "check": "no_liveness_probe",
+    "severity": "low",
+    "evidence": "has_liveness=False - a hung (not crashed) process won't be auto-restarted",
+    "suggested_experiment": "cpu_stress"
+  },
+  {
+    "risk_id": "R-kafka-stateful_single_replica",
+    "service": "kafka",
+    "status": "predicted",
+    "check": "stateful_single_replica",
+    "severity": "medium",
+    "evidence": "replicas=1, has_pdb=False, stateful=True, fan_in=3",
+    "suggested_experiment": "pod_kill"
+  },
+  {
+    "risk_id": "R-kafka-no_readiness_probe",
+    "service": "kafka",
+    "status": "predicted",
+    "check": "no_readiness_probe",
+    "severity": "low",
+    "evidence": "has_readiness=False - a restarted pod may receive traffic before it's ready",
+    "suggested_experiment": "pod_kill"
+  },
+  {
+    "risk_id": "R-kafka-no_liveness_probe",
+    "service": "kafka",
+    "status": "predicted",
+    "check": "no_liveness_probe",
+    "severity": "low",
+    "evidence": "has_liveness=False - a hung (not crashed) process won't be auto-restarted",
+    "suggested_experiment": "cpu_stress"
+  },
+  {
+    "risk_id": "R-kafka-no_hpa_shared_dependency",
+    "service": "kafka",
+    "status": "predicted",
+    "check": "no_hpa_shared_dependency",
+    "severity": "low",
+    "evidence": "has_hpa=False, 3 callers - can't absorb a traffic or latency spike",
+    "suggested_experiment": "network_delay"
+  },
+  {
+    "risk_id": "R-quote-single_replica_no_pdb",
+    "service": "quote",
+    "status": "predicted",
+    "check": "single_replica_no_pdb",
+    "severity": "low",
+    "evidence": "replicas=1, has_pdb=False, stateful=False, fan_in=1",
+    "suggested_experiment": "pod_kill"
+  },
+  {
+    "risk_id": "R-quote-no_readiness_probe",
+    "service": "quote",
+    "status": "predicted",
+    "check": "no_readiness_probe",
+    "severity": "low",
+    "evidence": "has_readiness=False - a restarted pod may receive traffic before it's ready",
+    "suggested_experiment": "pod_kill"
+  },
+  {
+    "risk_id": "R-quote-no_liveness_probe",
+    "service": "quote",
+    "status": "predicted",
+    "check": "no_liveness_probe",
+    "severity": "low",
+    "evidence": "has_liveness=False - a hung (not crashed) process won't be auto-restarted",
+    "suggested_experiment": "cpu_stress"
+  }
+]

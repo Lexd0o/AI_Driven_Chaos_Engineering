@@ -1,0 +1,16 @@
+{
+  "probe": {
+    "max_latency_ms": 2000,
+    "recovery_timeout_seconds": 120
+  },
+  "recovery": {
+    "min_baseline_samples": 5,
+    "min_fault_samples": 3,
+    "degrade_factor": 1.5,
+    "degrade_min_delta_ms": 50,
+    "error_rate_threshold": 0.10,
+    "recovery_consecutive_samples": 3,
+    "recovery_limit_seconds": 30,
+    "weights": {"error_rate": 35, "slo_breach": 20, "slow_recovery": 20, "latency_inflation": 15, "single_replica": 10}
+  }
+}

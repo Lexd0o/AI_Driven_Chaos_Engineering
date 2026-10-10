@@ -1,4 +1,6 @@
-# Generated data and local databases (never committed)
+# Generated data and local databases (never committed).
+# Exception: P3's pipeline outputs already tracked in data/ (graph, plans, risks) stay as evidence;
+# re-running the pipeline updates them. New files in data/ are ignored.
 data/
 *.db
 *.db-wal
@@ -13,6 +15,10 @@ __pycache__/
 .venv*/
 venv/
 
-# Secrets (GROQ_API_KEY etc.)
+# Secrets (GROQ_API_KEY, ANTHROPIC_API_KEY etc.)
 .env
 .env.*
+!.env.example
+
+# The OpenTelemetry Demo is installed from its Helm chart (config/otel-demo-values.yaml), never vendored
+opentelemetry-demo/

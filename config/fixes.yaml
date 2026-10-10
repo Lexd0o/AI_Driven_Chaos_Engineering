@@ -1,0 +1,64 @@
+# Fix-as-code templates (Plan.md T1.4, Decisions.md D-007: fixes are YAML patches, never auto-applied).
+# fixes.py turns each finding in data/risks.json into a patch built from these values.
+# Starting points - tune after baseline.json exists, like every other threshold.
+
+# Pods are selected by this label in the demo's Helm chart (verified live, chart 0.42.3).
+selector_label: opentelemetry.io/name
+
+# Stateless services go to this many replicas (fix for single_replica_no_pdb).
+target_replicas: 2
+
+# How each service can be health-checked, taken from the demo's own source (opentelemetry-demo/src)
+# and checked on the live cluster. Strongest available check per service:
+#   grpc: <port>         - Kubernetes' built-in gRPC probe against the service's grpc.health.v1 server
+#   http: {path, port}   - HTTP GET on a real health route (port may be a named container port)
+#   exec: [cmd, ...]     - command run inside the container (data stores)
+#   tcp: <port>          - port is open; weakest, used only where nothing better exists
+#   none                 - no port and no health endpoint; the finding is marked manual
+# Note: these health servers mostly report a static SERVING status. They catch a dead or frozen
+# server/event loop, not a single stuck request handler - that would need app code changes (D-007).
+default_probe: {tcp: service}
+probes:
+  # grpc.health.v1 registered in source (all listen on 8080; gRPC probes need a numeric port)
+  ad: {grpc: 8080}               # src/ad/src/main/java/oteldemo/AdService.java
+  cart: {grpc: 8080}             # src/cart/src/services/HealthCheckService.cs
+  checkout: {grpc: 8080}         # src/checkout/main.go (healthpb.RegisterHealthServer)
+  currency: {grpc: 8080}         # src/currency/src/server.cpp
+  payment: {grpc: 8080}          # src/payment/index.js (grpc-js-health-check)
+  product-catalog: {grpc: 8080}  # src/product-catalog/main.go
+  recommendation: {grpc: 8080}   # src/recommendation/recommendation_server.py
+  # HTTP health routes
+  shipping: {http: {path: /health, port: service}}        # src/shipping/src/main.rs
+  image-provider: {http: {path: /status, port: service}}  # nginx.conf.template
+  # data stores: commands verified with kubectl exec on the live pods
+  valkey-cart: {exec: [valkey-cli, ping]}
+  astronomy-db: {exec: [pg_isready]}
+  # kafka's own check (kafka-broker-api-versions.sh) starts a JVM - too heavy every few seconds
+  # on this RAM budget, so it stays on the port check
+  kafka: {tcp: plaintext}
+  # no health endpoint found: frontend (Next.js), frontend-proxy (Envoy), quote, email -> default tcp
+  # Kafka consumers expose no port at all
+  accounting: none
+  fraud-detection: none
+
+readiness_probe:
+  initialDelaySeconds: 5
+  periodSeconds: 10
+  timeoutSeconds: 3      # default 1s is tight for exec probes on a loaded single node
+  failureThreshold: 3
+
+liveness_probe:
+  initialDelaySeconds: 30
+  periodSeconds: 20
+  timeoutSeconds: 3
+  failureThreshold: 3
+
+hpa:
+  min_replicas: 2
+  max_replicas: 4
+  cpu_utilization_pct: 70
+
+# Only used if a container has no limits at all (none do on the live cluster today).
+default_limits:
+  cpu: 500m
+  memory: 256Mi

@@ -1,0 +1,27 @@
+# Allowed fault types the planner may select from.
+# plan.py maps each risk's `suggested_experiment` (from audit.py) to one of these
+# entries; a fault_type not listed here is skipped rather than silently invented.
+# Durations/params are starting points - tune after baseline.json exists (P2).
+
+pod_kill:
+  mechanism: chaosmesh
+  chaos_kind: PodChaos
+  action: pod-kill
+  default_duration_s: 60
+  description: Kill one pod of the target service; Kubernetes should replace it.
+
+network_delay:
+  mechanism: chaosmesh
+  chaos_kind: NetworkChaos
+  action: delay
+  default_duration_s: 60
+  default_params: {latency_ms: 200}
+  description: Add latency to the target service's network traffic.
+
+cpu_stress:
+  mechanism: chaosmesh
+  chaos_kind: StressChaos
+  action: stress
+  default_duration_s: 60
+  default_params: {cpu_workers: 2}
+  description: Load the target's CPU to simulate a noisy-neighbour or resource crunch.

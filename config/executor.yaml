@@ -1,0 +1,46 @@
+# Executor settings for src/run.py (inject + guard + recovery watch), which drives the
+# vendored agents/chaos_agent_expanded package. Config, not code (Rules.md rule 16).
+# Scope limits (namespace, forbidden targets, max duration, fault params) stay in
+# config/policy.yaml - run.py re-checks every item against it before acting.
+
+context: docker-desktop
+namespace: otel-demo
+kubectl_path: kubectl
+
+# One GET probe per D-008 journey, through the frontend-proxy port-forward.
+# All verified to return 200 on 11 Oct. checkout has no GET endpoint (placing an order is a
+# POST that needs a filled cart), so an experiment is probed only on its other journeys and
+# the run record lists checkout under `uncovered_journeys`. An experiment with no probed
+# journey at all (e.g. payment -> checkout only) is refused in --execute.
+journey_probes:
+  browse:
+    url: http://localhost:8080/api/products
+    expect_products: true
+  cart:
+    url: http://localhost:8080/api/cart?sessionId=chaospilot-probe&currencyCode=USD
+  ads-recs:
+    url: http://localhost:8080/api/recommendations?productIds=OLJCESPC7Z&sessionId=chaospilot-probe&currencyCode=USD
+  # shipping quote - part of the cart page; probed for experiments whose target is listed here.
+  shipping-quote:
+    url: http://localhost:8080/api/shipping?itemList=%5B%7B%22productId%22%3A%22OLJCESPC7Z%22%2C%22quantity%22%3A1%7D%5D&currencyCode=USD&address=%7B%22streetAddress%22%3A%221600%20Amphitheatre%20Parkway%22%2C%22city%22%3A%22Mountain%20View%22%2C%22state%22%3A%22CA%22%2C%22country%22%3A%22United%20States%22%2C%22zipCode%22%3A%2294043%22%7D
+    for_targets: [shipping, quote]
+
+# The probes reach the app through `kubectl port-forward svc/frontend-proxy 8080:8080`, which
+# binds to one pod and dies with it. Faulting these services would break the probe path, not
+# just the app, so the run would measure our tooling. Refused in --execute until probes go
+# through a NodePort/ingress instead.
+probe_path_services: [frontend-proxy]
+
+guardian:
+  timeout_seconds: 3
+  max_latency_ms: 2000      # guardrail abort threshold per sample (slowest journey)
+  breach_seconds: 10        # abort when unhealthy this long (Architecture.md section 6: 10 s sustained)
+  baseline_seconds: 30      # healthy pre-check before injecting; no fault if any sample fails
+  poll_seconds: 2           # Architecture.md section 6: every 2 s
+  grace_seconds: 15         # fault deadline = duration_s + this; watchdog removes the CR after it
+  healthy_window_s: 30      # t_healthy = start of >= 30 s continuous healthy (section 7)
+
+runs_dir: data/runs
+lock_path: data/run.lock
+stop_path: data/STOP
+events_log: data/events.log

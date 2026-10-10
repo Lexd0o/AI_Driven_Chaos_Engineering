@@ -1,0 +1,34 @@
+# Safety policy - the L0 scope layer (Architecture.md section 5, Rules.md rules 1-3).
+# policy.py validates every data/plan.json item against this before run.py may act.
+# This is config, not code (Rules.md rule 16): changing a limit here never needs a
+# code change, but DOES need a Decisions.md entry (Rules.md rule 11 - frozen contract).
+
+allowed_namespace: otel-demo
+
+# Never a valid target, even if a planner (deterministic or LLM) somehow proposes it.
+# Mirrors config/graph_overrides.yaml's ignore_nodes - infra/monitoring, not the app.
+forbidden_targets:
+  - kube-system
+  - chaos-mesh
+  - flagd
+  - flagd-ui
+  - load-generator
+  - telemetry-docs
+  - otel-collector
+  - jaeger
+  - prometheus
+  - grafana
+  - opensearch
+  - opamp-server
+
+max_duration_s: 120
+
+allowed_fault_types:
+  pod_kill:
+    mechanism: chaosmesh
+  network_delay:
+    mechanism: chaosmesh
+    max_latency_ms: 1000
+  cpu_stress:
+    mechanism: chaosmesh
+    max_cpu_workers: 4

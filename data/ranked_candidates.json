@@ -1,0 +1,368 @@
+[
+  {
+    "service": "frontend-proxy",
+    "risk_score": 1.6,
+    "criticality": 0.4,
+    "centrality": 1.0,
+    "fan_in": 0,
+    "on_checkout_path": false,
+    "risk_flags": 3,
+    "blast_radius": 0,
+    "inbound_calls": 0,
+    "gateway_share": 1.0,
+    "high_risks": 3,
+    "top_risks": [
+      "R-frontend-proxy-single_replica_no_pdb",
+      "R-frontend-proxy-no_readiness_probe",
+      "R-frontend-proxy-no_liveness_probe"
+    ],
+    "reason": "frontend-proxy: criticality=0.4, fan_in=0, 3 structural risk flag(s), 0 service(s) depend on it, gateway to 100% of the app",
+    "rank": 1
+  },
+  {
+    "service": "product-catalog",
+    "risk_score": 1.5,
+    "criticality": 0.3,
+    "centrality": 1.0,
+    "fan_in": 3,
+    "on_checkout_path": true,
+    "risk_flags": 4,
+    "blast_radius": 4,
+    "inbound_calls": 1094,
+    "gateway_share": 0.125,
+    "high_risks": 1,
+    "top_risks": [
+      "R-product-catalog-single_replica_no_pdb",
+      "R-product-catalog-no_readiness_probe",
+      "R-product-catalog-no_liveness_probe",
+      "R-product-catalog-no_hpa_shared_dependency"
+    ],
+    "reason": "product-catalog: criticality=0.3, fan_in=3, on checkout path, 4 structural risk flag(s), 4 service(s) depend on it",
+    "rank": 2
+  },
+  {
+    "service": "astronomy-db",
+    "risk_score": 1.45,
+    "criticality": 0.3,
+    "centrality": 0.9667,
+    "fan_in": 2,
+    "on_checkout_path": true,
+    "risk_flags": 4,
+    "blast_radius": 6,
+    "inbound_calls": 0,
+    "gateway_share": 0.0625,
+    "high_risks": 1,
+    "top_risks": [
+      "R-astronomy-db-stateful_single_replica",
+      "R-astronomy-db-no_readiness_probe",
+      "R-astronomy-db-no_liveness_probe",
+      "R-astronomy-db-no_hpa_shared_dependency"
+    ],
+    "reason": "astronomy-db: criticality=0.3, fan_in=2, on checkout path, 4 structural risk flag(s), 6 service(s) depend on it",
+    "rank": 3
+  },
+  {
+    "service": "cart",
+    "risk_score": 1.45,
+    "criticality": 0.3,
+    "centrality": 0.9667,
+    "fan_in": 2,
+    "on_checkout_path": true,
+    "risk_flags": 4,
+    "blast_radius": 3,
+    "inbound_calls": 296,
+    "gateway_share": 0.125,
+    "high_risks": 1,
+    "top_risks": [
+      "R-cart-single_replica_no_pdb",
+      "R-cart-no_readiness_probe",
+      "R-cart-no_liveness_probe",
+      "R-cart-no_hpa_shared_dependency"
+    ],
+    "reason": "cart: criticality=0.3, fan_in=2, on checkout path, 4 structural risk flag(s), 3 service(s) depend on it",
+    "rank": 4
+  },
+  {
+    "service": "currency",
+    "risk_score": 1.45,
+    "criticality": 0.3,
+    "centrality": 0.9667,
+    "fan_in": 2,
+    "on_checkout_path": true,
+    "risk_flags": 4,
+    "blast_radius": 3,
+    "inbound_calls": 221,
+    "gateway_share": 0.0625,
+    "high_risks": 1,
+    "top_risks": [
+      "R-currency-single_replica_no_pdb",
+      "R-currency-no_readiness_probe",
+      "R-currency-no_liveness_probe",
+      "R-currency-no_hpa_shared_dependency"
+    ],
+    "reason": "currency: criticality=0.3, fan_in=2, on checkout path, 4 structural risk flag(s), 3 service(s) depend on it",
+    "rank": 5
+  },
+  {
+    "service": "shipping",
+    "risk_score": 1.45,
+    "criticality": 0.3,
+    "centrality": 0.9667,
+    "fan_in": 2,
+    "on_checkout_path": true,
+    "risk_flags": 4,
+    "blast_radius": 3,
+    "inbound_calls": 61,
+    "gateway_share": 0.125,
+    "high_risks": 1,
+    "top_risks": [
+      "R-shipping-single_replica_no_pdb",
+      "R-shipping-no_readiness_probe",
+      "R-shipping-no_liveness_probe",
+      "R-shipping-no_hpa_shared_dependency"
+    ],
+    "reason": "shipping: criticality=0.3, fan_in=2, on checkout path, 4 structural risk flag(s), 3 service(s) depend on it",
+    "rank": 6
+  },
+  {
+    "service": "frontend",
+    "risk_score": 1.4,
+    "criticality": 0.4,
+    "centrality": 0.875,
+    "fan_in": 1,
+    "on_checkout_path": false,
+    "risk_flags": 3,
+    "blast_radius": 1,
+    "inbound_calls": 801,
+    "gateway_share": 0.875,
+    "high_risks": 3,
+    "top_risks": [
+      "R-frontend-single_replica_no_pdb",
+      "R-frontend-no_readiness_probe",
+      "R-frontend-no_liveness_probe"
+    ],
+    "reason": "frontend: criticality=0.4, fan_in=1, 3 structural risk flag(s), 1 service(s) depend on it, gateway to 88% of the app",
+    "rank": 7
+  },
+  {
+    "service": "payment",
+    "risk_score": 1.0133,
+    "criticality": 0.4,
+    "centrality": 0.6333,
+    "fan_in": 1,
+    "on_checkout_path": true,
+    "risk_flags": 3,
+    "blast_radius": 3,
+    "inbound_calls": 17,
+    "gateway_share": 0.0625,
+    "high_risks": 3,
+    "top_risks": [
+      "R-payment-single_replica_no_pdb",
+      "R-payment-no_readiness_probe",
+      "R-payment-no_liveness_probe"
+    ],
+    "reason": "payment: criticality=0.4, fan_in=1, on checkout path, 3 structural risk flag(s), 3 service(s) depend on it",
+    "rank": 8
+  },
+  {
+    "service": "checkout",
+    "risk_score": 1.0133,
+    "criticality": 0.4,
+    "centrality": 0.6333,
+    "fan_in": 1,
+    "on_checkout_path": true,
+    "risk_flags": 3,
+    "blast_radius": 2,
+    "inbound_calls": 17,
+    "gateway_share": 0.25,
+    "high_risks": 3,
+    "top_risks": [
+      "R-checkout-single_replica_no_pdb",
+      "R-checkout-no_readiness_probe",
+      "R-checkout-no_liveness_probe"
+    ],
+    "reason": "checkout: criticality=0.4, fan_in=1, on checkout path, 3 structural risk flag(s), 2 service(s) depend on it, gateway to 25% of the app",
+    "rank": 9
+  },
+  {
+    "service": "valkey-cart",
+    "risk_score": 0.76,
+    "criticality": 0.3,
+    "centrality": 0.6333,
+    "fan_in": 1,
+    "on_checkout_path": true,
+    "risk_flags": 3,
+    "blast_radius": 4,
+    "inbound_calls": 0,
+    "gateway_share": 0.0625,
+    "high_risks": 1,
+    "top_risks": [
+      "R-valkey-cart-stateful_single_replica",
+      "R-valkey-cart-no_readiness_probe",
+      "R-valkey-cart-no_liveness_probe"
+    ],
+    "reason": "valkey-cart: criticality=0.3, fan_in=1, on checkout path, 3 structural risk flag(s), 4 service(s) depend on it",
+    "rank": 10
+  },
+  {
+    "service": "email",
+    "risk_score": 0.5067,
+    "criticality": 0.2,
+    "centrality": 0.6333,
+    "fan_in": 1,
+    "on_checkout_path": true,
+    "risk_flags": 3,
+    "blast_radius": 3,
+    "inbound_calls": 17,
+    "gateway_share": 0.0625,
+    "high_risks": 0,
+    "top_risks": [
+      "R-email-single_replica_no_pdb",
+      "R-email-no_readiness_probe",
+      "R-email-no_liveness_probe"
+    ],
+    "reason": "email: criticality=0.2, fan_in=1, on checkout path, 3 structural risk flag(s), 3 service(s) depend on it",
+    "rank": 11
+  },
+  {
+    "service": "kafka",
+    "risk_score": 0.5,
+    "criticality": 0.1,
+    "centrality": 1.0,
+    "fan_in": 3,
+    "on_checkout_path": true,
+    "risk_flags": 4,
+    "blast_radius": 5,
+    "inbound_calls": 0,
+    "gateway_share": 0.0625,
+    "high_risks": 0,
+    "top_risks": [
+      "R-kafka-stateful_single_replica",
+      "R-kafka-no_readiness_probe",
+      "R-kafka-no_liveness_probe",
+      "R-kafka-no_hpa_shared_dependency"
+    ],
+    "reason": "kafka: criticality=0.1, fan_in=3, on checkout path, 4 structural risk flag(s), 5 service(s) depend on it",
+    "rank": 12
+  },
+  {
+    "service": "recommendation",
+    "risk_score": 0.2667,
+    "criticality": 0.2,
+    "centrality": 0.3333,
+    "fan_in": 1,
+    "on_checkout_path": false,
+    "risk_flags": 3,
+    "blast_radius": 2,
+    "inbound_calls": 175,
+    "gateway_share": 0.0625,
+    "high_risks": 0,
+    "top_risks": [
+      "R-recommendation-single_replica_no_pdb",
+      "R-recommendation-no_readiness_probe",
+      "R-recommendation-no_liveness_probe"
+    ],
+    "reason": "recommendation: criticality=0.2, fan_in=1, 3 structural risk flag(s), 2 service(s) depend on it",
+    "rank": 13
+  },
+  {
+    "service": "ad",
+    "risk_score": 0.2667,
+    "criticality": 0.2,
+    "centrality": 0.3333,
+    "fan_in": 1,
+    "on_checkout_path": false,
+    "risk_flags": 3,
+    "blast_radius": 2,
+    "inbound_calls": 57,
+    "gateway_share": 0.0625,
+    "high_risks": 0,
+    "top_risks": [
+      "R-ad-single_replica_no_pdb",
+      "R-ad-no_readiness_probe",
+      "R-ad-no_liveness_probe"
+    ],
+    "reason": "ad: criticality=0.2, fan_in=1, 3 structural risk flag(s), 2 service(s) depend on it",
+    "rank": 14
+  },
+  {
+    "service": "quote",
+    "risk_score": 0.2533,
+    "criticality": 0.1,
+    "centrality": 0.6333,
+    "fan_in": 1,
+    "on_checkout_path": true,
+    "risk_flags": 3,
+    "blast_radius": 4,
+    "inbound_calls": 44,
+    "gateway_share": 0.0625,
+    "high_risks": 0,
+    "top_risks": [
+      "R-quote-single_replica_no_pdb",
+      "R-quote-no_readiness_probe",
+      "R-quote-no_liveness_probe"
+    ],
+    "reason": "quote: criticality=0.1, fan_in=1, on checkout path, 3 structural risk flag(s), 4 service(s) depend on it",
+    "rank": 15
+  },
+  {
+    "service": "image-provider",
+    "risk_score": 0.1333,
+    "criticality": 0.1,
+    "centrality": 0.3333,
+    "fan_in": 1,
+    "on_checkout_path": false,
+    "risk_flags": 3,
+    "blast_radius": 1,
+    "inbound_calls": 185,
+    "gateway_share": 0.0625,
+    "high_risks": 0,
+    "top_risks": [
+      "R-image-provider-single_replica_no_pdb",
+      "R-image-provider-no_readiness_probe",
+      "R-image-provider-no_liveness_probe"
+    ],
+    "reason": "image-provider: criticality=0.1, fan_in=1, 3 structural risk flag(s), 1 service(s) depend on it",
+    "rank": 16
+  },
+  {
+    "service": "accounting",
+    "risk_score": 0.0,
+    "criticality": 0.1,
+    "centrality": 0.0,
+    "fan_in": 0,
+    "on_checkout_path": false,
+    "risk_flags": 3,
+    "blast_radius": 0,
+    "inbound_calls": 0,
+    "gateway_share": 0.0,
+    "high_risks": 0,
+    "top_risks": [
+      "R-accounting-single_replica_no_pdb",
+      "R-accounting-no_readiness_probe",
+      "R-accounting-no_liveness_probe"
+    ],
+    "reason": "accounting: criticality=0.1, fan_in=0, 3 structural risk flag(s), 0 service(s) depend on it",
+    "rank": 17
+  },
+  {
+    "service": "fraud-detection",
+    "risk_score": 0.0,
+    "criticality": 0.1,
+    "centrality": 0.0,
+    "fan_in": 0,
+    "on_checkout_path": false,
+    "risk_flags": 3,
+    "blast_radius": 0,
+    "inbound_calls": 0,
+    "gateway_share": 0.0,
+    "high_risks": 0,
+    "top_risks": [
+      "R-fraud-detection-single_replica_no_pdb",
+      "R-fraud-detection-no_readiness_probe",
+      "R-fraud-detection-no_liveness_probe"
+    ],
+    "reason": "fraud-detection: criticality=0.1, fan_in=0, 3 structural risk flag(s), 0 service(s) depend on it",
+    "rank": 18
+  }
+]
