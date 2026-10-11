@@ -124,6 +124,123 @@ class TestBuild(unittest.TestCase):
         self.assertEqual([f["text_source"] for f in rep["explained"]], ["ai", "template"])
 
 
+GRAPH_NODES = {"generated_at": "g", "nodes": [{"name": n} for n in
+                                              ("cart", "frontend", "valkey", "checkout", "recommendation",
+                                               "product-catalog", "payment")],
+               "edges": [{"from": "frontend", "to": "product-catalog"},
+                         {"from": "recommendation", "to": "product-catalog"},
+                         {"from": "frontend", "to": "cart"}, {"from": "cart", "to": "valkey"}]}
+
+
+def tested_scores():
+    """Synthetic exp-002 shape: browse+ads-recs measured and failing, checkout uncovered."""
+    s = scores_scored()
+    s["experiments"] = [{
+        "experiment_id": "exp-002", "target": "product-catalog", "fault_type": "cpu_stress",
+        "outcome": "not_recovered", "S": 19.1, "recovery_s": None, "repeats_run": 1,
+        "journeys": {"ads-recs": {"A": 0.25, "L": 0.25, "S": 19.1}, "browse": {"A": 0.25, "L": 0.25, "S": 19.1},
+                     "cart": {"A": 1.0, "L": 1.0, "S": 100.0}},
+        "uncovered_journeys": ["checkout"]}]
+    s["findings"] = [finding(1, "confirmed", service="product-catalog", risk_id="R-pc-1", experiment_id="exp-002",
+                             S=19.1), finding(2), finding(3)]
+    return s
+
+
+class TestHardening(unittest.TestCase):
+    def test_number_value_match(self):
+        facts = json.dumps({"a": 73.0, "b": 100.0, "c": 0.75, "d": 0.25})
+        ok = lambda t: R.validate_text(good_text(t), facts, CFG["llm"])
+        self.assertEqual(ok("Score 73 of 100."), [])
+        self.assertTrue(any("74" in p for p in ok("Score 74.")))
+        self.assertEqual(ok("About 75% of probes and 25% of others."), [])
+        self.assertEqual(ok("About 73% here."), [])
+        self.assertTrue(ok("About 55% here."))
+
+    def test_normalise_ascii(self):
+        raw = "product‑catalog – it’s “bad” now — ok é☃"
+        out = R.normalise_text(raw)
+        self.assertTrue(out.isascii())
+        self.assertEqual(out, 'product-catalog - it\'s "bad" now - ok ')
+        llm = R.ReportText(executive_summary=good_text("Fix product‑catalog first."), items=[
+            R.Explained(risk_id="R-cart-c1", explanation=good_text("a—b"), why_fix_helps=good_text())])
+        with patch("src.report.structured_call", return_value=llm):
+            rep = R.build_report(scores_scored(), GRAPH_NODES, RANKED, CFG, True)
+        self.assertTrue(rep["executive_summary"]["text"].isascii())
+        self.assertTrue(rep["explained"][0]["explanation"].isascii())
+
+    def test_unknown_service_rejected(self):
+        facts = {"R-cart-c1": {"risk_id": "R-cart-c1", "service": "cart", "tested": False}}
+        bad = R.Explained(risk_id="R-cart-c1", explanation=good_text("It also hurts the payment service."),
+                          why_fix_helps=good_text())
+        probs = R.validate_item(bad, facts, set(), CFG["llm"], ["cart", "payment"])
+        self.assertTrue(any("payment" in p for p in probs))
+        ok = R.Explained(risk_id="R-cart-c1", explanation=good_text(), why_fix_helps=good_text())
+        self.assertEqual(R.validate_item(ok, facts, set(), CFG["llm"], ["cart", "payment"]), [])
+
+    def test_tested_facts_built_from_experiment(self):
+        s = tested_scores()
+        exps = {e["experiment_id"]: e for e in s["experiments"]}
+        plan = {"exp-002": {"slo": {"success_rate_min": 0.95}}}
+        facts = R.finding_facts(s["findings"][0], exps, GRAPH_NODES, {}, plan)
+        self.assertTrue(facts["tested"])
+        self.assertEqual(facts["journeys_failed"], ["ads-recs", "browse"])
+        self.assertEqual(facts["journeys_not_measured"], ["checkout"])
+        self.assertEqual(facts["journeys_measured"]["browse"]["availability_A"], 0.25)
+        self.assertEqual(facts["outcome"], "not_recovered")
+        self.assertEqual(facts["service_context"]["callers_of_product-catalog"], ["frontend", "recommendation"])
+        pred = R.finding_facts(s["findings"][1], exps, GRAPH_NODES, {})
+        self.assertFalse(pred["tested"])
+        self.assertNotIn("journeys_failed", pred)
+
+    def test_run_measurements_in_facts_and_percent_accepted(self):
+        s = tested_scores()
+        exps = {e["experiment_id"]: e for e in s["experiments"]}
+        plan = {"exp-002": {"slo": {"success_rate_min": 0.95}, "recovery_budget_s": 100}}
+        recs = {"exp-002": [{"peak_error_rate": 0.5, "peak_p95_ms": 900.0, "aborted": False},
+                            {"peak_error_rate": 0.75, "peak_p95_ms": 3019.9, "aborted": True,
+                             "abort_reason": "probe_threshold_breach", "stop_reason": "probe_threshold_breach",
+                             "t_breach": "x", "t_clear": None}]}
+        facts = R.finding_facts(s["findings"][0], exps, GRAPH_NODES, {}, plan, recs)
+        m = facts["run_measurements"]
+        self.assertEqual((m["peak_error_rate"], m["peak_p95_ms"], m["aborted"]), (0.75, 3019.9, True))
+        self.assertTrue(m["slo_breach_observed"])
+        self.assertFalse(m["fault_cleared"])
+        self.assertEqual((m["recovery_budget_s"], m["experiment_score_S"]), (100, 19.1))
+        item = R.Explained(risk_id="R-pc-1", explanation=good_text("Up to 75% of browse requests failed."),
+                           why_fix_helps=good_text())
+        self.assertEqual(R.validate_item(item, {"R-pc-1": facts}, set(), CFG["llm"]), [])
+
+    def test_unmeasured_journey_failure_rejected(self):
+        s = tested_scores()
+        bad = R.ReportText(executive_summary=good_text(), items=[
+            R.Explained(risk_id="R-pc-1", explanation=good_text("This made the checkout journey fail."),
+                        why_fix_helps=good_text()),
+            R.Explained(risk_id="R-cart-c2", explanation=good_text(), why_fix_helps=good_text())])
+        with patch("src.report.structured_call", return_value=bad):
+            rep = R.build_report(s, GRAPH_NODES, RANKED, CFG, True)
+        self.assertEqual(rep["explained"][0]["text_source"], "template")
+        good = R.ReportText(executive_summary=good_text(), items=[
+            R.Explained(risk_id="R-pc-1", explanation=good_text("Browse failed; checkout was not measured."),
+                        why_fix_helps=good_text())])
+        with patch("src.report.structured_call", return_value=good):
+            rep = R.build_report(s, GRAPH_NODES, RANKED, CFG, True)
+        self.assertEqual(rep["explained"][0]["text_source"], "ai")
+
+    def test_files_written_utf8(self):
+        import os
+        import tempfile
+        rep = R.build_report(scores_not_scored(), GRAPH, RANKED, CFG, False)
+        rep["executive_summary"]["text"] = "café ‑ ok"
+        with tempfile.TemporaryDirectory() as d, \
+                patch.object(R, "OUT_MD", os.path.join(d, "r", "f.md")), \
+                patch.object(R, "OUT_JSON", os.path.join(d, "r", "f.json")):
+            R.write_outputs(rep)
+            with open(R.OUT_MD, encoding="utf-8") as f:
+                self.assertIn("café ‑ ok", f.read())
+            with open(R.OUT_JSON, encoding="utf-8") as f:
+                self.assertEqual(json.load(f)["executive_summary"]["text"], "café ‑ ok")
+
+
 class TestMarkdown(unittest.TestCase):
     def test_not_scored(self):
         rep = R.build_report(scores_not_scored(), GRAPH, RANKED, CFG, False)

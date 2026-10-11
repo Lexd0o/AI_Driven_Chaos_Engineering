@@ -1,0 +1,46 @@
+{
+  "experiment_id": "exp-006",
+  "repeat": 1,
+  "run_id": "run-11384eb5e683",
+  "fault_type": "network_delay",
+  "target": "shipping",
+  "t_start": "2026-10-11T01:02:35.452209+00:00",
+  "t_inject": "2026-10-11T01:03:13.329652+00:00",
+  "t_breach": null,
+  "t_detect": null,
+  "t_clear": "2026-10-11T01:04:16.357772+00:00",
+  "t_healthy": "2026-10-11T01:04:16.508447+00:00",
+  "aborted": false,
+  "abort_reason": null,
+  "stop_reason": "duration_finished",
+  "error": null,
+  "outcome": "survived",
+  "peak_error_rate": 0.0,
+  "peak_p95_ms": 1158.4,
+  "impact_recovery_s": null,
+  "post_fault_recovery_s": 0.150675,
+  "journeys": {
+    "cart": {
+      "A": 1.0,
+      "L": 1.0,
+      "samples": 20
+    },
+    "shipping-quote": {
+      "A": 1.0,
+      "L": 1.0,
+      "samples": 20
+    }
+  },
+  "uncovered_journeys": [
+    "checkout"
+  ],
+  "evidence": {
+    "probe_urls": {
+      "cart": "http://localhost:8080/api/cart?sessionId=chaospilot-probe&currencyCode=USD",
+      "shipping-quote": "http://localhost:8080/api/shipping?itemList=%5B%7B%22productId%22%3A%22OLJCESPC7Z%22%2C%22quantity%22%3A1%7D%5D&currencyCode=USD&address=%7B%22streetAddress%22%3A%221600%20Amphitheatre%20Parkway%22%2C%22city%22%3A%22Mountain%20View%22%2C%22state%22%3A%22CA%22%2C%22country%22%3A%22United%20States%22%2C%22zipCode%22%3A%2294043%22%7D"
+    },
+    "agent_report": "data/runs/run-11384eb5e683.json",
+    "trace_ids": [],
+    "prom_queries": []
+  }
+}

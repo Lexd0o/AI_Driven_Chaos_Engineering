@@ -13,6 +13,7 @@ risk_id, number guard: no number that is absent from the facts). A text that fai
 the deterministic template text is used, so the report is complete with no LLM at all.
 """
 import argparse
+import glob
 import json
 import os
 import re
@@ -26,6 +27,7 @@ from src.llm import structured_call
 SCORES_PATH = "data/scores.json"
 GRAPH_PATH = "data/graph.json"
 RANKED_PATH = "data/ranked_candidates.json"
+RUNS_DIR = "data/runs"
 PLAN_PATH = "data/plan_validated.json"
 EXECUTOR_PATH = "config/executor.yaml"
 CONFIG_PATH = "config/scoring.yaml"
@@ -34,6 +36,17 @@ OUT_JSON = "reports/findings_report.json"
 
 TABLE_ROWS = 15
 NUMBER_RE = re.compile(r"\d+(?:\.\d+)?")
+NUMBER_PCT_RE = re.compile(r"(\d+(?:\.\d+)?)(\s?%)?")
+JOURNEYS = ("browse", "cart", "checkout", "ads-recs")
+FAILURE_WORDS = ("fail", "broke", "outage", "down", "error")
+DEFAULT_SUCCESS_MIN = 0.95
+ASCII_MAP = {
+    "‐": "-", "‑": "-", "‒": "-", "–": "-", "—": "-", "―": "-", "−": "-",
+    "‘": "'", "’": "'", "‚": "'", "‛": "'",
+    "“": '"', "”": '"', "„": '"', "‟": '"',
+    " ": " ", " ": " ", " ": " ", " ": " ", " ": " ", " ": " ", " ": " ",
+    "…": "...",
+}
 
 SYSTEM_PROMPT = """You are a reliability analyst writing for an engineering team. A chaos-engineering \
 tool tested (or analysed) the OpenTelemetry Demo, an e-commerce microservices app on Kubernetes, and \
@@ -48,9 +61,17 @@ radius), and what the evidence shows.
 still needs to be written.
 
 Rules: use only the facts provided. Do not invent numbers, services, journeys or fixes. Do not \
-compute, change or re-rank scores or severities. A finding with basis "predicted" was not tested: \
-call it a prediction or risk, never a confirmed failure. Only status "confirmed" may be described \
-as a failure that was observed."""
+compute, change or re-rank scores or severities. A finding with `tested: false` (basis "predicted") \
+was not tested: call it a prediction or risk and describe any impact as possible ("could"), never a \
+confirmed failure. Only status "confirmed" may be described as a failure that was observed.
+For tested findings, claim impact ONLY on journeys listed in `journeys_failed`. Never claim any \
+impact on journeys listed in `journeys_not_measured`; you may say they were not measured. Journeys in \
+`journeys_measured` that are not in `journeys_failed` held up.
+The service lists in `service_context` are named after the service they belong to \
+(`callers_of_X` are the services that call X; `services_called_by_X` are what X calls). Only describe \
+them as X's callers or dependencies; do not attach them to any other service or journey.
+Write in plain words. Never print raw field names or key=value text (such as blast_radius=0, \
+has_liveness=False or journeys_failed); explain what they mean instead. Use plain ASCII punctuation."""
 
 
 class Explained(BaseModel):
@@ -83,26 +104,86 @@ def humanise(check: str) -> str:
 # ------------------------------------------------------------------ facts
 
 def service_context(service: str, graph: dict, ranked_by_service: dict) -> dict:
+    """Graph context with every key named after the service it belongs to (no ambiguity)."""
     edges = graph.get("edges", [])
     cand = ranked_by_service.get(service, {})
     return {
-        "callers": sorted({e["from"] for e in edges if e["to"] == service}),
-        "calls_into": sorted({e["to"] for e in edges if e["from"] == service}),
-        "blast_radius": cand.get("blast_radius"),
+        f"callers_of_{service}": sorted({e["from"] for e in edges if e["to"] == service}),
+        f"services_called_by_{service}": sorted({e["to"] for e in edges if e["from"] == service}),
+        "dependent_service_count": cand.get("blast_radius"),
         "gateway_share": cand.get("gateway_share"),
         "on_checkout_path": cand.get("on_checkout_path"),
     }
 
 
-def finding_facts(finding: dict, experiments: dict, graph: dict, ranked_by_service: dict) -> dict:
+def journey_facts(exp: dict, plan_item: dict | None) -> dict:
+    """Which journeys an experiment measured, which of those failed, and which were not measured."""
+    slo = (plan_item or {}).get("slo") or {}
+    floor = slo.get("success_rate_min")
+    floor = DEFAULT_SUCCESS_MIN if floor is None else floor
+    measured, failed = {}, []
+    for name, j in (exp.get("journeys") or {}).items():
+        a, lat = j.get("A"), j.get("L")
+        measured[name] = {"availability_A": a, "latency_in_slo_L": lat}
+        if (a is not None and a < floor) or (lat is not None and lat < floor):
+            failed.append(name)
+    return {"journeys_measured": measured, "journeys_failed": sorted(failed),
+            "journeys_not_measured": sorted(exp.get("uncovered_journeys") or []),
+            "journey_failure_threshold": floor}
+
+
+def load_run_records(experiments: dict, runs_dir: str | None = None) -> dict:
+    """{experiment_id: [run records]} from data/runs/<experiment_id>-r*.json (missing dir = none)."""
+    runs_dir = runs_dir or RUNS_DIR
+    out = {}
+    for exp_id in experiments:
+        recs = []
+        for path in sorted(glob.glob(os.path.join(runs_dir, f"{exp_id}-r*.json"))):
+            try:
+                with open(path, encoding="utf-8") as f:
+                    recs.append(json.load(f))
+            except (OSError, ValueError):
+                continue
+        if recs:
+            out[exp_id] = recs
+    return out
+
+
+def run_measurements(records: list[dict], exp: dict, plan_item: dict | None) -> dict:
+    """Measured values from the worst repeat (highest peak error rate, then p95), plus the score."""
+    worst = max(records or [{}], key=lambda r: (r.get("peak_error_rate") or 0, r.get("peak_p95_ms") or 0))
+    return {
+        "peak_error_rate": worst.get("peak_error_rate"),
+        "peak_p95_ms": worst.get("peak_p95_ms"),
+        "aborted": worst.get("aborted"),
+        "abort_reason": worst.get("abort_reason"),
+        "stop_reason": worst.get("stop_reason"),
+        "slo_breach_observed": worst.get("t_breach") is not None,
+        "fault_cleared": worst.get("t_clear") is not None,
+        "recovery_budget_s": (plan_item or {}).get("recovery_budget_s"),
+        "experiment_score_S": exp.get("S"),
+        "repeats_with_records": len(records or []),
+    }
+
+
+def finding_facts(finding: dict, experiments: dict, graph: dict, ranked_by_service: dict,
+                  plan_by_id: dict | None = None, run_records: dict | None = None) -> dict:
     facts = {k: finding.get(k) for k in (
         "rank", "risk_id", "service", "check", "status", "basis", "severity", "severity_value",
         "evidence", "S", "criticality")}
     exp = experiments.get(finding.get("experiment_id"))
-    if exp:
+    tested = finding.get("basis") == "tested" and exp is not None
+    facts["tested"] = tested
+    if tested:
         facts["experiment"] = {k: exp.get(k) for k in (
-            "experiment_id", "fault_type", "outcome", "S", "recovery_s", "repeats_run", "uncovered_journeys")}
-        facts["experiment"]["journeys"] = exp.get("journeys")
+            "experiment_id", "fault_type", "S", "recovery_s", "repeats_run")}
+        facts["outcome"] = exp.get("outcome")
+        plan_item = (plan_by_id or {}).get(exp.get("experiment_id"))
+        facts.update(journey_facts(exp, plan_item))
+        facts["run_measurements"] = run_measurements(
+            (run_records or {}).get(exp.get("experiment_id")) or [], exp, plan_item)
+    else:
+        facts["note"] = "not tested: any impact is a prediction"
     facts["service_context"] = service_context(finding["service"], graph, ranked_by_service)
     fix = finding.get("fix")
     facts["fix"] = fix["summary"] if fix else None
@@ -188,11 +269,12 @@ WHY_FIX = {
 def role_sentence(f: dict) -> str:
     """One sentence on the service's role, from graph context fields only."""
     ctx = f["service_context"]
+    callers = ctx.get(f"callers_of_{f['service']}") or []
     bits = []
-    if ctx["callers"]:
-        bits.append(f"is called by {', '.join(ctx['callers'])}")
-    if ctx["blast_radius"]:
-        bits.append(f"has {ctx['blast_radius']} dependent service(s) in its blast radius")
+    if callers:
+        bits.append(f"is called by {', '.join(callers)}")
+    if ctx["dependent_service_count"]:
+        bits.append(f"has {ctx['dependent_service_count']} dependent service(s) in its blast radius")
     if ctx["gateway_share"]:
         bits.append(f"carries gateway share {ctx['gateway_share']}")
     if ctx["on_checkout_path"]:
@@ -244,45 +326,100 @@ def template_summary(rf: dict) -> str:
 
 # ------------------------------------------------------------------ validation
 
+def normalise_text(text: str) -> str:
+    """Plain-ASCII version of model text: typographic dashes/quotes/spaces mapped, other non-ASCII dropped."""
+    text = "".join(ASCII_MAP.get(ch, ch) for ch in text)
+    text = text.encode("ascii", "ignore").decode("ascii")
+    return re.sub(r"[ \t]{2,}", " ", text)
+
+
 def number_tokens(text: str) -> set[str]:
     return set(NUMBER_RE.findall(text))
 
 
-def validate_text(text: str, facts_json: str, cfg: dict) -> list[str]:
-    """Length bounds + number guard. Empty list = accept."""
+def _close(a: float, b: float) -> bool:
+    return abs(a - b) <= 1e-9 + 1e-6 * max(abs(a), abs(b))
+
+
+def invented_numbers(text: str, facts_json: str) -> list[str]:
+    """Number tokens in text whose VALUE is not in the facts (73 == 73.0; 75% matches 0.75 or 75)."""
+    fact_vals = [float(t) for t in NUMBER_RE.findall(facts_json)]
+    bad = []
+    for tok, pct in NUMBER_PCT_RE.findall(text):
+        v = float(tok)
+        candidates = [v, v / 100] if pct else [v]
+        if not any(_close(c, fv) for c in candidates for fv in fact_vals) and tok not in bad:
+            bad.append(tok)
+    return sorted(bad, key=float)
+
+
+def word_present(name: str, text: str) -> bool:
+    return re.search(rf"(?<![\w-]){re.escape(name)}(?![\w-])", text) is not None
+
+
+def validate_text(text: str, facts_json: str, cfg: dict, services=()) -> list[str]:
+    """Length bounds + number guard + known-service guard. Empty list = accept."""
     problems = []
     n = len(text.strip())
     if not cfg["min_text_chars"] <= n <= cfg["max_text_chars"]:
         problems.append(f"{n} chars (allowed {cfg['min_text_chars']}-{cfg['max_text_chars']})")
-    invented = sorted(number_tokens(text) - number_tokens(facts_json))
+    invented = invented_numbers(text, facts_json)
     if invented:
         problems.append(f"numbers not in facts: {', '.join(invented)}")
+    lowered = text.lower()
+    foreign = sorted(s for s in services if word_present(s, lowered) and not word_present(s, facts_json.lower()))
+    if foreign:
+        problems.append(f"services not in facts: {', '.join(foreign)}")
     return problems
 
 
-def validate_item(item: Explained, facts_by_id: dict, seen: set, cfg: dict) -> list[str]:
+def unmeasured_failure_claims(text: str, facts: dict) -> list[str]:
+    """For a tested finding: journeys that were not measured but are described with a failure word."""
+    if not facts.get("tested"):
+        return []
+    found = []
+    sentences = re.split(r"[.;!?]+", text.lower())
+    for journey in facts.get("journeys_not_measured") or []:
+        for s in sentences:
+            if word_present(journey, s) and any(w in s for w in FAILURE_WORDS):
+                found.append(journey)
+                break
+    return found
+
+
+def validate_item(item: Explained, facts_by_id: dict, seen: set, cfg: dict, services=()) -> list[str]:
     if item.risk_id not in facts_by_id:
         return [f"unknown risk_id '{item.risk_id}'"]
     if item.risk_id in seen:
         return [f"duplicate risk_id '{item.risk_id}'"]
-    facts_json = json.dumps(facts_by_id[item.risk_id])
+    facts = facts_by_id[item.risk_id]
+    facts_json = json.dumps(facts)
     problems = []
     for field in ("explanation", "why_fix_helps"):
-        problems += [f"{field}: {p}" for p in validate_text(getattr(item, field), facts_json, cfg)]
+        text = getattr(item, field)
+        problems += [f"{field}: {p}" for p in validate_text(text, facts_json, cfg, services)]
+        claims = unmeasured_failure_claims(text, facts)
+        if claims:
+            problems.append(f"{field}: claims failure on unmeasured journey: {', '.join(claims)}")
     return problems
 
 
-def apply_ai_text(llm: ReportText, rfacts: dict, facts_by_id: dict, cfg: dict) -> tuple[str | None, dict]:
-    """Returns (validated summary or None, {risk_id: (explanation, why_fix_helps)})."""
+def apply_ai_text(llm: ReportText, rfacts: dict, facts_by_id: dict, cfg: dict,
+                  services=()) -> tuple[str | None, dict]:
+    """Returns (validated summary or None, {risk_id: (explanation, why_fix_helps)}). Text is
+    normalised to ASCII first."""
     summary = None
-    problems = validate_text(llm.executive_summary, json.dumps(rfacts), cfg)
+    text = normalise_text(llm.executive_summary)
+    problems = validate_text(text, json.dumps(rfacts), cfg, services)
     if problems:
         print(f"  dropped AI executive summary: {'; '.join(problems)}")
     else:
-        summary = llm.executive_summary.strip()
+        summary = text.strip()
     accepted, seen = {}, set()
     for item in llm.items:
-        problems = validate_item(item, facts_by_id, seen, cfg)
+        item = Explained(risk_id=item.risk_id, explanation=normalise_text(item.explanation),
+                         why_fix_helps=normalise_text(item.why_fix_helps))
+        problems = validate_item(item, facts_by_id, seen, cfg, services)
         if problems:
             print(f"  dropped AI text for {item.risk_id}: {'; '.join(problems)}")
             continue
@@ -294,7 +431,8 @@ def apply_ai_text(llm: ReportText, rfacts: dict, facts_by_id: dict, cfg: dict) -
 # ------------------------------------------------------------------ build
 
 def build_report(scores: dict, graph: dict, ranked: list[dict], cfg: dict, use_llm: bool,
-                 plan: list[dict] | None = None, executor: dict | None = None) -> dict:
+                 plan: list[dict] | None = None, executor: dict | None = None,
+                 run_records: dict | None = None) -> dict:
     """Pure data -> report dict (no file I/O except through structured_call)."""
     llm_cfg = cfg["llm"]
     ranked_by_service = {c["service"]: c for c in ranked}
@@ -303,7 +441,12 @@ def build_report(scores: dict, graph: dict, ranked: list[dict], cfg: dict, use_l
     top = findings[:llm_cfg["explain_top"]]
     nested_w = scores.get("weights") or {}  # score.py: {"weights": {A,L,R,C}, "journey_weights": {...}}
 
-    facts_by_id = {f["risk_id"]: finding_facts(f, experiments, graph, ranked_by_service) for f in top}
+    plan_by_id = {p.get("experiment_id"): p for p in plan or []}
+    services = sorted(n["name"] for n in graph.get("nodes", []) if n.get("name"))
+    if run_records is None:
+        run_records = load_run_records(experiments)
+    facts_by_id = {f["risk_id"]: finding_facts(f, experiments, graph, ranked_by_service, plan_by_id, run_records)
+                   for f in top}
     rfacts = report_facts(scores, top)
 
     summary_ai, ai_items = None, {}
@@ -311,7 +454,7 @@ def build_report(scores: dict, graph: dict, ranked: list[dict], cfg: dict, use_l
         user = json.dumps({"report": rfacts, "findings": list(facts_by_id.values())}, indent=1)
         llm = structured_call(SYSTEM_PROMPT, user, ReportText, llm_cfg, "AI explanations")
         if llm is not None:
-            summary_ai, ai_items = apply_ai_text(llm, rfacts, facts_by_id, llm_cfg)
+            summary_ai, ai_items = apply_ai_text(llm, rfacts, facts_by_id, llm_cfg, services)
 
     explained = []
     for f in top:
@@ -462,7 +605,7 @@ def write_outputs(report: dict) -> None:
     with open(OUT_MD, "w", encoding="utf-8") as f:
         f.write(render_markdown(report))
     with open(OUT_JSON, "w", encoding="utf-8") as f:
-        json.dump(report, f, indent=2)
+        json.dump(report, f, indent=2, ensure_ascii=False)
 
 
 def main() -> None:

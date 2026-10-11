@@ -1,0 +1,40 @@
+{
+  "experiment_id": "exp-004",
+  "repeat": 1,
+  "run_id": "run-537dde91bdf0",
+  "fault_type": "pod_kill",
+  "target": "currency",
+  "t_start": "2026-10-11T00:50:27.525014+00:00",
+  "t_inject": "2026-10-11T00:51:07.826082+00:00",
+  "t_breach": null,
+  "t_detect": null,
+  "t_clear": "2026-10-11T00:52:10.797046+00:00",
+  "t_healthy": "2026-10-11T00:52:10.932942+00:00",
+  "aborted": false,
+  "abort_reason": null,
+  "stop_reason": "observation_finished",
+  "error": null,
+  "outcome": "survived",
+  "peak_error_rate": 0.0,
+  "peak_p95_ms": 492.8,
+  "impact_recovery_s": null,
+  "post_fault_recovery_s": 0.135896,
+  "journeys": {
+    "browse": {
+      "A": 1.0,
+      "L": 1.0,
+      "samples": 26
+    }
+  },
+  "uncovered_journeys": [
+    "checkout"
+  ],
+  "evidence": {
+    "probe_urls": {
+      "browse": "http://localhost:8080/api/products"
+    },
+    "agent_report": "data/runs/run-537dde91bdf0.json",
+    "trace_ids": [],
+    "prom_queries": []
+  }
+}

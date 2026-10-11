@@ -1,0 +1,61 @@
+{
+  "run_id": "run-188b4c77b579",
+  "mode": "preview",
+  "status": "preview_completed",
+  "started_at": "2026-10-11T00:50:05.263650+00:00",
+  "fault_injected": false,
+  "samples": [],
+  "events": [
+    {
+      "stage": "server_validation",
+      "observed_at": "2026-10-11T00:50:05.598620+00:00"
+    },
+    {
+      "stage": "preview_completed",
+      "observed_at": "2026-10-11T00:50:06.617666+00:00"
+    }
+  ],
+  "cluster": {
+    "context": "docker-desktop",
+    "namespace": "otel-demo",
+    "kubectl_path": "kubectl"
+  },
+  "plan": {
+    "target_service": "currency",
+    "fault_type": "pod_kill",
+    "hypothesis": "currency: single replica no pdb (replicas=1, has_pdb=False, stateful=False, fan_in=2) - expect currency's callers to see errors or latency until the fault clears.",
+    "duration_seconds": 0,
+    "latency_ms": 0,
+    "loss_percent": 0,
+    "duplicate_percent": 0,
+    "cpu_workers": 0,
+    "pod_count": 1
+  },
+  "manifest": {
+    "apiVersion": "chaos-mesh.org/v1alpha1",
+    "kind": "PodChaos",
+    "metadata": {
+      "name": "reslab-run-188b4c77b579",
+      "namespace": "otel-demo",
+      "labels": {
+        "reslab-run-id": "run-188b4c77b579"
+      }
+    },
+    "spec": {
+      "mode": "one",
+      "selector": {
+        "namespaces": [
+          "otel-demo"
+        ],
+        "labelSelectors": {
+          "opentelemetry.io/name": "currency"
+        }
+      },
+      "action": "pod-kill"
+    }
+  },
+  "resource": {
+    "kind": "podchaos",
+    "name": "reslab-run-188b4c77b579"
+  }
+}

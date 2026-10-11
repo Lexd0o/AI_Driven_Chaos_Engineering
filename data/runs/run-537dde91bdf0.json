@@ -1,0 +1,1070 @@
+{
+  "run_id": "run-537dde91bdf0",
+  "mode": "execute",
+  "status": "execute_completed",
+  "started_at": "2026-10-11T00:50:27.525014+00:00",
+  "fault_injected": true,
+  "samples": [
+    {
+      "observed_at": "2026-10-11T00:50:31.829424+00:00",
+      "ok": true,
+      "latency_ms": 654.57,
+      "error": null,
+      "journeys": {
+        "browse": {
+          "observed_at": "2026-10-11T00:50:31.829369+00:00",
+          "ok": true,
+          "latency_ms": 654.57,
+          "error": null
+        }
+      },
+      "stage": "baseline"
+    },
+    {
+      "observed_at": "2026-10-11T00:50:33.911593+00:00",
+      "ok": true,
+      "latency_ms": 77.7,
+      "error": null,
+      "journeys": {
+        "browse": {
+          "observed_at": "2026-10-11T00:50:33.911445+00:00",
+          "ok": true,
+          "latency_ms": 77.7,
+          "error": null
+        }
+      },
+      "stage": "baseline"
+    },
+    {
+      "observed_at": "2026-10-11T00:50:35.997707+00:00",
+      "ok": true,
+      "latency_ms": 81.8,
+      "error": null,
+      "journeys": {
+        "browse": {
+          "observed_at": "2026-10-11T00:50:35.997662+00:00",
+          "ok": true,
+          "latency_ms": 81.8,
+          "error": null
+        }
+      },
+      "stage": "baseline"
+    },
+    {
+      "observed_at": "2026-10-11T00:50:38.041631+00:00",
+      "ok": true,
+      "latency_ms": 40.46,
+      "error": null,
+      "journeys": {
+        "browse": {
+          "observed_at": "2026-10-11T00:50:38.041546+00:00",
+          "ok": true,
+          "latency_ms": 40.46,
+          "error": null
+        }
+      },
+      "stage": "baseline"
+    },
+    {
+      "observed_at": "2026-10-11T00:50:40.180272+00:00",
+      "ok": true,
+      "latency_ms": 135.1,
+      "error": null,
+      "journeys": {
+        "browse": {
+          "observed_at": "2026-10-11T00:50:40.180211+00:00",
+          "ok": true,
+          "latency_ms": 135.1,
+          "error": null
+        }
+      },
+      "stage": "baseline"
+    },
+    {
+      "observed_at": "2026-10-11T00:50:42.429739+00:00",
+      "ok": true,
+      "latency_ms": 243.98,
+      "error": null,
+      "journeys": {
+        "browse": {
+          "observed_at": "2026-10-11T00:50:42.429681+00:00",
+          "ok": true,
+          "latency_ms": 243.98,
+          "error": null
+        }
+      },
+      "stage": "baseline"
+    },
+    {
+      "observed_at": "2026-10-11T00:50:44.528530+00:00",
+      "ok": true,
+      "latency_ms": 94.82,
+      "error": null,
+      "journeys": {
+        "browse": {
+          "observed_at": "2026-10-11T00:50:44.528371+00:00",
+          "ok": true,
+          "latency_ms": 94.82,
+          "error": null
+        }
+      },
+      "stage": "baseline"
+    },
+    {
+      "observed_at": "2026-10-11T00:50:46.576847+00:00",
+      "ok": true,
+      "latency_ms": 43.0,
+      "error": null,
+      "journeys": {
+        "browse": {
+          "observed_at": "2026-10-11T00:50:46.576794+00:00",
+          "ok": true,
+          "latency_ms": 43.0,
+          "error": null
+        }
+      },
+      "stage": "baseline"
+    },
+    {
+      "observed_at": "2026-10-11T00:50:48.676849+00:00",
+      "ok": true,
+      "latency_ms": 95.41,
+      "error": null,
+      "journeys": {
+        "browse": {
+          "observed_at": "2026-10-11T00:50:48.676782+00:00",
+          "ok": true,
+          "latency_ms": 95.41,
+          "error": null
+        }
+      },
+      "stage": "baseline"
+    },
+    {
+      "observed_at": "2026-10-11T00:50:50.726579+00:00",
+      "ok": true,
+      "latency_ms": 44.87,
+      "error": null,
+      "journeys": {
+        "browse": {
+          "observed_at": "2026-10-11T00:50:50.726536+00:00",
+          "ok": true,
+          "latency_ms": 44.87,
+          "error": null
+        }
+      },
+      "stage": "baseline"
+    },
+    {
+      "observed_at": "2026-10-11T00:50:52.766727+00:00",
+      "ok": true,
+      "latency_ms": 36.37,
+      "error": null,
+      "journeys": {
+        "browse": {
+          "observed_at": "2026-10-11T00:50:52.766693+00:00",
+          "ok": true,
+          "latency_ms": 36.37,
+          "error": null
+        }
+      },
+      "stage": "baseline"
+    },
+    {
+      "observed_at": "2026-10-11T00:50:54.867705+00:00",
+      "ok": true,
+      "latency_ms": 96.19,
+      "error": null,
+      "journeys": {
+        "browse": {
+          "observed_at": "2026-10-11T00:50:54.867640+00:00",
+          "ok": true,
+          "latency_ms": 96.19,
+          "error": null
+        }
+      },
+      "stage": "baseline"
+    },
+    {
+      "observed_at": "2026-10-11T00:50:57.017148+00:00",
+      "ok": true,
+      "latency_ms": 144.39,
+      "error": null,
+      "journeys": {
+        "browse": {
+          "observed_at": "2026-10-11T00:50:57.017089+00:00",
+          "ok": true,
+          "latency_ms": 144.39,
+          "error": null
+        }
+      },
+      "stage": "baseline"
+    },
+    {
+      "observed_at": "2026-10-11T00:50:59.066888+00:00",
+      "ok": true,
+      "latency_ms": 44.32,
+      "error": null,
+      "journeys": {
+        "browse": {
+          "observed_at": "2026-10-11T00:50:59.066844+00:00",
+          "ok": true,
+          "latency_ms": 44.32,
+          "error": null
+        }
+      },
+      "stage": "baseline"
+    },
+    {
+      "observed_at": "2026-10-11T00:51:01.248315+00:00",
+      "ok": true,
+      "latency_ms": 177.77,
+      "error": null,
+      "journeys": {
+        "browse": {
+          "observed_at": "2026-10-11T00:51:01.248261+00:00",
+          "ok": true,
+          "latency_ms": 177.77,
+          "error": null
+        }
+      },
+      "stage": "baseline"
+    },
+    {
+      "observed_at": "2026-10-11T00:51:05.366736+00:00",
+      "ok": true,
+      "latency_ms": 25.52,
+      "error": null,
+      "journeys": {
+        "browse": {
+          "observed_at": "2026-10-11T00:51:05.366703+00:00",
+          "ok": true,
+          "latency_ms": 25.52,
+          "error": null
+        }
+      },
+      "stage": "during_fault"
+    },
+    {
+      "observed_at": "2026-10-11T00:51:08.192747+00:00",
+      "ok": true,
+      "latency_ms": 362.67,
+      "error": null,
+      "journeys": {
+        "browse": {
+          "observed_at": "2026-10-11T00:51:08.192702+00:00",
+          "ok": true,
+          "latency_ms": 362.67,
+          "error": null
+        }
+      },
+      "stage": "during_fault"
+    },
+    {
+      "observed_at": "2026-10-11T00:51:11.678649+00:00",
+      "ok": true,
+      "latency_ms": 562.82,
+      "error": null,
+      "journeys": {
+        "browse": {
+          "observed_at": "2026-10-11T00:51:11.678601+00:00",
+          "ok": true,
+          "latency_ms": 562.82,
+          "error": null
+        }
+      },
+      "stage": "during_fault"
+    },
+    {
+      "observed_at": "2026-10-11T00:51:15.327556+00:00",
+      "ok": true,
+      "latency_ms": 255.32,
+      "error": null,
+      "journeys": {
+        "browse": {
+          "observed_at": "2026-10-11T00:51:15.327504+00:00",
+          "ok": true,
+          "latency_ms": 255.32,
+          "error": null
+        }
+      },
+      "stage": "during_fault"
+    },
+    {
+      "observed_at": "2026-10-11T00:51:18.050736+00:00",
+      "ok": true,
+      "latency_ms": 208.13,
+      "error": null,
+      "journeys": {
+        "browse": {
+          "observed_at": "2026-10-11T00:51:18.050690+00:00",
+          "ok": true,
+          "latency_ms": 208.13,
+          "error": null
+        }
+      },
+      "stage": "during_fault"
+    },
+    {
+      "observed_at": "2026-10-11T00:51:20.459616+00:00",
+      "ok": true,
+      "latency_ms": 74.37,
+      "error": null,
+      "journeys": {
+        "browse": {
+          "observed_at": "2026-10-11T00:51:20.459555+00:00",
+          "ok": true,
+          "latency_ms": 74.37,
+          "error": null
+        }
+      },
+      "stage": "during_fault"
+    },
+    {
+      "observed_at": "2026-10-11T00:51:23.067917+00:00",
+      "ok": true,
+      "latency_ms": 168.81,
+      "error": null,
+      "journeys": {
+        "browse": {
+          "observed_at": "2026-10-11T00:51:23.067864+00:00",
+          "ok": true,
+          "latency_ms": 168.81,
+          "error": null
+        }
+      },
+      "stage": "during_fault"
+    },
+    {
+      "observed_at": "2026-10-11T00:51:25.812120+00:00",
+      "ok": true,
+      "latency_ms": 118.6,
+      "error": null,
+      "journeys": {
+        "browse": {
+          "observed_at": "2026-10-11T00:51:25.812064+00:00",
+          "ok": true,
+          "latency_ms": 118.6,
+          "error": null
+        }
+      },
+      "stage": "during_fault"
+    },
+    {
+      "observed_at": "2026-10-11T00:51:28.600794+00:00",
+      "ok": true,
+      "latency_ms": 72.39,
+      "error": null,
+      "journeys": {
+        "browse": {
+          "observed_at": "2026-10-11T00:51:28.600559+00:00",
+          "ok": true,
+          "latency_ms": 72.39,
+          "error": null
+        }
+      },
+      "stage": "during_fault"
+    },
+    {
+      "observed_at": "2026-10-11T00:51:30.795855+00:00",
+      "ok": true,
+      "latency_ms": 46.0,
+      "error": null,
+      "journeys": {
+        "browse": {
+          "observed_at": "2026-10-11T00:51:30.795812+00:00",
+          "ok": true,
+          "latency_ms": 46.0,
+          "error": null
+        }
+      },
+      "stage": "during_fault"
+    },
+    {
+      "observed_at": "2026-10-11T00:51:33.217224+00:00",
+      "ok": true,
+      "latency_ms": 73.25,
+      "error": null,
+      "journeys": {
+        "browse": {
+          "observed_at": "2026-10-11T00:51:33.217181+00:00",
+          "ok": true,
+          "latency_ms": 73.25,
+          "error": null
+        }
+      },
+      "stage": "during_fault"
+    },
+    {
+      "observed_at": "2026-10-11T00:51:35.631846+00:00",
+      "ok": true,
+      "latency_ms": 67.93,
+      "error": null,
+      "journeys": {
+        "browse": {
+          "observed_at": "2026-10-11T00:51:35.631791+00:00",
+          "ok": true,
+          "latency_ms": 67.93,
+          "error": null
+        }
+      },
+      "stage": "during_fault"
+    },
+    {
+      "observed_at": "2026-10-11T00:51:38.030812+00:00",
+      "ok": true,
+      "latency_ms": 99.43,
+      "error": null,
+      "journeys": {
+        "browse": {
+          "observed_at": "2026-10-11T00:51:38.030734+00:00",
+          "ok": true,
+          "latency_ms": 99.43,
+          "error": null
+        }
+      },
+      "stage": "during_fault"
+    },
+    {
+      "observed_at": "2026-10-11T00:51:40.354175+00:00",
+      "ok": true,
+      "latency_ms": 137.35,
+      "error": null,
+      "journeys": {
+        "browse": {
+          "observed_at": "2026-10-11T00:51:40.354120+00:00",
+          "ok": true,
+          "latency_ms": 137.35,
+          "error": null
+        }
+      },
+      "stage": "during_fault"
+    },
+    {
+      "observed_at": "2026-10-11T00:51:43.049849+00:00",
+      "ok": true,
+      "latency_ms": 85.14,
+      "error": null,
+      "journeys": {
+        "browse": {
+          "observed_at": "2026-10-11T00:51:43.049801+00:00",
+          "ok": true,
+          "latency_ms": 85.14,
+          "error": null
+        }
+      },
+      "stage": "during_fault"
+    },
+    {
+      "observed_at": "2026-10-11T00:51:45.569621+00:00",
+      "ok": true,
+      "latency_ms": 73.66,
+      "error": null,
+      "journeys": {
+        "browse": {
+          "observed_at": "2026-10-11T00:51:45.569571+00:00",
+          "ok": true,
+          "latency_ms": 73.66,
+          "error": null
+        }
+      },
+      "stage": "during_fault"
+    },
+    {
+      "observed_at": "2026-10-11T00:51:48.111263+00:00",
+      "ok": true,
+      "latency_ms": 99.6,
+      "error": null,
+      "journeys": {
+        "browse": {
+          "observed_at": "2026-10-11T00:51:48.111208+00:00",
+          "ok": true,
+          "latency_ms": 99.6,
+          "error": null
+        }
+      },
+      "stage": "during_fault"
+    },
+    {
+      "observed_at": "2026-10-11T00:51:50.419990+00:00",
+      "ok": true,
+      "latency_ms": 83.45,
+      "error": null,
+      "journeys": {
+        "browse": {
+          "observed_at": "2026-10-11T00:51:50.419933+00:00",
+          "ok": true,
+          "latency_ms": 83.45,
+          "error": null
+        }
+      },
+      "stage": "during_fault"
+    },
+    {
+      "observed_at": "2026-10-11T00:51:52.782774+00:00",
+      "ok": true,
+      "latency_ms": 92.64,
+      "error": null,
+      "journeys": {
+        "browse": {
+          "observed_at": "2026-10-11T00:51:52.782721+00:00",
+          "ok": true,
+          "latency_ms": 92.64,
+          "error": null
+        }
+      },
+      "stage": "during_fault"
+    },
+    {
+      "observed_at": "2026-10-11T00:51:55.532788+00:00",
+      "ok": true,
+      "latency_ms": 130.92,
+      "error": null,
+      "journeys": {
+        "browse": {
+          "observed_at": "2026-10-11T00:51:55.532729+00:00",
+          "ok": true,
+          "latency_ms": 130.92,
+          "error": null
+        }
+      },
+      "stage": "during_fault"
+    },
+    {
+      "observed_at": "2026-10-11T00:51:57.837581+00:00",
+      "ok": true,
+      "latency_ms": 55.5,
+      "error": null,
+      "journeys": {
+        "browse": {
+          "observed_at": "2026-10-11T00:51:57.837537+00:00",
+          "ok": true,
+          "latency_ms": 55.5,
+          "error": null
+        }
+      },
+      "stage": "during_fault"
+    },
+    {
+      "observed_at": "2026-10-11T00:52:00.143086+00:00",
+      "ok": true,
+      "latency_ms": 95.92,
+      "error": null,
+      "journeys": {
+        "browse": {
+          "observed_at": "2026-10-11T00:52:00.143043+00:00",
+          "ok": true,
+          "latency_ms": 95.92,
+          "error": null
+        }
+      },
+      "stage": "during_fault"
+    },
+    {
+      "observed_at": "2026-10-11T00:52:02.470939+00:00",
+      "ok": true,
+      "latency_ms": 67.33,
+      "error": null,
+      "journeys": {
+        "browse": {
+          "observed_at": "2026-10-11T00:52:02.470880+00:00",
+          "ok": true,
+          "latency_ms": 67.33,
+          "error": null
+        }
+      },
+      "stage": "during_fault"
+    },
+    {
+      "observed_at": "2026-10-11T00:52:04.804154+00:00",
+      "ok": true,
+      "latency_ms": 47.72,
+      "error": null,
+      "journeys": {
+        "browse": {
+          "observed_at": "2026-10-11T00:52:04.804095+00:00",
+          "ok": true,
+          "latency_ms": 47.72,
+          "error": null
+        }
+      },
+      "stage": "during_fault"
+    },
+    {
+      "observed_at": "2026-10-11T00:52:07.127501+00:00",
+      "ok": true,
+      "latency_ms": 51.63,
+      "error": null,
+      "journeys": {
+        "browse": {
+          "observed_at": "2026-10-11T00:52:07.127457+00:00",
+          "ok": true,
+          "latency_ms": 51.63,
+          "error": null
+        }
+      },
+      "stage": "during_fault"
+    },
+    {
+      "observed_at": "2026-10-11T00:52:09.286517+00:00",
+      "ok": true,
+      "latency_ms": 27.38,
+      "error": null,
+      "journeys": {
+        "browse": {
+          "observed_at": "2026-10-11T00:52:09.286476+00:00",
+          "ok": true,
+          "latency_ms": 27.38,
+          "error": null
+        }
+      },
+      "stage": "during_fault"
+    },
+    {
+      "observed_at": "2026-10-11T00:52:10.932942+00:00",
+      "ok": true,
+      "latency_ms": 119.53,
+      "error": null,
+      "journeys": {
+        "browse": {
+          "observed_at": "2026-10-11T00:52:10.932885+00:00",
+          "ok": true,
+          "latency_ms": 119.53,
+          "error": null
+        }
+      },
+      "stage": "recovery",
+      "deployment_ready": true
+    },
+    {
+      "observed_at": "2026-10-11T00:52:13.265105+00:00",
+      "ok": true,
+      "latency_ms": 54.86,
+      "error": null,
+      "journeys": {
+        "browse": {
+          "observed_at": "2026-10-11T00:52:13.264993+00:00",
+          "ok": true,
+          "latency_ms": 54.86,
+          "error": null
+        }
+      },
+      "stage": "recovery",
+      "deployment_ready": true
+    },
+    {
+      "observed_at": "2026-10-11T00:52:15.626097+00:00",
+      "ok": true,
+      "latency_ms": 61.1,
+      "error": null,
+      "journeys": {
+        "browse": {
+          "observed_at": "2026-10-11T00:52:15.626052+00:00",
+          "ok": true,
+          "latency_ms": 61.1,
+          "error": null
+        }
+      },
+      "stage": "recovery",
+      "deployment_ready": true
+    },
+    {
+      "observed_at": "2026-10-11T00:52:18.106352+00:00",
+      "ok": true,
+      "latency_ms": 222.96,
+      "error": null,
+      "journeys": {
+        "browse": {
+          "observed_at": "2026-10-11T00:52:18.106288+00:00",
+          "ok": true,
+          "latency_ms": 222.96,
+          "error": null
+        }
+      },
+      "stage": "recovery",
+      "deployment_ready": true
+    },
+    {
+      "observed_at": "2026-10-11T00:52:21.082999+00:00",
+      "ok": true,
+      "latency_ms": 107.76,
+      "error": null,
+      "journeys": {
+        "browse": {
+          "observed_at": "2026-10-11T00:52:21.082944+00:00",
+          "ok": true,
+          "latency_ms": 107.76,
+          "error": null
+        }
+      },
+      "stage": "recovery",
+      "deployment_ready": true
+    },
+    {
+      "observed_at": "2026-10-11T00:52:23.606734+00:00",
+      "ok": true,
+      "latency_ms": 161.02,
+      "error": null,
+      "journeys": {
+        "browse": {
+          "observed_at": "2026-10-11T00:52:23.606675+00:00",
+          "ok": true,
+          "latency_ms": 161.02,
+          "error": null
+        }
+      },
+      "stage": "recovery",
+      "deployment_ready": true
+    },
+    {
+      "observed_at": "2026-10-11T00:52:26.907725+00:00",
+      "ok": true,
+      "latency_ms": 110.33,
+      "error": null,
+      "journeys": {
+        "browse": {
+          "observed_at": "2026-10-11T00:52:26.907681+00:00",
+          "ok": true,
+          "latency_ms": 110.33,
+          "error": null
+        }
+      },
+      "stage": "recovery",
+      "deployment_ready": true
+    },
+    {
+      "observed_at": "2026-10-11T00:52:29.238729+00:00",
+      "ok": true,
+      "latency_ms": 55.3,
+      "error": null,
+      "journeys": {
+        "browse": {
+          "observed_at": "2026-10-11T00:52:29.238685+00:00",
+          "ok": true,
+          "latency_ms": 55.3,
+          "error": null
+        }
+      },
+      "stage": "recovery",
+      "deployment_ready": true
+    },
+    {
+      "observed_at": "2026-10-11T00:52:31.582944+00:00",
+      "ok": true,
+      "latency_ms": 48.07,
+      "error": null,
+      "journeys": {
+        "browse": {
+          "observed_at": "2026-10-11T00:52:31.582904+00:00",
+          "ok": true,
+          "latency_ms": 48.07,
+          "error": null
+        }
+      },
+      "stage": "recovery",
+      "deployment_ready": true
+    },
+    {
+      "observed_at": "2026-10-11T00:52:34.053134+00:00",
+      "ok": true,
+      "latency_ms": 37.39,
+      "error": null,
+      "journeys": {
+        "browse": {
+          "observed_at": "2026-10-11T00:52:34.052994+00:00",
+          "ok": true,
+          "latency_ms": 37.39,
+          "error": null
+        }
+      },
+      "stage": "recovery",
+      "deployment_ready": true
+    },
+    {
+      "observed_at": "2026-10-11T00:52:36.423320+00:00",
+      "ok": true,
+      "latency_ms": 62.11,
+      "error": null,
+      "journeys": {
+        "browse": {
+          "observed_at": "2026-10-11T00:52:36.423263+00:00",
+          "ok": true,
+          "latency_ms": 62.11,
+          "error": null
+        }
+      },
+      "stage": "recovery",
+      "deployment_ready": true
+    },
+    {
+      "observed_at": "2026-10-11T00:52:38.787667+00:00",
+      "ok": true,
+      "latency_ms": 46.23,
+      "error": null,
+      "journeys": {
+        "browse": {
+          "observed_at": "2026-10-11T00:52:38.787596+00:00",
+          "ok": true,
+          "latency_ms": 46.23,
+          "error": null
+        }
+      },
+      "stage": "recovery",
+      "deployment_ready": true
+    },
+    {
+      "observed_at": "2026-10-11T00:52:41.067243+00:00",
+      "ok": true,
+      "latency_ms": 55.97,
+      "error": null,
+      "journeys": {
+        "browse": {
+          "observed_at": "2026-10-11T00:52:41.067204+00:00",
+          "ok": true,
+          "latency_ms": 55.97,
+          "error": null
+        }
+      },
+      "stage": "recovery",
+      "deployment_ready": true
+    }
+  ],
+  "events": [
+    {
+      "stage": "server_validation",
+      "observed_at": "2026-10-11T00:50:27.717621+00:00"
+    },
+    {
+      "stage": "baseline",
+      "observed_at": "2026-10-11T00:50:31.164818+00:00"
+    },
+    {
+      "stage": "submitting",
+      "observed_at": "2026-10-11T00:51:04.460970+00:00"
+    },
+    {
+      "stage": "observing",
+      "observed_at": "2026-10-11T00:51:05.102901+00:00"
+    },
+    {
+      "stage": "injection_confirmed",
+      "observed_at": "2026-10-11T00:51:07.826107+00:00"
+    },
+    {
+      "stage": "recovery_watch",
+      "observed_at": "2026-10-11T00:52:10.803117+00:00"
+    },
+    {
+      "stage": "recovered",
+      "observed_at": "2026-10-11T00:52:41.250704+00:00"
+    }
+  ],
+  "cluster": {
+    "context": "docker-desktop",
+    "namespace": "otel-demo",
+    "kubectl_path": "kubectl"
+  },
+  "plan": {
+    "target_service": "currency",
+    "fault_type": "pod_kill",
+    "hypothesis": "currency: single replica no pdb (replicas=1, has_pdb=False, stateful=False, fan_in=2) - expect currency's callers to see errors or latency until the fault clears.",
+    "duration_seconds": 0,
+    "latency_ms": 0,
+    "loss_percent": 0,
+    "duplicate_percent": 0,
+    "cpu_workers": 0,
+    "pod_count": 1
+  },
+  "manifest": {
+    "apiVersion": "chaos-mesh.org/v1alpha1",
+    "kind": "PodChaos",
+    "metadata": {
+      "name": "reslab-run-537dde91bdf0",
+      "namespace": "otel-demo",
+      "labels": {
+        "reslab-run-id": "run-537dde91bdf0"
+      }
+    },
+    "spec": {
+      "mode": "one",
+      "selector": {
+        "namespaces": [
+          "otel-demo"
+        ],
+        "labelSelectors": {
+          "opentelemetry.io/name": "currency"
+        }
+      },
+      "action": "pod-kill"
+    }
+  },
+  "resource": {
+    "kind": "podchaos",
+    "name": "reslab-run-537dde91bdf0"
+  },
+  "original_state": {
+    "apiVersion": "apps/v1",
+    "kind": "Deployment",
+    "metadata": {
+      "annotations": {
+        "deployment.kubernetes.io/revision": "1",
+        "meta.helm.sh/release-name": "otel-demo",
+        "meta.helm.sh/release-namespace": "otel-demo"
+      },
+      "creationTimestamp": "2026-10-10T07:07:37Z",
+      "generation": 1,
+      "labels": {
+        "app.kubernetes.io/component": "currency",
+        "app.kubernetes.io/managed-by": "Helm",
+        "app.kubernetes.io/name": "currency",
+        "app.kubernetes.io/part-of": "opentelemetry-demo",
+        "app.kubernetes.io/version": "3.1.0",
+        "helm.sh/chart": "opentelemetry-demo-0.42.3",
+        "opentelemetry.io/name": "currency"
+      },
+      "name": "currency",
+      "namespace": "otel-demo",
+      "resourceVersion": "99129",
+      "uid": "ff462206-d90c-4e32-85d2-ee4f0bce732e"
+    },
+    "spec": {
+      "progressDeadlineSeconds": 600,
+      "replicas": 1,
+      "revisionHistoryLimit": 10,
+      "selector": {
+        "matchLabels": {
+          "opentelemetry.io/name": "currency"
+        }
+      },
+      "strategy": {
+        "rollingUpdate": {
+          "maxSurge": "25%",
+          "maxUnavailable": "25%"
+        },
+        "type": "RollingUpdate"
+      },
+      "template": {
+        "metadata": {
+          "annotations": {
+            "resource.opentelemetry.io/service.namespace": "opentelemetry-demo"
+          },
+          "labels": {
+            "app.kubernetes.io/component": "currency",
+            "app.kubernetes.io/name": "currency",
+            "app.kubernetes.io/version": "3.1.0",
+            "opentelemetry.io/name": "currency"
+          }
+        },
+        "spec": {
+          "containers": [
+            {
+              "env": [
+                {
+                  "name": "OTEL_SERVICE_NAME",
+                  "valueFrom": {
+                    "fieldRef": {
+                      "apiVersion": "v1",
+                      "fieldPath": "metadata.labels['app.kubernetes.io/component']"
+                    }
+                  }
+                },
+                {
+                  "name": "OTEL_COLLECTOR_NAME",
+                  "value": "otel-collector"
+                },
+                {
+                  "name": "OTEL_EXPORTER_OTLP_METRICS_TEMPORALITY_PREFERENCE",
+                  "value": "cumulative"
+                },
+                {
+                  "name": "OTEL_EXPORTER_OTLP_METRICS_DEFAULT_HISTOGRAM_AGGREGATION",
+                  "value": "explicit_bucket_histogram"
+                },
+                {
+                  "name": "CURRENCY_PORT",
+                  "value": "8080"
+                },
+                {
+                  "name": "OTEL_EXPORTER_OTLP_ENDPOINT",
+                  "value": "http://$(OTEL_COLLECTOR_NAME):4317"
+                },
+                {
+                  "name": "VERSION",
+                  "value": "3.1.0"
+                },
+                {
+                  "name": "IPV6_ENABLED",
+                  "value": "false"
+                },
+                {
+                  "name": "OTEL_RESOURCE_ATTRIBUTES",
+                  "value": "service.version=3.1.0,service.criticality=high"
+                }
+              ],
+              "image": "ghcr.io/open-telemetry/demo:3.1.0-currency",
+              "imagePullPolicy": "IfNotPresent",
+              "name": "currency",
+              "ports": [
+                {
+                  "containerPort": 8080,
+                  "name": "service",
+                  "protocol": "TCP"
+                }
+              ],
+              "resources": {
+                "limits": {
+                  "memory": "20Mi"
+                }
+              },
+              "terminationMessagePath": "/dev/termination-log",
+              "terminationMessagePolicy": "File"
+            }
+          ],
+          "dnsPolicy": "ClusterFirst",
+          "restartPolicy": "Always",
+          "schedulerName": "default-scheduler",
+          "securityContext": {},
+          "serviceAccount": "otel-demo",
+          "serviceAccountName": "otel-demo",
+          "terminationGracePeriodSeconds": 30
+        }
+      }
+    },
+    "status": {
+      "availableReplicas": 1,
+      "conditions": [
+        {
+          "lastTransitionTime": "2026-10-10T07:07:38Z",
+          "lastUpdateTime": "2026-10-10T07:24:33Z",
+          "message": "ReplicaSet \"currency-657c6bbdb\" has successfully progressed.",
+          "reason": "NewReplicaSetAvailable",
+          "status": "True",
+          "type": "Progressing"
+        },
+        {
+          "lastTransitionTime": "2026-10-11T00:35:35Z",
+          "lastUpdateTime": "2026-10-11T00:35:35Z",
+          "message": "Deployment has minimum availability.",
+          "reason": "MinimumReplicasAvailable",
+          "status": "True",
+          "type": "Available"
+        }
+      ],
+      "observedGeneration": 1,
+      "readyReplicas": 1,
+      "replicas": 1,
+      "terminatingReplicas": 0,
+      "updatedReplicas": 1
+    }
+  },
+  "action_started_at": "2026-10-11T00:51:04.460940+00:00",
+  "injection_status": {
+    "Selected": true,
+    "AllInjected": true
+  },
+  "fault_confirmed_at": "2026-10-11T00:51:07.826082+00:00",
+  "stop_reason": "observation_finished",
+  "t_clear": "2026-10-11T00:52:10.797046+00:00",
+  "t_healthy": "2026-10-11T00:52:10.932942+00:00",
+  "finished_at": "2026-10-11T00:52:41.253964+00:00"
+}

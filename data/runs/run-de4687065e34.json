@@ -1,0 +1,67 @@
+{
+  "run_id": "run-de4687065e34",
+  "mode": "preview",
+  "status": "preview_completed",
+  "started_at": "2026-10-11T00:50:07.415162+00:00",
+  "fault_injected": false,
+  "samples": [],
+  "events": [
+    {
+      "stage": "server_validation",
+      "observed_at": "2026-10-11T00:50:07.817300+00:00"
+    },
+    {
+      "stage": "preview_completed",
+      "observed_at": "2026-10-11T00:50:08.384687+00:00"
+    }
+  ],
+  "cluster": {
+    "context": "docker-desktop",
+    "namespace": "otel-demo",
+    "kubectl_path": "kubectl"
+  },
+  "plan": {
+    "target_service": "product-catalog",
+    "fault_type": "cpu_stress",
+    "hypothesis": "product-catalog: no liveness probe (has_liveness=False - a hung (not crashed) process won't be auto-restarted) - expect product-catalog's callers to see errors or latency until the fault clears.",
+    "duration_seconds": 60,
+    "latency_ms": 0,
+    "loss_percent": 0,
+    "duplicate_percent": 0,
+    "cpu_workers": 2,
+    "pod_count": 1
+  },
+  "manifest": {
+    "apiVersion": "chaos-mesh.org/v1alpha1",
+    "kind": "StressChaos",
+    "metadata": {
+      "name": "reslab-run-de4687065e34",
+      "namespace": "otel-demo",
+      "labels": {
+        "reslab-run-id": "run-de4687065e34"
+      }
+    },
+    "spec": {
+      "mode": "one",
+      "selector": {
+        "namespaces": [
+          "otel-demo"
+        ],
+        "labelSelectors": {
+          "opentelemetry.io/name": "product-catalog"
+        }
+      },
+      "duration": "60s",
+      "stressors": {
+        "cpu": {
+          "workers": 2,
+          "load": 100
+        }
+      }
+    }
+  },
+  "resource": {
+    "kind": "stresschaos",
+    "name": "reslab-run-de4687065e34"
+  }
+}

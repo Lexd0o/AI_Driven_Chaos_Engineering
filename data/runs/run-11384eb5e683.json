@@ -1,0 +1,1317 @@
+{
+  "run_id": "run-11384eb5e683",
+  "mode": "execute",
+  "status": "execute_completed",
+  "started_at": "2026-10-11T01:02:35.452209+00:00",
+  "fault_injected": true,
+  "samples": [
+    {
+      "observed_at": "2026-10-11T01:02:39.371803+00:00",
+      "ok": true,
+      "latency_ms": 266.63,
+      "error": null,
+      "journeys": {
+        "cart": {
+          "observed_at": "2026-10-11T01:02:39.304168+00:00",
+          "ok": true,
+          "latency_ms": 266.63,
+          "error": null
+        },
+        "shipping-quote": {
+          "observed_at": "2026-10-11T01:02:39.371767+00:00",
+          "ok": true,
+          "latency_ms": 67.54,
+          "error": null
+        }
+      },
+      "stage": "baseline"
+    },
+    {
+      "observed_at": "2026-10-11T01:02:41.574886+00:00",
+      "ok": true,
+      "latency_ms": 103.86,
+      "error": null,
+      "journeys": {
+        "cart": {
+          "observed_at": "2026-10-11T01:02:41.470918+00:00",
+          "ok": true,
+          "latency_ms": 93.85,
+          "error": null
+        },
+        "shipping-quote": {
+          "observed_at": "2026-10-11T01:02:41.574836+00:00",
+          "ok": true,
+          "latency_ms": 103.86,
+          "error": null
+        }
+      },
+      "stage": "baseline"
+    },
+    {
+      "observed_at": "2026-10-11T01:02:43.938535+00:00",
+      "ok": true,
+      "latency_ms": 187.4,
+      "error": null,
+      "journeys": {
+        "cart": {
+          "observed_at": "2026-10-11T01:02:43.771026+00:00",
+          "ok": true,
+          "latency_ms": 187.4,
+          "error": null
+        },
+        "shipping-quote": {
+          "observed_at": "2026-10-11T01:02:43.938487+00:00",
+          "ok": true,
+          "latency_ms": 167.41,
+          "error": null
+        }
+      },
+      "stage": "baseline"
+    },
+    {
+      "observed_at": "2026-10-11T01:02:46.051116+00:00",
+      "ok": true,
+      "latency_ms": 56.99,
+      "error": null,
+      "journeys": {
+        "cart": {
+          "observed_at": "2026-10-11T01:02:45.999983+00:00",
+          "ok": true,
+          "latency_ms": 56.99,
+          "error": null
+        },
+        "shipping-quote": {
+          "observed_at": "2026-10-11T01:02:46.051068+00:00",
+          "ok": true,
+          "latency_ms": 51.03,
+          "error": null
+        }
+      },
+      "stage": "baseline"
+    },
+    {
+      "observed_at": "2026-10-11T01:02:48.142021+00:00",
+      "ok": true,
+      "latency_ms": 44.55,
+      "error": null,
+      "journeys": {
+        "cart": {
+          "observed_at": "2026-10-11T01:02:48.099801+00:00",
+          "ok": true,
+          "latency_ms": 44.55,
+          "error": null
+        },
+        "shipping-quote": {
+          "observed_at": "2026-10-11T01:02:48.141982+00:00",
+          "ok": true,
+          "latency_ms": 42.14,
+          "error": null
+        }
+      },
+      "stage": "baseline"
+    },
+    {
+      "observed_at": "2026-10-11T01:02:50.221512+00:00",
+      "ok": true,
+      "latency_ms": 50.79,
+      "error": null,
+      "journeys": {
+        "cart": {
+          "observed_at": "2026-10-11T01:02:50.170556+00:00",
+          "ok": true,
+          "latency_ms": 24.87,
+          "error": null
+        },
+        "shipping-quote": {
+          "observed_at": "2026-10-11T01:02:50.221468+00:00",
+          "ok": true,
+          "latency_ms": 50.79,
+          "error": null
+        }
+      },
+      "stage": "baseline"
+    },
+    {
+      "observed_at": "2026-10-11T01:02:52.418570+00:00",
+      "ok": true,
+      "latency_ms": 132.61,
+      "error": null,
+      "journeys": {
+        "cart": {
+          "observed_at": "2026-10-11T01:02:52.285871+00:00",
+          "ok": true,
+          "latency_ms": 60.02,
+          "error": null
+        },
+        "shipping-quote": {
+          "observed_at": "2026-10-11T01:02:52.418531+00:00",
+          "ok": true,
+          "latency_ms": 132.61,
+          "error": null
+        }
+      },
+      "stage": "baseline"
+    },
+    {
+      "observed_at": "2026-10-11T01:02:54.575652+00:00",
+      "ok": true,
+      "latency_ms": 106.22,
+      "error": null,
+      "journeys": {
+        "cart": {
+          "observed_at": "2026-10-11T01:02:54.469323+00:00",
+          "ok": true,
+          "latency_ms": 46.15,
+          "error": null
+        },
+        "shipping-quote": {
+          "observed_at": "2026-10-11T01:02:54.575599+00:00",
+          "ok": true,
+          "latency_ms": 106.22,
+          "error": null
+        }
+      },
+      "stage": "baseline"
+    },
+    {
+      "observed_at": "2026-10-11T01:02:56.729422+00:00",
+      "ok": true,
+      "latency_ms": 83.23,
+      "error": null,
+      "journeys": {
+        "cart": {
+          "observed_at": "2026-10-11T01:02:56.663511+00:00",
+          "ok": true,
+          "latency_ms": 83.23,
+          "error": null
+        },
+        "shipping-quote": {
+          "observed_at": "2026-10-11T01:02:56.729372+00:00",
+          "ok": true,
+          "latency_ms": 65.78,
+          "error": null
+        }
+      },
+      "stage": "baseline"
+    },
+    {
+      "observed_at": "2026-10-11T01:02:58.856052+00:00",
+      "ok": true,
+      "latency_ms": 73.86,
+      "error": null,
+      "journeys": {
+        "cart": {
+          "observed_at": "2026-10-11T01:02:58.782093+00:00",
+          "ok": true,
+          "latency_ms": 47.75,
+          "error": null
+        },
+        "shipping-quote": {
+          "observed_at": "2026-10-11T01:02:58.856003+00:00",
+          "ok": true,
+          "latency_ms": 73.86,
+          "error": null
+        }
+      },
+      "stage": "baseline"
+    },
+    {
+      "observed_at": "2026-10-11T01:03:01.152557+00:00",
+      "ok": true,
+      "latency_ms": 161.34,
+      "error": null,
+      "journeys": {
+        "cart": {
+          "observed_at": "2026-10-11T01:03:01.021576+00:00",
+          "ok": true,
+          "latency_ms": 161.34,
+          "error": null
+        },
+        "shipping-quote": {
+          "observed_at": "2026-10-11T01:03:01.152505+00:00",
+          "ok": true,
+          "latency_ms": 130.87,
+          "error": null
+        }
+      },
+      "stage": "baseline"
+    },
+    {
+      "observed_at": "2026-10-11T01:03:03.259597+00:00",
+      "ok": true,
+      "latency_ms": 58.46,
+      "error": null,
+      "journeys": {
+        "cart": {
+          "observed_at": "2026-10-11T01:03:03.215756+00:00",
+          "ok": true,
+          "latency_ms": 58.46,
+          "error": null
+        },
+        "shipping-quote": {
+          "observed_at": "2026-10-11T01:03:03.259551+00:00",
+          "ok": true,
+          "latency_ms": 43.75,
+          "error": null
+        }
+      },
+      "stage": "baseline"
+    },
+    {
+      "observed_at": "2026-10-11T01:03:05.333750+00:00",
+      "ok": true,
+      "latency_ms": 40.49,
+      "error": null,
+      "journeys": {
+        "cart": {
+          "observed_at": "2026-10-11T01:03:05.293178+00:00",
+          "ok": true,
+          "latency_ms": 27.44,
+          "error": null
+        },
+        "shipping-quote": {
+          "observed_at": "2026-10-11T01:03:05.333712+00:00",
+          "ok": true,
+          "latency_ms": 40.49,
+          "error": null
+        }
+      },
+      "stage": "baseline"
+    },
+    {
+      "observed_at": "2026-10-11T01:03:07.473998+00:00",
+      "ok": true,
+      "latency_ms": 81.09,
+      "error": null,
+      "journeys": {
+        "cart": {
+          "observed_at": "2026-10-11T01:03:07.419756+00:00",
+          "ok": true,
+          "latency_ms": 81.09,
+          "error": null
+        },
+        "shipping-quote": {
+          "observed_at": "2026-10-11T01:03:07.473948+00:00",
+          "ok": true,
+          "latency_ms": 54.14,
+          "error": null
+        }
+      },
+      "stage": "baseline"
+    },
+    {
+      "observed_at": "2026-10-11T01:03:10.942268+00:00",
+      "ok": true,
+      "latency_ms": 32.2,
+      "error": null,
+      "journeys": {
+        "cart": {
+          "observed_at": "2026-10-11T01:03:10.909953+00:00",
+          "ok": true,
+          "latency_ms": 28.24,
+          "error": null
+        },
+        "shipping-quote": {
+          "observed_at": "2026-10-11T01:03:10.942227+00:00",
+          "ok": true,
+          "latency_ms": 32.2,
+          "error": null
+        }
+      },
+      "stage": "during_fault"
+    },
+    {
+      "observed_at": "2026-10-11T01:03:14.273427+00:00",
+      "ok": true,
+      "latency_ms": 870.11,
+      "error": null,
+      "journeys": {
+        "cart": {
+          "observed_at": "2026-10-11T01:03:13.403215+00:00",
+          "ok": true,
+          "latency_ms": 66.66,
+          "error": null
+        },
+        "shipping-quote": {
+          "observed_at": "2026-10-11T01:03:14.273377+00:00",
+          "ok": true,
+          "latency_ms": 870.11,
+          "error": null
+        }
+      },
+      "stage": "during_fault"
+    },
+    {
+      "observed_at": "2026-10-11T01:03:18.025868+00:00",
+      "ok": true,
+      "latency_ms": 1167.81,
+      "error": null,
+      "journeys": {
+        "cart": {
+          "observed_at": "2026-10-11T01:03:16.857898+00:00",
+          "ok": true,
+          "latency_ms": 193.86,
+          "error": null
+        },
+        "shipping-quote": {
+          "observed_at": "2026-10-11T01:03:18.025819+00:00",
+          "ok": true,
+          "latency_ms": 1167.81,
+          "error": null
+        }
+      },
+      "stage": "during_fault"
+    },
+    {
+      "observed_at": "2026-10-11T01:03:21.559756+00:00",
+      "ok": true,
+      "latency_ms": 923.83,
+      "error": null,
+      "journeys": {
+        "cart": {
+          "observed_at": "2026-10-11T01:03:20.635825+00:00",
+          "ok": true,
+          "latency_ms": 219.29,
+          "error": null
+        },
+        "shipping-quote": {
+          "observed_at": "2026-10-11T01:03:21.559715+00:00",
+          "ok": true,
+          "latency_ms": 923.83,
+          "error": null
+        }
+      },
+      "stage": "during_fault"
+    },
+    {
+      "observed_at": "2026-10-11T01:03:25.668282+00:00",
+      "ok": true,
+      "latency_ms": 947.43,
+      "error": null,
+      "journeys": {
+        "cart": {
+          "observed_at": "2026-10-11T01:03:24.720751+00:00",
+          "ok": true,
+          "latency_ms": 170.17,
+          "error": null
+        },
+        "shipping-quote": {
+          "observed_at": "2026-10-11T01:03:25.668233+00:00",
+          "ok": true,
+          "latency_ms": 947.43,
+          "error": null
+        }
+      },
+      "stage": "during_fault"
+    },
+    {
+      "observed_at": "2026-10-11T01:03:29.001712+00:00",
+      "ok": true,
+      "latency_ms": 913.67,
+      "error": null,
+      "journeys": {
+        "cart": {
+          "observed_at": "2026-10-11T01:03:28.087950+00:00",
+          "ok": true,
+          "latency_ms": 52.69,
+          "error": null
+        },
+        "shipping-quote": {
+          "observed_at": "2026-10-11T01:03:29.001671+00:00",
+          "ok": true,
+          "latency_ms": 913.67,
+          "error": null
+        }
+      },
+      "stage": "during_fault"
+    },
+    {
+      "observed_at": "2026-10-11T01:03:32.239632+00:00",
+      "ok": true,
+      "latency_ms": 854.0,
+      "error": null,
+      "journeys": {
+        "cart": {
+          "observed_at": "2026-10-11T01:03:31.385537+00:00",
+          "ok": true,
+          "latency_ms": 48.49,
+          "error": null
+        },
+        "shipping-quote": {
+          "observed_at": "2026-10-11T01:03:32.239594+00:00",
+          "ok": true,
+          "latency_ms": 854.0,
+          "error": null
+        }
+      },
+      "stage": "during_fault"
+    },
+    {
+      "observed_at": "2026-10-11T01:03:35.740895+00:00",
+      "ok": true,
+      "latency_ms": 869.05,
+      "error": null,
+      "journeys": {
+        "cart": {
+          "observed_at": "2026-10-11T01:03:34.871715+00:00",
+          "ok": true,
+          "latency_ms": 70.15,
+          "error": null
+        },
+        "shipping-quote": {
+          "observed_at": "2026-10-11T01:03:35.740818+00:00",
+          "ok": true,
+          "latency_ms": 869.05,
+          "error": null
+        }
+      },
+      "stage": "during_fault"
+    },
+    {
+      "observed_at": "2026-10-11T01:03:39.075361+00:00",
+      "ok": true,
+      "latency_ms": 866.44,
+      "error": null,
+      "journeys": {
+        "cart": {
+          "observed_at": "2026-10-11T01:03:38.208820+00:00",
+          "ok": true,
+          "latency_ms": 121.58,
+          "error": null
+        },
+        "shipping-quote": {
+          "observed_at": "2026-10-11T01:03:39.075304+00:00",
+          "ok": true,
+          "latency_ms": 866.44,
+          "error": null
+        }
+      },
+      "stage": "during_fault"
+    },
+    {
+      "observed_at": "2026-10-11T01:03:42.343560+00:00",
+      "ok": true,
+      "latency_ms": 873.44,
+      "error": null,
+      "journeys": {
+        "cart": {
+          "observed_at": "2026-10-11T01:03:41.469906+00:00",
+          "ok": true,
+          "latency_ms": 104.71,
+          "error": null
+        },
+        "shipping-quote": {
+          "observed_at": "2026-10-11T01:03:42.343406+00:00",
+          "ok": true,
+          "latency_ms": 873.44,
+          "error": null
+        }
+      },
+      "stage": "during_fault"
+    },
+    {
+      "observed_at": "2026-10-11T01:03:45.669045+00:00",
+      "ok": true,
+      "latency_ms": 898.52,
+      "error": null,
+      "journeys": {
+        "cart": {
+          "observed_at": "2026-10-11T01:03:44.770318+00:00",
+          "ok": true,
+          "latency_ms": 98.46,
+          "error": null
+        },
+        "shipping-quote": {
+          "observed_at": "2026-10-11T01:03:45.668947+00:00",
+          "ok": true,
+          "latency_ms": 898.52,
+          "error": null
+        }
+      },
+      "stage": "during_fault"
+    },
+    {
+      "observed_at": "2026-10-11T01:03:48.968824+00:00",
+      "ok": true,
+      "latency_ms": 845.83,
+      "error": null,
+      "journeys": {
+        "cart": {
+          "observed_at": "2026-10-11T01:03:48.122911+00:00",
+          "ok": true,
+          "latency_ms": 66.29,
+          "error": null
+        },
+        "shipping-quote": {
+          "observed_at": "2026-10-11T01:03:48.968786+00:00",
+          "ok": true,
+          "latency_ms": 845.83,
+          "error": null
+        }
+      },
+      "stage": "during_fault"
+    },
+    {
+      "observed_at": "2026-10-11T01:03:52.410905+00:00",
+      "ok": true,
+      "latency_ms": 980.34,
+      "error": null,
+      "journeys": {
+        "cart": {
+          "observed_at": "2026-10-11T01:03:51.430461+00:00",
+          "ok": true,
+          "latency_ms": 87.5,
+          "error": null
+        },
+        "shipping-quote": {
+          "observed_at": "2026-10-11T01:03:52.410859+00:00",
+          "ok": true,
+          "latency_ms": 980.34,
+          "error": null
+        }
+      },
+      "stage": "during_fault"
+    },
+    {
+      "observed_at": "2026-10-11T01:03:55.591725+00:00",
+      "ok": true,
+      "latency_ms": 860.34,
+      "error": null,
+      "journeys": {
+        "cart": {
+          "observed_at": "2026-10-11T01:03:54.731280+00:00",
+          "ok": true,
+          "latency_ms": 43.86,
+          "error": null
+        },
+        "shipping-quote": {
+          "observed_at": "2026-10-11T01:03:55.591674+00:00",
+          "ok": true,
+          "latency_ms": 860.34,
+          "error": null
+        }
+      },
+      "stage": "during_fault"
+    },
+    {
+      "observed_at": "2026-10-11T01:03:58.840413+00:00",
+      "ok": true,
+      "latency_ms": 871.51,
+      "error": null,
+      "journeys": {
+        "cart": {
+          "observed_at": "2026-10-11T01:03:57.968806+00:00",
+          "ok": true,
+          "latency_ms": 42.11,
+          "error": null
+        },
+        "shipping-quote": {
+          "observed_at": "2026-10-11T01:03:58.840363+00:00",
+          "ok": true,
+          "latency_ms": 871.51,
+          "error": null
+        }
+      },
+      "stage": "during_fault"
+    },
+    {
+      "observed_at": "2026-10-11T01:04:02.309407+00:00",
+      "ok": true,
+      "latency_ms": 978.67,
+      "error": null,
+      "journeys": {
+        "cart": {
+          "observed_at": "2026-10-11T01:04:01.330633+00:00",
+          "ok": true,
+          "latency_ms": 180.8,
+          "error": null
+        },
+        "shipping-quote": {
+          "observed_at": "2026-10-11T01:04:02.309357+00:00",
+          "ok": true,
+          "latency_ms": 978.67,
+          "error": null
+        }
+      },
+      "stage": "during_fault"
+    },
+    {
+      "observed_at": "2026-10-11T01:04:06.277941+00:00",
+      "ok": true,
+      "latency_ms": 972.03,
+      "error": null,
+      "journeys": {
+        "cart": {
+          "observed_at": "2026-10-11T01:04:05.305820+00:00",
+          "ok": true,
+          "latency_ms": 96.11,
+          "error": null
+        },
+        "shipping-quote": {
+          "observed_at": "2026-10-11T01:04:06.277896+00:00",
+          "ok": true,
+          "latency_ms": 972.03,
+          "error": null
+        }
+      },
+      "stage": "during_fault"
+    },
+    {
+      "observed_at": "2026-10-11T01:04:09.496872+00:00",
+      "ok": true,
+      "latency_ms": 897.52,
+      "error": null,
+      "journeys": {
+        "cart": {
+          "observed_at": "2026-10-11T01:04:08.599247+00:00",
+          "ok": true,
+          "latency_ms": 46.53,
+          "error": null
+        },
+        "shipping-quote": {
+          "observed_at": "2026-10-11T01:04:09.496831+00:00",
+          "ok": true,
+          "latency_ms": 897.52,
+          "error": null
+        }
+      },
+      "stage": "during_fault"
+    },
+    {
+      "observed_at": "2026-10-11T01:04:12.711191+00:00",
+      "ok": true,
+      "latency_ms": 102.91,
+      "error": null,
+      "journeys": {
+        "cart": {
+          "observed_at": "2026-10-11T01:04:12.608826+00:00",
+          "ok": true,
+          "latency_ms": 102.91,
+          "error": null
+        },
+        "shipping-quote": {
+          "observed_at": "2026-10-11T01:04:12.711143+00:00",
+          "ok": true,
+          "latency_ms": 102.27,
+          "error": null
+        }
+      },
+      "stage": "during_fault"
+    },
+    {
+      "observed_at": "2026-10-11T01:04:15.246086+00:00",
+      "ok": true,
+      "latency_ms": 133.58,
+      "error": null,
+      "journeys": {
+        "cart": {
+          "observed_at": "2026-10-11T01:04:15.112316+00:00",
+          "ok": true,
+          "latency_ms": 129.3,
+          "error": null
+        },
+        "shipping-quote": {
+          "observed_at": "2026-10-11T01:04:15.245975+00:00",
+          "ok": true,
+          "latency_ms": 133.58,
+          "error": null
+        }
+      },
+      "stage": "during_fault"
+    },
+    {
+      "observed_at": "2026-10-11T01:04:16.508447+00:00",
+      "ok": true,
+      "latency_ms": 68.63,
+      "error": null,
+      "journeys": {
+        "cart": {
+          "observed_at": "2026-10-11T01:04:16.439732+00:00",
+          "ok": true,
+          "latency_ms": 67.84,
+          "error": null
+        },
+        "shipping-quote": {
+          "observed_at": "2026-10-11T01:04:16.508408+00:00",
+          "ok": true,
+          "latency_ms": 68.63,
+          "error": null
+        }
+      },
+      "stage": "recovery",
+      "deployment_ready": true
+    },
+    {
+      "observed_at": "2026-10-11T01:04:19.055500+00:00",
+      "ok": true,
+      "latency_ms": 95.35,
+      "error": null,
+      "journeys": {
+        "cart": {
+          "observed_at": "2026-10-11T01:04:18.991883+00:00",
+          "ok": true,
+          "latency_ms": 95.35,
+          "error": null
+        },
+        "shipping-quote": {
+          "observed_at": "2026-10-11T01:04:19.055450+00:00",
+          "ok": true,
+          "latency_ms": 63.51,
+          "error": null
+        }
+      },
+      "stage": "recovery",
+      "deployment_ready": true
+    },
+    {
+      "observed_at": "2026-10-11T01:04:21.639618+00:00",
+      "ok": true,
+      "latency_ms": 85.56,
+      "error": null,
+      "journeys": {
+        "cart": {
+          "observed_at": "2026-10-11T01:04:21.553952+00:00",
+          "ok": true,
+          "latency_ms": 63.62,
+          "error": null
+        },
+        "shipping-quote": {
+          "observed_at": "2026-10-11T01:04:21.639565+00:00",
+          "ok": true,
+          "latency_ms": 85.56,
+          "error": null
+        }
+      },
+      "stage": "recovery",
+      "deployment_ready": true
+    },
+    {
+      "observed_at": "2026-10-11T01:04:24.258653+00:00",
+      "ok": true,
+      "latency_ms": 45.89,
+      "error": null,
+      "journeys": {
+        "cart": {
+          "observed_at": "2026-10-11T01:04:24.227676+00:00",
+          "ok": true,
+          "latency_ms": 45.89,
+          "error": null
+        },
+        "shipping-quote": {
+          "observed_at": "2026-10-11T01:04:24.258621+00:00",
+          "ok": true,
+          "latency_ms": 30.91,
+          "error": null
+        }
+      },
+      "stage": "recovery",
+      "deployment_ready": true
+    },
+    {
+      "observed_at": "2026-10-11T01:04:26.716168+00:00",
+      "ok": true,
+      "latency_ms": 188.59,
+      "error": null,
+      "journeys": {
+        "cart": {
+          "observed_at": "2026-10-11T01:04:26.603846+00:00",
+          "ok": true,
+          "latency_ms": 188.59,
+          "error": null
+        },
+        "shipping-quote": {
+          "observed_at": "2026-10-11T01:04:26.716129+00:00",
+          "ok": true,
+          "latency_ms": 112.23,
+          "error": null
+        }
+      },
+      "stage": "recovery",
+      "deployment_ready": true
+    },
+    {
+      "observed_at": "2026-10-11T01:04:29.093170+00:00",
+      "ok": true,
+      "latency_ms": 44.76,
+      "error": null,
+      "journeys": {
+        "cart": {
+          "observed_at": "2026-10-11T01:04:29.048321+00:00",
+          "ok": true,
+          "latency_ms": 30.05,
+          "error": null
+        },
+        "shipping-quote": {
+          "observed_at": "2026-10-11T01:04:29.093131+00:00",
+          "ok": true,
+          "latency_ms": 44.76,
+          "error": null
+        }
+      },
+      "stage": "recovery",
+      "deployment_ready": true
+    },
+    {
+      "observed_at": "2026-10-11T01:04:31.407712+00:00",
+      "ok": true,
+      "latency_ms": 39.98,
+      "error": null,
+      "journeys": {
+        "cart": {
+          "observed_at": "2026-10-11T01:04:31.367636+00:00",
+          "ok": true,
+          "latency_ms": 30.29,
+          "error": null
+        },
+        "shipping-quote": {
+          "observed_at": "2026-10-11T01:04:31.407665+00:00",
+          "ok": true,
+          "latency_ms": 39.98,
+          "error": null
+        }
+      },
+      "stage": "recovery",
+      "deployment_ready": true
+    },
+    {
+      "observed_at": "2026-10-11T01:04:33.728319+00:00",
+      "ok": true,
+      "latency_ms": 64.73,
+      "error": null,
+      "journeys": {
+        "cart": {
+          "observed_at": "2026-10-11T01:04:33.689644+00:00",
+          "ok": true,
+          "latency_ms": 64.73,
+          "error": null
+        },
+        "shipping-quote": {
+          "observed_at": "2026-10-11T01:04:33.728277+00:00",
+          "ok": true,
+          "latency_ms": 38.57,
+          "error": null
+        }
+      },
+      "stage": "recovery",
+      "deployment_ready": true
+    },
+    {
+      "observed_at": "2026-10-11T01:04:36.133774+00:00",
+      "ok": true,
+      "latency_ms": 106.96,
+      "error": null,
+      "journeys": {
+        "cart": {
+          "observed_at": "2026-10-11T01:04:36.064647+00:00",
+          "ok": true,
+          "latency_ms": 106.96,
+          "error": null
+        },
+        "shipping-quote": {
+          "observed_at": "2026-10-11T01:04:36.133732+00:00",
+          "ok": true,
+          "latency_ms": 69.04,
+          "error": null
+        }
+      },
+      "stage": "recovery",
+      "deployment_ready": true
+    },
+    {
+      "observed_at": "2026-10-11T01:04:38.664909+00:00",
+      "ok": true,
+      "latency_ms": 142.24,
+      "error": null,
+      "journeys": {
+        "cart": {
+          "observed_at": "2026-10-11T01:04:38.544980+00:00",
+          "ok": true,
+          "latency_ms": 142.24,
+          "error": null
+        },
+        "shipping-quote": {
+          "observed_at": "2026-10-11T01:04:38.664700+00:00",
+          "ok": true,
+          "latency_ms": 119.67,
+          "error": null
+        }
+      },
+      "stage": "recovery",
+      "deployment_ready": true
+    },
+    {
+      "observed_at": "2026-10-11T01:04:41.127874+00:00",
+      "ok": true,
+      "latency_ms": 64.01,
+      "error": null,
+      "journeys": {
+        "cart": {
+          "observed_at": "2026-10-11T01:04:41.063775+00:00",
+          "ok": true,
+          "latency_ms": 42.59,
+          "error": null
+        },
+        "shipping-quote": {
+          "observed_at": "2026-10-11T01:04:41.127826+00:00",
+          "ok": true,
+          "latency_ms": 64.01,
+          "error": null
+        }
+      },
+      "stage": "recovery",
+      "deployment_ready": true
+    },
+    {
+      "observed_at": "2026-10-11T01:04:43.403276+00:00",
+      "ok": true,
+      "latency_ms": 31.12,
+      "error": null,
+      "journeys": {
+        "cart": {
+          "observed_at": "2026-10-11T01:04:43.372066+00:00",
+          "ok": true,
+          "latency_ms": 30.57,
+          "error": null
+        },
+        "shipping-quote": {
+          "observed_at": "2026-10-11T01:04:43.403232+00:00",
+          "ok": true,
+          "latency_ms": 31.12,
+          "error": null
+        }
+      },
+      "stage": "recovery",
+      "deployment_ready": true
+    },
+    {
+      "observed_at": "2026-10-11T01:04:45.637234+00:00",
+      "ok": true,
+      "latency_ms": 35.22,
+      "error": null,
+      "journeys": {
+        "cart": {
+          "observed_at": "2026-10-11T01:04:45.601921+00:00",
+          "ok": true,
+          "latency_ms": 25.08,
+          "error": null
+        },
+        "shipping-quote": {
+          "observed_at": "2026-10-11T01:04:45.637187+00:00",
+          "ok": true,
+          "latency_ms": 35.22,
+          "error": null
+        }
+      },
+      "stage": "recovery",
+      "deployment_ready": true
+    },
+    {
+      "observed_at": "2026-10-11T01:04:47.982077+00:00",
+      "ok": true,
+      "latency_ms": 76.81,
+      "error": null,
+      "journeys": {
+        "cart": {
+          "observed_at": "2026-10-11T01:04:47.905151+00:00",
+          "ok": true,
+          "latency_ms": 46.85,
+          "error": null
+        },
+        "shipping-quote": {
+          "observed_at": "2026-10-11T01:04:47.982033+00:00",
+          "ok": true,
+          "latency_ms": 76.81,
+          "error": null
+        }
+      },
+      "stage": "recovery",
+      "deployment_ready": true
+    }
+  ],
+  "events": [
+    {
+      "stage": "server_validation",
+      "observed_at": "2026-10-11T01:02:35.748658+00:00"
+    },
+    {
+      "stage": "baseline",
+      "observed_at": "2026-10-11T01:02:39.033154+00:00"
+    },
+    {
+      "stage": "submitting",
+      "observed_at": "2026-10-11T01:03:10.279018+00:00"
+    },
+    {
+      "stage": "observing",
+      "observed_at": "2026-10-11T01:03:10.663467+00:00"
+    },
+    {
+      "stage": "injection_confirmed",
+      "observed_at": "2026-10-11T01:03:13.329683+00:00"
+    },
+    {
+      "stage": "recovery_watch",
+      "observed_at": "2026-10-11T01:04:16.364597+00:00"
+    },
+    {
+      "stage": "recovered",
+      "observed_at": "2026-10-11T01:04:48.329878+00:00"
+    }
+  ],
+  "cluster": {
+    "context": "docker-desktop",
+    "namespace": "otel-demo",
+    "kubectl_path": "kubectl"
+  },
+  "plan": {
+    "target_service": "shipping",
+    "fault_type": "network_delay",
+    "hypothesis": "shipping: no hpa shared dependency (has_hpa=False, 2 callers - can't absorb a traffic or latency spike) - expect shipping's callers to see errors or latency until the fault clears.",
+    "duration_seconds": 60,
+    "latency_ms": 200,
+    "loss_percent": 0,
+    "duplicate_percent": 0,
+    "cpu_workers": 0,
+    "pod_count": 1
+  },
+  "manifest": {
+    "apiVersion": "chaos-mesh.org/v1alpha1",
+    "kind": "NetworkChaos",
+    "metadata": {
+      "name": "reslab-run-11384eb5e683",
+      "namespace": "otel-demo",
+      "labels": {
+        "reslab-run-id": "run-11384eb5e683"
+      }
+    },
+    "spec": {
+      "mode": "one",
+      "selector": {
+        "namespaces": [
+          "otel-demo"
+        ],
+        "labelSelectors": {
+          "opentelemetry.io/name": "shipping"
+        }
+      },
+      "duration": "60s",
+      "action": "delay",
+      "delay": {
+        "latency": "200ms",
+        "jitter": "0ms",
+        "correlation": "0"
+      }
+    }
+  },
+  "resource": {
+    "kind": "networkchaos",
+    "name": "reslab-run-11384eb5e683"
+  },
+  "original_state": {
+    "apiVersion": "apps/v1",
+    "kind": "Deployment",
+    "metadata": {
+      "annotations": {
+        "deployment.kubernetes.io/revision": "1",
+        "meta.helm.sh/release-name": "otel-demo",
+        "meta.helm.sh/release-namespace": "otel-demo"
+      },
+      "creationTimestamp": "2026-10-10T07:07:37Z",
+      "generation": 1,
+      "labels": {
+        "app.kubernetes.io/component": "shipping",
+        "app.kubernetes.io/managed-by": "Helm",
+        "app.kubernetes.io/name": "shipping",
+        "app.kubernetes.io/part-of": "opentelemetry-demo",
+        "app.kubernetes.io/version": "3.1.0",
+        "helm.sh/chart": "opentelemetry-demo-0.42.3",
+        "opentelemetry.io/name": "shipping"
+      },
+      "name": "shipping",
+      "namespace": "otel-demo",
+      "resourceVersion": "99398",
+      "uid": "6f17e93a-d7b3-414d-be93-1eafdcf8942e"
+    },
+    "spec": {
+      "progressDeadlineSeconds": 600,
+      "replicas": 1,
+      "revisionHistoryLimit": 10,
+      "selector": {
+        "matchLabels": {
+          "opentelemetry.io/name": "shipping"
+        }
+      },
+      "strategy": {
+        "rollingUpdate": {
+          "maxSurge": "25%",
+          "maxUnavailable": "25%"
+        },
+        "type": "RollingUpdate"
+      },
+      "template": {
+        "metadata": {
+          "annotations": {
+            "resource.opentelemetry.io/service.namespace": "opentelemetry-demo"
+          },
+          "labels": {
+            "app.kubernetes.io/component": "shipping",
+            "app.kubernetes.io/name": "shipping",
+            "app.kubernetes.io/version": "3.1.0",
+            "opentelemetry.io/name": "shipping"
+          }
+        },
+        "spec": {
+          "containers": [
+            {
+              "env": [
+                {
+                  "name": "OTEL_SERVICE_NAME",
+                  "valueFrom": {
+                    "fieldRef": {
+                      "apiVersion": "v1",
+                      "fieldPath": "metadata.labels['app.kubernetes.io/component']"
+                    }
+                  }
+                },
+                {
+                  "name": "OTEL_COLLECTOR_NAME",
+                  "value": "otel-collector"
+                },
+                {
+                  "name": "OTEL_EXPORTER_OTLP_METRICS_TEMPORALITY_PREFERENCE",
+                  "value": "cumulative"
+                },
+                {
+                  "name": "OTEL_EXPORTER_OTLP_METRICS_DEFAULT_HISTOGRAM_AGGREGATION",
+                  "value": "explicit_bucket_histogram"
+                },
+                {
+                  "name": "SHIPPING_PORT",
+                  "value": "8080"
+                },
+                {
+                  "name": "QUOTE_ADDR",
+                  "value": "http://quote:8080"
+                },
+                {
+                  "name": "FLAGD_HOST",
+                  "value": "flagd"
+                },
+                {
+                  "name": "FLAGD_PORT",
+                  "value": "8013"
+                },
+                {
+                  "name": "OTEL_EXPORTER_OTLP_ENDPOINT",
+                  "value": "http://$(OTEL_COLLECTOR_NAME):4318"
+                },
+                {
+                  "name": "OTEL_EXPORTER_OTLP_PROTOCOL",
+                  "value": "http/protobuf"
+                },
+                {
+                  "name": "IPV6_ENABLED",
+                  "value": "false"
+                },
+                {
+                  "name": "OTEL_RESOURCE_ATTRIBUTES",
+                  "value": "service.version=3.1.0,service.criticality=high"
+                }
+              ],
+              "image": "ghcr.io/open-telemetry/demo:3.1.0-shipping",
+              "imagePullPolicy": "IfNotPresent",
+              "name": "shipping",
+              "ports": [
+                {
+                  "containerPort": 8080,
+                  "name": "service",
+                  "protocol": "TCP"
+                }
+              ],
+              "resources": {
+                "limits": {
+                  "memory": "20Mi"
+                }
+              },
+              "securityContext": {
+                "readOnlyRootFilesystem": true
+              },
+              "terminationMessagePath": "/dev/termination-log",
+              "terminationMessagePolicy": "File",
+              "volumeMounts": [
+                {
+                  "mountPath": "/tmp",
+                  "name": "tmp"
+                }
+              ]
+            }
+          ],
+          "dnsPolicy": "ClusterFirst",
+          "initContainers": [
+            {
+              "command": [
+                "sh",
+                "-c",
+                "until nc -z -v -w30 flagd 8013; do echo waiting for flagd; sleep 2; done;"
+              ],
+              "image": "busybox:latest",
+              "imagePullPolicy": "Always",
+              "name": "wait-for-flagd",
+              "resources": {},
+              "terminationMessagePath": "/dev/termination-log",
+              "terminationMessagePolicy": "File"
+            }
+          ],
+          "restartPolicy": "Always",
+          "schedulerName": "default-scheduler",
+          "securityContext": {},
+          "serviceAccount": "otel-demo",
+          "serviceAccountName": "otel-demo",
+          "terminationGracePeriodSeconds": 30,
+          "volumes": [
+            {
+              "emptyDir": {},
+              "name": "tmp"
+            }
+          ]
+        }
+      }
+    },
+    "status": {
+      "availableReplicas": 1,
+      "conditions": [
+        {
+          "lastTransitionTime": "2026-10-10T07:49:29Z",
+          "lastUpdateTime": "2026-10-10T07:49:29Z",
+          "message": "ReplicaSet \"shipping-764b957d75\" has successfully progressed.",
+          "reason": "NewReplicaSetAvailable",
+          "status": "True",
+          "type": "Progressing"
+        },
+        {
+          "lastTransitionTime": "2026-10-11T00:36:34Z",
+          "lastUpdateTime": "2026-10-11T00:36:34Z",
+          "message": "Deployment has minimum availability.",
+          "reason": "MinimumReplicasAvailable",
+          "status": "True",
+          "type": "Available"
+        }
+      ],
+      "observedGeneration": 1,
+      "readyReplicas": 1,
+      "replicas": 1,
+      "terminatingReplicas": 0,
+      "updatedReplicas": 1
+    }
+  },
+  "action_started_at": "2026-10-11T01:03:10.278991+00:00",
+  "injection_status": {
+    "Selected": true,
+    "AllInjected": false
+  },
+  "fault_confirmed_at": "2026-10-11T01:03:13.329652+00:00",
+  "stop_reason": "duration_finished",
+  "t_clear": "2026-10-11T01:04:16.357772+00:00",
+  "t_healthy": "2026-10-11T01:04:16.508447+00:00",
+  "finished_at": "2026-10-11T01:04:48.334008+00:00"
+}

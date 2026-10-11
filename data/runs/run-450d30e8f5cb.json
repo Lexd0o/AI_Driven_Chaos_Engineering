@@ -1,0 +1,67 @@
+{
+  "run_id": "run-450d30e8f5cb",
+  "mode": "preview",
+  "status": "preview_completed",
+  "started_at": "2026-10-11T00:50:09.247712+00:00",
+  "fault_injected": false,
+  "samples": [],
+  "events": [
+    {
+      "stage": "server_validation",
+      "observed_at": "2026-10-11T00:50:09.702683+00:00"
+    },
+    {
+      "stage": "preview_completed",
+      "observed_at": "2026-10-11T00:50:10.622710+00:00"
+    }
+  ],
+  "cluster": {
+    "context": "docker-desktop",
+    "namespace": "otel-demo",
+    "kubectl_path": "kubectl"
+  },
+  "plan": {
+    "target_service": "astronomy-db",
+    "fault_type": "network_delay",
+    "hypothesis": "astronomy-db: no hpa shared dependency (has_hpa=False, 2 callers - can't absorb a traffic or latency spike) - expect astronomy-db's callers to see errors or latency until the fault clears.",
+    "duration_seconds": 60,
+    "latency_ms": 200,
+    "loss_percent": 0,
+    "duplicate_percent": 0,
+    "cpu_workers": 0,
+    "pod_count": 1
+  },
+  "manifest": {
+    "apiVersion": "chaos-mesh.org/v1alpha1",
+    "kind": "NetworkChaos",
+    "metadata": {
+      "name": "reslab-run-450d30e8f5cb",
+      "namespace": "otel-demo",
+      "labels": {
+        "reslab-run-id": "run-450d30e8f5cb"
+      }
+    },
+    "spec": {
+      "mode": "one",
+      "selector": {
+        "namespaces": [
+          "otel-demo"
+        ],
+        "labelSelectors": {
+          "opentelemetry.io/name": "astronomy-db"
+        }
+      },
+      "duration": "60s",
+      "action": "delay",
+      "delay": {
+        "latency": "200ms",
+        "jitter": "0ms",
+        "correlation": "0"
+      }
+    }
+  },
+  "resource": {
+    "kind": "networkchaos",
+    "name": "reslab-run-450d30e8f5cb"
+  }
+}

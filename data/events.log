@@ -1,0 +1,15 @@
+2026-10-11T00:50:05.261259+00:00 exp-004 preview start (pod_kill on currency)
+2026-10-11T00:50:06.622924+00:00 exp-004 preview preview_completed stop_reason=None
+2026-10-11T00:50:07.414548+00:00 exp-002 preview start (cpu_stress on product-catalog)
+2026-10-11T00:50:08.390226+00:00 exp-002 preview preview_completed stop_reason=None
+2026-10-11T00:50:09.247100+00:00 exp-003 preview start (network_delay on astronomy-db)
+2026-10-11T00:50:10.630445+00:00 exp-003 preview preview_completed stop_reason=None
+2026-10-11T00:50:27.524243+00:00 exp-004 execute start (pod_kill on currency)
+2026-10-11T00:52:41.256800+00:00 exp-004 execute execute_completed stop_reason=observation_finished
+2026-10-11T00:52:41.259470+00:00 exp-004 outcome=survived record=data/runs\exp-004-r1.json
+2026-10-11T00:52:59.203607+00:00 exp-002 execute start (cpu_stress on product-catalog)
+2026-10-11T00:56:51.636072+00:00 exp-002 execute execute_completed stop_reason=probe_threshold_breach
+2026-10-11T00:56:51.638487+00:00 exp-002 outcome=not_recovered record=data/runs\exp-002-r1.json
+2026-10-11T01:02:35.449083+00:00 exp-006 execute start (network_delay on shipping)
+2026-10-11T01:04:48.342058+00:00 exp-006 execute execute_completed stop_reason=duration_finished
+2026-10-11T01:04:48.345215+00:00 exp-006 outcome=survived record=data/runs\exp-006-r1.json

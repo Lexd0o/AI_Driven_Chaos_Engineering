@@ -1,0 +1,1095 @@
+{
+  "run_id": "run-eb8231230c45",
+  "mode": "execute",
+  "status": "execute_completed",
+  "started_at": "2026-10-11T00:52:59.204475+00:00",
+  "fault_injected": true,
+  "samples": [
+    {
+      "observed_at": "2026-10-11T00:53:03.355559+00:00",
+      "ok": true,
+      "latency_ms": 215.35,
+      "error": null,
+      "journeys": {
+        "ads-recs": {
+          "observed_at": "2026-10-11T00:53:03.315789+00:00",
+          "ok": true,
+          "latency_ms": 215.35,
+          "error": null
+        },
+        "browse": {
+          "observed_at": "2026-10-11T00:53:03.355496+00:00",
+          "ok": true,
+          "latency_ms": 39.65,
+          "error": null
+        }
+      },
+      "stage": "baseline"
+    },
+    {
+      "observed_at": "2026-10-11T00:53:05.529099+00:00",
+      "ok": true,
+      "latency_ms": 116.13,
+      "error": null,
+      "journeys": {
+        "ads-recs": {
+          "observed_at": "2026-10-11T00:53:05.476396+00:00",
+          "ok": true,
+          "latency_ms": 116.13,
+          "error": null
+        },
+        "browse": {
+          "observed_at": "2026-10-11T00:53:05.529045+00:00",
+          "ok": true,
+          "latency_ms": 52.59,
+          "error": null
+        }
+      },
+      "stage": "baseline"
+    },
+    {
+      "observed_at": "2026-10-11T00:53:07.892816+00:00",
+      "ok": true,
+      "latency_ms": 242.9,
+      "error": null,
+      "journeys": {
+        "ads-recs": {
+          "observed_at": "2026-10-11T00:53:07.776700+00:00",
+          "ok": true,
+          "latency_ms": 242.9,
+          "error": null
+        },
+        "browse": {
+          "observed_at": "2026-10-11T00:53:07.892770+00:00",
+          "ok": true,
+          "latency_ms": 116.01,
+          "error": null
+        }
+      },
+      "stage": "baseline"
+    },
+    {
+      "observed_at": "2026-10-11T00:53:10.156098+00:00",
+      "ok": true,
+      "latency_ms": 160.51,
+      "error": null,
+      "journeys": {
+        "ads-recs": {
+          "observed_at": "2026-10-11T00:53:10.057097+00:00",
+          "ok": true,
+          "latency_ms": 160.51,
+          "error": null
+        },
+        "browse": {
+          "observed_at": "2026-10-11T00:53:10.156043+00:00",
+          "ok": true,
+          "latency_ms": 98.88,
+          "error": null
+        }
+      },
+      "stage": "baseline"
+    },
+    {
+      "observed_at": "2026-10-11T00:53:12.225128+00:00",
+      "ok": true,
+      "latency_ms": 37.6,
+      "error": null,
+      "journeys": {
+        "ads-recs": {
+          "observed_at": "2026-10-11T00:53:12.201941+00:00",
+          "ok": true,
+          "latency_ms": 37.6,
+          "error": null
+        },
+        "browse": {
+          "observed_at": "2026-10-11T00:53:12.225007+00:00",
+          "ok": true,
+          "latency_ms": 23.03,
+          "error": null
+        }
+      },
+      "stage": "baseline"
+    },
+    {
+      "observed_at": "2026-10-11T00:53:14.355905+00:00",
+      "ok": true,
+      "latency_ms": 86.56,
+      "error": null,
+      "journeys": {
+        "ads-recs": {
+          "observed_at": "2026-10-11T00:53:14.315121+00:00",
+          "ok": true,
+          "latency_ms": 86.56,
+          "error": null
+        },
+        "browse": {
+          "observed_at": "2026-10-11T00:53:14.355849+00:00",
+          "ok": true,
+          "latency_ms": 40.67,
+          "error": null
+        }
+      },
+      "stage": "baseline"
+    },
+    {
+      "observed_at": "2026-10-11T00:53:16.676530+00:00",
+      "ok": true,
+      "latency_ms": 213.59,
+      "error": null,
+      "journeys": {
+        "ads-recs": {
+          "observed_at": "2026-10-11T00:53:16.573631+00:00",
+          "ok": true,
+          "latency_ms": 213.59,
+          "error": null
+        },
+        "browse": {
+          "observed_at": "2026-10-11T00:53:16.676473+00:00",
+          "ok": true,
+          "latency_ms": 102.79,
+          "error": null
+        }
+      },
+      "stage": "baseline"
+    },
+    {
+      "observed_at": "2026-10-11T00:53:18.841907+00:00",
+      "ok": true,
+      "latency_ms": 109.43,
+      "error": null,
+      "journeys": {
+        "ads-recs": {
+          "observed_at": "2026-10-11T00:53:18.790942+00:00",
+          "ok": true,
+          "latency_ms": 109.43,
+          "error": null
+        },
+        "browse": {
+          "observed_at": "2026-10-11T00:53:18.841853+00:00",
+          "ok": true,
+          "latency_ms": 50.86,
+          "error": null
+        }
+      },
+      "stage": "baseline"
+    },
+    {
+      "observed_at": "2026-10-11T00:53:20.925039+00:00",
+      "ok": true,
+      "latency_ms": 56.03,
+      "error": null,
+      "journeys": {
+        "ads-recs": {
+          "observed_at": "2026-10-11T00:53:20.902154+00:00",
+          "ok": true,
+          "latency_ms": 56.03,
+          "error": null
+        },
+        "browse": {
+          "observed_at": "2026-10-11T00:53:20.924996+00:00",
+          "ok": true,
+          "latency_ms": 22.77,
+          "error": null
+        }
+      },
+      "stage": "baseline"
+    },
+    {
+      "observed_at": "2026-10-11T00:53:23.200992+00:00",
+      "ok": true,
+      "latency_ms": 197.31,
+      "error": null,
+      "journeys": {
+        "ads-recs": {
+          "observed_at": "2026-10-11T00:53:23.126758+00:00",
+          "ok": true,
+          "latency_ms": 197.31,
+          "error": null
+        },
+        "browse": {
+          "observed_at": "2026-10-11T00:53:23.200937+00:00",
+          "ok": true,
+          "latency_ms": 74.12,
+          "error": null
+        }
+      },
+      "stage": "baseline"
+    },
+    {
+      "observed_at": "2026-10-11T00:53:25.589003+00:00",
+      "ok": true,
+      "latency_ms": 277.76,
+      "error": null,
+      "journeys": {
+        "ads-recs": {
+          "observed_at": "2026-10-11T00:53:25.485084+00:00",
+          "ok": true,
+          "latency_ms": 277.76,
+          "error": null
+        },
+        "browse": {
+          "observed_at": "2026-10-11T00:53:25.588950+00:00",
+          "ok": true,
+          "latency_ms": 103.8,
+          "error": null
+        }
+      },
+      "stage": "baseline"
+    },
+    {
+      "observed_at": "2026-10-11T00:53:27.768328+00:00",
+      "ok": true,
+      "latency_ms": 100.48,
+      "error": null,
+      "journeys": {
+        "ads-recs": {
+          "observed_at": "2026-10-11T00:53:27.693903+00:00",
+          "ok": true,
+          "latency_ms": 100.48,
+          "error": null
+        },
+        "browse": {
+          "observed_at": "2026-10-11T00:53:27.768269+00:00",
+          "ok": true,
+          "latency_ms": 74.31,
+          "error": null
+        }
+      },
+      "stage": "baseline"
+    },
+    {
+      "observed_at": "2026-10-11T00:53:30.020238+00:00",
+      "ok": true,
+      "latency_ms": 172.31,
+      "error": null,
+      "journeys": {
+        "ads-recs": {
+          "observed_at": "2026-10-11T00:53:29.945041+00:00",
+          "ok": true,
+          "latency_ms": 172.31,
+          "error": null
+        },
+        "browse": {
+          "observed_at": "2026-10-11T00:53:30.020185+00:00",
+          "ok": true,
+          "latency_ms": 75.09,
+          "error": null
+        }
+      },
+      "stage": "baseline"
+    },
+    {
+      "observed_at": "2026-10-11T00:53:32.157591+00:00",
+      "ok": true,
+      "latency_ms": 97.71,
+      "error": null,
+      "journeys": {
+        "ads-recs": {
+          "observed_at": "2026-10-11T00:53:32.122417+00:00",
+          "ok": true,
+          "latency_ms": 97.71,
+          "error": null
+        },
+        "browse": {
+          "observed_at": "2026-10-11T00:53:32.157536+00:00",
+          "ok": true,
+          "latency_ms": 35.07,
+          "error": null
+        }
+      },
+      "stage": "baseline"
+    },
+    {
+      "observed_at": "2026-10-11T00:53:37.399054+00:00",
+      "ok": true,
+      "latency_ms": 335.0,
+      "error": null,
+      "journeys": {
+        "ads-recs": {
+          "observed_at": "2026-10-11T00:53:37.220961+00:00",
+          "ok": true,
+          "latency_ms": 335.0,
+          "error": null
+        },
+        "browse": {
+          "observed_at": "2026-10-11T00:53:37.398996+00:00",
+          "ok": true,
+          "latency_ms": 177.98,
+          "error": null
+        }
+      },
+      "stage": "during_fault"
+    },
+    {
+      "observed_at": "2026-10-11T00:53:45.815891+00:00",
+      "ok": false,
+      "latency_ms": 3016.75,
+      "error": "ads-recs: timed out; browse: timed out",
+      "journeys": {
+        "ads-recs": {
+          "observed_at": "2026-10-11T00:53:42.803111+00:00",
+          "ok": false,
+          "latency_ms": 3016.75,
+          "error": "timed out"
+        },
+        "browse": {
+          "observed_at": "2026-10-11T00:53:45.815822+00:00",
+          "ok": false,
+          "latency_ms": 3012.65,
+          "error": "timed out"
+        }
+      },
+      "stage": "during_fault"
+    },
+    {
+      "observed_at": "2026-10-11T00:53:54.707534+00:00",
+      "ok": false,
+      "latency_ms": 3005.97,
+      "error": "ads-recs: timed out; browse: timed out",
+      "journeys": {
+        "ads-recs": {
+          "observed_at": "2026-10-11T00:53:51.701465+00:00",
+          "ok": false,
+          "latency_ms": 3001.75,
+          "error": "timed out"
+        },
+        "browse": {
+          "observed_at": "2026-10-11T00:53:54.707488+00:00",
+          "ok": false,
+          "latency_ms": 3005.97,
+          "error": "timed out"
+        }
+      },
+      "stage": "during_fault"
+    },
+    {
+      "observed_at": "2026-10-11T00:54:03.300542+00:00",
+      "ok": false,
+      "latency_ms": 3018.54,
+      "error": "ads-recs: timed out; browse: timed out",
+      "journeys": {
+        "ads-recs": {
+          "observed_at": "2026-10-11T00:54:00.281888+00:00",
+          "ok": false,
+          "latency_ms": 3014.08,
+          "error": "timed out"
+        },
+        "browse": {
+          "observed_at": "2026-10-11T00:54:03.300484+00:00",
+          "ok": false,
+          "latency_ms": 3018.54,
+          "error": "timed out"
+        }
+      },
+      "stage": "during_fault"
+    },
+    {
+      "observed_at": "2026-10-11T00:54:24.343281+00:00",
+      "ok": false,
+      "latency_ms": 3008.87,
+      "error": "ads-recs: timed out; browse: timed out",
+      "journeys": {
+        "ads-recs": {
+          "observed_at": "2026-10-11T00:54:21.335702+00:00",
+          "ok": false,
+          "latency_ms": 3008.87,
+          "error": "timed out"
+        },
+        "browse": {
+          "observed_at": "2026-10-11T00:54:24.343228+00:00",
+          "ok": false,
+          "latency_ms": 3007.47,
+          "error": "timed out"
+        }
+      },
+      "stage": "recovery",
+      "deployment_ready": true
+    },
+    {
+      "observed_at": "2026-10-11T00:54:32.847627+00:00",
+      "ok": false,
+      "latency_ms": 3008.27,
+      "error": "ads-recs: timed out; browse: timed out",
+      "journeys": {
+        "ads-recs": {
+          "observed_at": "2026-10-11T00:54:29.842157+00:00",
+          "ok": false,
+          "latency_ms": 3008.27,
+          "error": "timed out"
+        },
+        "browse": {
+          "observed_at": "2026-10-11T00:54:32.847574+00:00",
+          "ok": false,
+          "latency_ms": 3005.36,
+          "error": "timed out"
+        }
+      },
+      "stage": "recovery",
+      "deployment_ready": true
+    },
+    {
+      "observed_at": "2026-10-11T00:54:41.301736+00:00",
+      "ok": false,
+      "latency_ms": 3019.41,
+      "error": "ads-recs: timed out; browse: timed out",
+      "journeys": {
+        "ads-recs": {
+          "observed_at": "2026-10-11T00:54:38.299884+00:00",
+          "ok": false,
+          "latency_ms": 3019.41,
+          "error": "timed out"
+        },
+        "browse": {
+          "observed_at": "2026-10-11T00:54:41.301685+00:00",
+          "ok": false,
+          "latency_ms": 3001.74,
+          "error": "timed out"
+        }
+      },
+      "stage": "recovery",
+      "deployment_ready": true
+    },
+    {
+      "observed_at": "2026-10-11T00:54:50.329433+00:00",
+      "ok": false,
+      "latency_ms": 3023.85,
+      "error": "ads-recs: timed out; browse: timed out",
+      "journeys": {
+        "ads-recs": {
+          "observed_at": "2026-10-11T00:54:47.305460+00:00",
+          "ok": false,
+          "latency_ms": 3023.8,
+          "error": "timed out"
+        },
+        "browse": {
+          "observed_at": "2026-10-11T00:54:50.329381+00:00",
+          "ok": false,
+          "latency_ms": 3023.85,
+          "error": "timed out"
+        }
+      },
+      "stage": "recovery",
+      "deployment_ready": true
+    },
+    {
+      "observed_at": "2026-10-11T00:54:58.826019+00:00",
+      "ok": false,
+      "latency_ms": 3014.11,
+      "error": "ads-recs: timed out; browse: timed out",
+      "journeys": {
+        "ads-recs": {
+          "observed_at": "2026-10-11T00:54:55.819831+00:00",
+          "ok": false,
+          "latency_ms": 3014.11,
+          "error": "timed out"
+        },
+        "browse": {
+          "observed_at": "2026-10-11T00:54:58.825963+00:00",
+          "ok": false,
+          "latency_ms": 3006.07,
+          "error": "timed out"
+        }
+      },
+      "stage": "recovery",
+      "deployment_ready": true
+    },
+    {
+      "observed_at": "2026-10-11T00:55:07.522723+00:00",
+      "ok": false,
+      "latency_ms": 3013.09,
+      "error": "ads-recs: timed out; browse: timed out",
+      "journeys": {
+        "ads-recs": {
+          "observed_at": "2026-10-11T00:55:04.511624+00:00",
+          "ok": false,
+          "latency_ms": 3013.09,
+          "error": "timed out"
+        },
+        "browse": {
+          "observed_at": "2026-10-11T00:55:07.522671+00:00",
+          "ok": false,
+          "latency_ms": 3010.99,
+          "error": "timed out"
+        }
+      },
+      "stage": "recovery",
+      "deployment_ready": true
+    },
+    {
+      "observed_at": "2026-10-11T00:55:16.131135+00:00",
+      "ok": false,
+      "latency_ms": 3010.37,
+      "error": "ads-recs: timed out; browse: timed out",
+      "journeys": {
+        "ads-recs": {
+          "observed_at": "2026-10-11T00:55:13.121806+00:00",
+          "ok": false,
+          "latency_ms": 3010.37,
+          "error": "timed out"
+        },
+        "browse": {
+          "observed_at": "2026-10-11T00:55:16.131085+00:00",
+          "ok": false,
+          "latency_ms": 3009.2,
+          "error": "timed out"
+        }
+      },
+      "stage": "recovery",
+      "deployment_ready": true
+    },
+    {
+      "observed_at": "2026-10-11T00:55:24.558616+00:00",
+      "ok": false,
+      "latency_ms": 3010.58,
+      "error": "ads-recs: timed out; browse: timed out",
+      "journeys": {
+        "ads-recs": {
+          "observed_at": "2026-10-11T00:55:21.548981+00:00",
+          "ok": false,
+          "latency_ms": 3010.58,
+          "error": "timed out"
+        },
+        "browse": {
+          "observed_at": "2026-10-11T00:55:24.558565+00:00",
+          "ok": false,
+          "latency_ms": 3009.53,
+          "error": "timed out"
+        }
+      },
+      "stage": "recovery",
+      "deployment_ready": true
+    },
+    {
+      "observed_at": "2026-10-11T00:55:33.081193+00:00",
+      "ok": false,
+      "latency_ms": 3030.77,
+      "error": "ads-recs: timed out; browse: timed out",
+      "journeys": {
+        "ads-recs": {
+          "observed_at": "2026-10-11T00:55:30.065954+00:00",
+          "ok": false,
+          "latency_ms": 3030.77,
+          "error": "timed out"
+        },
+        "browse": {
+          "observed_at": "2026-10-11T00:55:33.081115+00:00",
+          "ok": false,
+          "latency_ms": 3015.1,
+          "error": "timed out"
+        }
+      },
+      "stage": "recovery",
+      "deployment_ready": true
+    },
+    {
+      "observed_at": "2026-10-11T00:55:41.491919+00:00",
+      "ok": false,
+      "latency_ms": 3013.44,
+      "error": "ads-recs: timed out; browse: timed out",
+      "journeys": {
+        "ads-recs": {
+          "observed_at": "2026-10-11T00:55:38.478374+00:00",
+          "ok": false,
+          "latency_ms": 3010.47,
+          "error": "timed out"
+        },
+        "browse": {
+          "observed_at": "2026-10-11T00:55:41.491867+00:00",
+          "ok": false,
+          "latency_ms": 3013.44,
+          "error": "timed out"
+        }
+      },
+      "stage": "recovery",
+      "deployment_ready": true
+    },
+    {
+      "observed_at": "2026-10-11T00:55:49.917721+00:00",
+      "ok": false,
+      "latency_ms": 3015.3,
+      "error": "ads-recs: timed out; browse: timed out",
+      "journeys": {
+        "ads-recs": {
+          "observed_at": "2026-10-11T00:55:46.907570+00:00",
+          "ok": false,
+          "latency_ms": 3015.3,
+          "error": "timed out"
+        },
+        "browse": {
+          "observed_at": "2026-10-11T00:55:49.917649+00:00",
+          "ok": false,
+          "latency_ms": 3009.97,
+          "error": "timed out"
+        }
+      },
+      "stage": "recovery",
+      "deployment_ready": true
+    },
+    {
+      "observed_at": "2026-10-11T00:55:58.297543+00:00",
+      "ok": false,
+      "latency_ms": 3006.35,
+      "error": "ads-recs: timed out; browse: timed out",
+      "journeys": {
+        "ads-recs": {
+          "observed_at": "2026-10-11T00:55:55.292958+00:00",
+          "ok": false,
+          "latency_ms": 3006.35,
+          "error": "timed out"
+        },
+        "browse": {
+          "observed_at": "2026-10-11T00:55:58.297494+00:00",
+          "ok": false,
+          "latency_ms": 3004.48,
+          "error": "timed out"
+        }
+      },
+      "stage": "recovery",
+      "deployment_ready": true
+    },
+    {
+      "observed_at": "2026-10-11T00:56:06.675611+00:00",
+      "ok": false,
+      "latency_ms": 3021.97,
+      "error": "ads-recs: timed out; browse: timed out",
+      "journeys": {
+        "ads-recs": {
+          "observed_at": "2026-10-11T00:56:03.653447+00:00",
+          "ok": false,
+          "latency_ms": 3008.51,
+          "error": "timed out"
+        },
+        "browse": {
+          "observed_at": "2026-10-11T00:56:06.675496+00:00",
+          "ok": false,
+          "latency_ms": 3021.97,
+          "error": "timed out"
+        }
+      },
+      "stage": "recovery",
+      "deployment_ready": true
+    },
+    {
+      "observed_at": "2026-10-11T00:56:15.462676+00:00",
+      "ok": false,
+      "latency_ms": 3017.44,
+      "error": "ads-recs: timed out; browse: timed out",
+      "journeys": {
+        "ads-recs": {
+          "observed_at": "2026-10-11T00:56:12.445128+00:00",
+          "ok": false,
+          "latency_ms": 3012.46,
+          "error": "timed out"
+        },
+        "browse": {
+          "observed_at": "2026-10-11T00:56:15.462621+00:00",
+          "ok": false,
+          "latency_ms": 3017.44,
+          "error": "timed out"
+        }
+      },
+      "stage": "recovery",
+      "deployment_ready": true
+    },
+    {
+      "observed_at": "2026-10-11T00:56:23.804030+00:00",
+      "ok": false,
+      "latency_ms": 3016.23,
+      "error": "ads-recs: timed out; browse: timed out",
+      "journeys": {
+        "ads-recs": {
+          "observed_at": "2026-10-11T00:56:20.789524+00:00",
+          "ok": false,
+          "latency_ms": 3016.23,
+          "error": "timed out"
+        },
+        "browse": {
+          "observed_at": "2026-10-11T00:56:23.803979+00:00",
+          "ok": false,
+          "latency_ms": 3014.25,
+          "error": "timed out"
+        }
+      },
+      "stage": "recovery",
+      "deployment_ready": true
+    },
+    {
+      "observed_at": "2026-10-11T00:56:32.419767+00:00",
+      "ok": false,
+      "latency_ms": 3055.13,
+      "error": "ads-recs: timed out; browse: timed out",
+      "journeys": {
+        "ads-recs": {
+          "observed_at": "2026-10-11T00:56:29.409162+00:00",
+          "ok": false,
+          "latency_ms": 3055.13,
+          "error": "timed out"
+        },
+        "browse": {
+          "observed_at": "2026-10-11T00:56:32.419716+00:00",
+          "ok": false,
+          "latency_ms": 3010.49,
+          "error": "timed out"
+        }
+      },
+      "stage": "recovery",
+      "deployment_ready": true
+    },
+    {
+      "observed_at": "2026-10-11T00:56:40.884944+00:00",
+      "ok": false,
+      "latency_ms": 3016.17,
+      "error": "ads-recs: timed out; browse: timed out",
+      "journeys": {
+        "ads-recs": {
+          "observed_at": "2026-10-11T00:56:37.868590+00:00",
+          "ok": false,
+          "latency_ms": 3004.02,
+          "error": "timed out"
+        },
+        "browse": {
+          "observed_at": "2026-10-11T00:56:40.884835+00:00",
+          "ok": false,
+          "latency_ms": 3016.17,
+          "error": "timed out"
+        }
+      },
+      "stage": "recovery",
+      "deployment_ready": true
+    },
+    {
+      "observed_at": "2026-10-11T00:56:49.311243+00:00",
+      "ok": false,
+      "latency_ms": 3015.79,
+      "error": "ads-recs: timed out; browse: timed out",
+      "journeys": {
+        "ads-recs": {
+          "observed_at": "2026-10-11T00:56:46.295338+00:00",
+          "ok": false,
+          "latency_ms": 3005.62,
+          "error": "timed out"
+        },
+        "browse": {
+          "observed_at": "2026-10-11T00:56:49.311189+00:00",
+          "ok": false,
+          "latency_ms": 3015.79,
+          "error": "timed out"
+        }
+      },
+      "stage": "recovery",
+      "deployment_ready": true
+    }
+  ],
+  "events": [
+    {
+      "stage": "server_validation",
+      "observed_at": "2026-10-11T00:52:59.663575+00:00"
+    },
+    {
+      "stage": "baseline",
+      "observed_at": "2026-10-11T00:53:03.096204+00:00"
+    },
+    {
+      "stage": "submitting",
+      "observed_at": "2026-10-11T00:53:35.196065+00:00"
+    },
+    {
+      "stage": "observing",
+      "observed_at": "2026-10-11T00:53:35.929336+00:00"
+    },
+    {
+      "stage": "injection_confirmed",
+      "observed_at": "2026-10-11T00:53:48.693668+00:00"
+    },
+    {
+      "stage": "recovery_watch",
+      "observed_at": "2026-10-11T00:54:18.323465+00:00"
+    }
+  ],
+  "cluster": {
+    "context": "docker-desktop",
+    "namespace": "otel-demo",
+    "kubectl_path": "kubectl"
+  },
+  "plan": {
+    "target_service": "product-catalog",
+    "fault_type": "cpu_stress",
+    "hypothesis": "product-catalog: no liveness probe (has_liveness=False - a hung (not crashed) process won't be auto-restarted) - expect product-catalog's callers to see errors or latency until the fault clears.",
+    "duration_seconds": 60,
+    "latency_ms": 0,
+    "loss_percent": 0,
+    "duplicate_percent": 0,
+    "cpu_workers": 2,
+    "pod_count": 1
+  },
+  "manifest": {
+    "apiVersion": "chaos-mesh.org/v1alpha1",
+    "kind": "StressChaos",
+    "metadata": {
+      "name": "reslab-run-eb8231230c45",
+      "namespace": "otel-demo",
+      "labels": {
+        "reslab-run-id": "run-eb8231230c45"
+      }
+    },
+    "spec": {
+      "mode": "one",
+      "selector": {
+        "namespaces": [
+          "otel-demo"
+        ],
+        "labelSelectors": {
+          "opentelemetry.io/name": "product-catalog"
+        }
+      },
+      "duration": "60s",
+      "stressors": {
+        "cpu": {
+          "workers": 2,
+          "load": 100
+        }
+      }
+    }
+  },
+  "resource": {
+    "kind": "stresschaos",
+    "name": "reslab-run-eb8231230c45"
+  },
+  "original_state": {
+    "apiVersion": "apps/v1",
+    "kind": "Deployment",
+    "metadata": {
+      "annotations": {
+        "deployment.kubernetes.io/revision": "1",
+        "meta.helm.sh/release-name": "otel-demo",
+        "meta.helm.sh/release-namespace": "otel-demo"
+      },
+      "creationTimestamp": "2026-10-10T07:07:37Z",
+      "generation": 1,
+      "labels": {
+        "app.kubernetes.io/component": "product-catalog",
+        "app.kubernetes.io/managed-by": "Helm",
+        "app.kubernetes.io/name": "product-catalog",
+        "app.kubernetes.io/part-of": "opentelemetry-demo",
+        "app.kubernetes.io/version": "3.1.0",
+        "helm.sh/chart": "opentelemetry-demo-0.42.3",
+        "opentelemetry.io/name": "product-catalog"
+      },
+      "name": "product-catalog",
+      "namespace": "otel-demo",
+      "resourceVersion": "99329",
+      "uid": "eca72864-301a-4cb5-be70-88aee854a7b4"
+    },
+    "spec": {
+      "progressDeadlineSeconds": 600,
+      "replicas": 1,
+      "revisionHistoryLimit": 10,
+      "selector": {
+        "matchLabels": {
+          "opentelemetry.io/name": "product-catalog"
+        }
+      },
+      "strategy": {
+        "rollingUpdate": {
+          "maxSurge": "25%",
+          "maxUnavailable": "25%"
+        },
+        "type": "RollingUpdate"
+      },
+      "template": {
+        "metadata": {
+          "annotations": {
+            "resource.opentelemetry.io/service.namespace": "opentelemetry-demo"
+          },
+          "labels": {
+            "app.kubernetes.io/component": "product-catalog",
+            "app.kubernetes.io/name": "product-catalog",
+            "app.kubernetes.io/version": "3.1.0",
+            "opentelemetry.io/name": "product-catalog"
+          }
+        },
+        "spec": {
+          "containers": [
+            {
+              "env": [
+                {
+                  "name": "OTEL_SERVICE_NAME",
+                  "valueFrom": {
+                    "fieldRef": {
+                      "apiVersion": "v1",
+                      "fieldPath": "metadata.labels['app.kubernetes.io/component']"
+                    }
+                  }
+                },
+                {
+                  "name": "OTEL_COLLECTOR_NAME",
+                  "value": "otel-collector"
+                },
+                {
+                  "name": "OTEL_EXPORTER_OTLP_METRICS_TEMPORALITY_PREFERENCE",
+                  "value": "cumulative"
+                },
+                {
+                  "name": "OTEL_EXPORTER_OTLP_METRICS_DEFAULT_HISTOGRAM_AGGREGATION",
+                  "value": "explicit_bucket_histogram"
+                },
+                {
+                  "name": "PRODUCT_CATALOG_PORT",
+                  "value": "8080"
+                },
+                {
+                  "name": "FLAGD_HOST",
+                  "value": "flagd"
+                },
+                {
+                  "name": "FLAGD_PORT",
+                  "value": "8013"
+                },
+                {
+                  "name": "GOMEMLIMIT",
+                  "value": "16MiB"
+                },
+                {
+                  "name": "OTEL_GO_X_OBSERVABILITY",
+                  "value": "true"
+                },
+                {
+                  "name": "DB_CONNECTION_STRING",
+                  "value": "postgres://astronomy_user:astronomy_password@astronomy-db/astronomy_db?sslmode=disable"
+                },
+                {
+                  "name": "OTEL_SEMCONV_STABILITY_OPT_IN",
+                  "value": "database"
+                },
+                {
+                  "name": "OTEL_EXPORTER_OTLP_ENDPOINT",
+                  "value": "http://$(OTEL_COLLECTOR_NAME):4317"
+                },
+                {
+                  "name": "OPAMP_SERVER_ENDPOINT",
+                  "value": "ws://opamp-server:4320/v1/opamp"
+                },
+                {
+                  "name": "OPAMP_SERVER_TLS_INSECURE_SKIP_VERIFY",
+                  "value": "false"
+                },
+                {
+                  "name": "OTEL_CONFIG_FILE",
+                  "value": "/otel-config.yml"
+                },
+                {
+                  "name": "OTEL_RESOURCE_ATTRIBUTES",
+                  "value": "service.version=3.1.0,service.criticality=high"
+                }
+              ],
+              "image": "ghcr.io/open-telemetry/demo:3.1.0-product-catalog",
+              "imagePullPolicy": "IfNotPresent",
+              "name": "product-catalog",
+              "ports": [
+                {
+                  "containerPort": 8080,
+                  "name": "service",
+                  "protocol": "TCP"
+                }
+              ],
+              "resources": {
+                "limits": {
+                  "memory": "32Mi"
+                }
+              },
+              "securityContext": {
+                "readOnlyRootFilesystem": true
+              },
+              "terminationMessagePath": "/dev/termination-log",
+              "terminationMessagePolicy": "File",
+              "volumeMounts": [
+                {
+                  "mountPath": "/otel-config.yml",
+                  "name": "product-catalog-otel-config",
+                  "subPath": "otel-config.yml"
+                },
+                {
+                  "mountPath": "/tmp",
+                  "name": "tmp"
+                }
+              ]
+            }
+          ],
+          "dnsPolicy": "ClusterFirst",
+          "initContainers": [
+            {
+              "command": [
+                "sh",
+                "-c",
+                "until nc -z -v -w30 astronomy-db 5432; do echo waiting for astronomy-db; sleep 2; done;"
+              ],
+              "image": "busybox:latest",
+              "imagePullPolicy": "Always",
+              "name": "wait-for-astronomy-db",
+              "resources": {},
+              "terminationMessagePath": "/dev/termination-log",
+              "terminationMessagePolicy": "File"
+            }
+          ],
+          "restartPolicy": "Always",
+          "schedulerName": "default-scheduler",
+          "securityContext": {},
+          "serviceAccount": "otel-demo",
+          "serviceAccountName": "otel-demo",
+          "terminationGracePeriodSeconds": 30,
+          "volumes": [
+            {
+              "configMap": {
+                "defaultMode": 420,
+                "name": "product-catalog-product-catalog-otel-config"
+              },
+              "name": "product-catalog-otel-config"
+            },
+            {
+              "emptyDir": {},
+              "name": "tmp"
+            }
+          ]
+        }
+      }
+    },
+    "status": {
+      "availableReplicas": 1,
+      "conditions": [
+        {
+          "lastTransitionTime": "2026-10-10T07:32:29Z",
+          "lastUpdateTime": "2026-10-10T07:32:29Z",
+          "message": "ReplicaSet \"product-catalog-5956875555\" has successfully progressed.",
+          "reason": "NewReplicaSetAvailable",
+          "status": "True",
+          "type": "Progressing"
+        },
+        {
+          "lastTransitionTime": "2026-10-11T00:36:13Z",
+          "lastUpdateTime": "2026-10-11T00:36:13Z",
+          "message": "Deployment has minimum availability.",
+          "reason": "MinimumReplicasAvailable",
+          "status": "True",
+          "type": "Available"
+        }
+      ],
+      "observedGeneration": 1,
+      "readyReplicas": 1,
+      "replicas": 1,
+      "terminatingReplicas": 0,
+      "updatedReplicas": 1
+    }
+  },
+  "action_started_at": "2026-10-11T00:53:35.196036+00:00",
+  "injection_status": {
+    "Selected": true,
+    "AllInjected": true
+  },
+  "t_breach": "2026-10-11T00:53:45.815891+00:00",
+  "fault_confirmed_at": "2026-10-11T00:53:48.693641+00:00",
+  "stop_reason": "probe_threshold_breach",
+  "t_detect": "2026-10-11T00:54:03.304739+00:00",
+  "t_clear": "2026-10-11T00:54:18.319252+00:00",
+  "recovery_stop_reason": "recovery_budget_exceeded",
+  "finished_at": "2026-10-11T00:56:51.631440+00:00"
+}
