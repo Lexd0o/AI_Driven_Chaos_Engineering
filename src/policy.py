@@ -25,20 +25,35 @@ def load_yaml(path: str) -> dict:
         return yaml.safe_load(f) or {}
 
 
+def is_number(x) -> bool:
+    return isinstance(x, (int, float)) and not isinstance(x, bool) and x == x and abs(x) != float("inf")
+
+
 def check_item(item: dict, policy: dict) -> list[str]:
     """Return policy violations for one plan item (empty list = approved)."""
-    problems = []
-    target = item["target"]
+    if "forbidden_targets" not in policy:
+        # fail closed: a policy file that lost this key must not silently allow every target
+        raise SystemExit(f"{POLICY_PATH} has no forbidden_targets key - refusing to validate without it")
 
-    if target["namespace"] != policy["allowed_namespace"]:
-        problems.append(f"namespace '{target['namespace']}' is not the allowed namespace "
+    problems = []
+    target = item.get("target")
+    if not isinstance(target, dict) or "service" not in target:
+        return ["missing target.service"]
+    if "fault_type" not in item:
+        return ["missing fault_type"]
+
+    if target.get("namespace") != policy["allowed_namespace"]:
+        problems.append(f"namespace '{target.get('namespace')}' is not the allowed namespace "
                          f"'{policy['allowed_namespace']}'")
 
-    if target["service"] in (policy.get("forbidden_targets") or []):
+    if target["service"] in (policy["forbidden_targets"] or []):
         problems.append(f"service '{target['service']}' is on the forbidden_targets list")
 
-    duration = item.get("params", {}).get("duration_s")
-    if duration is None or duration > policy["max_duration_s"]:
+    params = item.get("params") or {}
+    duration = params.get("duration_s")
+    if not is_number(duration) or duration <= 0:
+        problems.append(f"duration_s={duration!r} must be a number > 0")
+    elif duration > policy["max_duration_s"]:
         problems.append(f"duration_s={duration} exceeds max_duration_s={policy['max_duration_s']}")
 
     allowed = policy.get("allowed_fault_types") or {}
@@ -53,12 +68,16 @@ def check_item(item: dict, policy: dict) -> list[str]:
                          f"'{spec.get('mechanism')}' for fault_type '{fault_type}'")
 
     if fault_type == "network_delay":
-        latency = item.get("params", {}).get("latency_ms", 0)
-        if latency > spec.get("max_latency_ms", 0):
+        latency = params.get("latency_ms")
+        if not is_number(latency) or latency <= 0:
+            problems.append(f"latency_ms={latency!r} must be a number > 0")
+        elif latency > spec.get("max_latency_ms", 0):
             problems.append(f"latency_ms={latency} exceeds max_latency_ms={spec.get('max_latency_ms')}")
     if fault_type == "cpu_stress":
-        workers = item.get("params", {}).get("cpu_workers", 0)
-        if workers > spec.get("max_cpu_workers", 0):
+        workers = params.get("cpu_workers")
+        if not is_number(workers) or workers != int(workers) or workers <= 0:
+            problems.append(f"cpu_workers={workers!r} must be an integer > 0")
+        elif workers > spec.get("max_cpu_workers", 0):
             problems.append(f"cpu_workers={workers} exceeds max_cpu_workers={spec.get('max_cpu_workers')}")
 
     return problems

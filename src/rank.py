@@ -188,6 +188,9 @@ def main() -> None:
     with open(OUT_PATH, "w") as f:
         json.dump(ranking, f, indent=2)
 
+    if not ranking:
+        print(f"WARNING: {GRAPH_PATH} has no nodes - wrote an empty {OUT_PATH}")
+        return
     top = ranking[0]
     print(f"wrote {OUT_PATH}: {len(ranking)} candidates ranked")
     print(f"  #1 {top['service']} (score={top['risk_score']}) - {top['reason']}")

@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-10-10T20:38:38.299553+00:00",
+  "generated_at": "2026-10-11T00:46:29.523548+00:00",
   "nodes": [
     {
       "name": "accounting",
@@ -220,51 +220,44 @@
   ],
   "edges": [
     {
-      "from": "frontend-proxy",
-      "to": "frontend",
-      "protocol": "http",
-      "source": "jaeger",
-      "calls": 279
-    },
-    {
       "from": "frontend",
       "to": "ad",
       "protocol": "grpc",
       "source": "jaeger",
-      "calls": 30
+      "calls": 29
     },
     {
-      "from": "frontend",
-      "to": "cart",
+      "from": "frontend-proxy",
+      "to": "frontend",
       "protocol": "http",
       "source": "jaeger",
-      "calls": 98
+      "calls": 278
     },
     {
       "from": "frontend",
       "to": "product-catalog",
       "protocol": "unknown",
       "source": "jaeger",
-      "calls": 276
+      "calls": 265
     },
     {
-      "from": "shipping",
-      "to": "quote",
+      "from": "frontend",
+      "to": "cart",
+      "protocol": "http",
+      "source": "jaeger",
+      "calls": 88
+    },
+    {
+      "from": "checkout",
+      "to": "shipping",
       "protocol": "http",
       "source": "jaeger",
       "calls": 19
     },
     {
-      "from": "checkout",
-      "to": "cart",
+      "from": "shipping",
+      "to": "quote",
       "protocol": "http",
-      "source": "jaeger",
-      "calls": 16
-    },
-    {
-      "from": "checkout",
-      "to": "currency",
-      "protocol": "unknown",
       "source": "jaeger",
       "calls": 25
     },
@@ -277,66 +270,73 @@
     },
     {
       "from": "checkout",
-      "to": "shipping",
+      "to": "cart",
       "protocol": "http",
       "source": "jaeger",
-      "calls": 16
-    },
-    {
-      "from": "checkout",
-      "to": "payment",
-      "protocol": "grpc",
-      "source": "jaeger",
-      "calls": 8
-    },
-    {
-      "from": "frontend",
-      "to": "checkout",
-      "protocol": "unknown",
-      "source": "jaeger",
-      "calls": 8
+      "calls": 21
     },
     {
       "from": "checkout",
       "to": "email",
       "protocol": "http",
       "source": "jaeger",
-      "calls": 7
+      "calls": 10
     },
     {
       "from": "frontend",
+      "to": "checkout",
+      "protocol": "unknown",
+      "source": "jaeger",
+      "calls": 10
+    },
+    {
+      "from": "checkout",
       "to": "currency",
       "protocol": "unknown",
       "source": "jaeger",
-      "calls": 80
+      "calls": 25
+    },
+    {
+      "from": "checkout",
+      "to": "payment",
+      "protocol": "grpc",
+      "source": "jaeger",
+      "calls": 9
     },
     {
       "from": "frontend",
       "to": "shipping",
       "protocol": "http",
       "source": "jaeger",
-      "calls": 11
+      "calls": 19
+    },
+    {
+      "from": "frontend",
+      "to": "currency",
+      "protocol": "unknown",
+      "source": "jaeger",
+      "calls": 101
     },
     {
       "from": "recommendation",
       "to": "product-catalog",
       "protocol": "unknown",
       "source": "jaeger",
-      "calls": 49
+      "calls": 51
     },
     {
       "from": "frontend",
       "to": "recommendation",
       "protocol": "grpc",
       "source": "jaeger",
-      "calls": 49
+      "calls": 51
     },
     {
       "from": "frontend-proxy",
       "to": "image-provider",
       "protocol": "http",
       "source": "jaeger",
-      "calls": 47
+      "calls": 42
     },
     {
       "from": "checkout",

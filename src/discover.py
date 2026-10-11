@@ -108,7 +108,11 @@ def protocol_of(span: dict) -> str:
 def edges_from_jaeger(names: set[str]) -> Counter:
     import requests
 
-    services = requests.get(f"{JAEGER}/api/services", timeout=10).json()["data"] or []
+    try:
+        services = requests.get(f"{JAEGER}/api/services", timeout=10).json()["data"] or []
+    except (requests.RequestException, ValueError, KeyError) as e:
+        print(f"WARNING: Jaeger /api/services failed ({type(e).__name__}) - no edges can be discovered")
+        return Counter()
     if not services:
         print("WARNING: Jaeger returned 0 services - is the load generator running?")
     counts: Counter = Counter()
@@ -116,7 +120,9 @@ def edges_from_jaeger(names: set[str]) -> Counter:
     # Only query k8s workloads: every edge a->b shows up in a's traces, and edges with a
     # non-workload end are dropped anyway. Querying frontend-web (browser spans) hung the
     # in-memory Jaeger past its liveness probe, and a restart wipes all stored traces.
-    for svc in sorted(s for s in services if s in names):
+    # ignore_nodes (flagd, jaeger, ...) are dropped later too, so don't load Jaeger by querying them.
+    ignored = set(load_yaml(OVERRIDES_PATH).get("ignore_nodes") or [])
+    for svc in sorted(s for s in services if s in names and s not in ignored):
         time.sleep(PAUSE_S)
         try:
             r = requests.get(
@@ -148,6 +154,18 @@ def edges_from_jaeger(names: set[str]) -> Counter:
                     if a != b:
                         counts[(a, b, protocol_of(s))] += 1
     return counts
+
+
+# ------------------------------------------------------------------- write guard
+
+def refuse_empty_live_graph(jaeger_edges: int, live: bool, allow_no_traces: bool) -> str | None:
+    """Reason to refuse writing graph.json, or None. A live run with zero Jaeger edges would
+    overwrite a good graph with override edges only (Jaeger unreachable, restarted, no traffic)."""
+    if live and jaeger_edges == 0 and not allow_no_traces:
+        return ("live run found 0 edges in Jaeger (unreachable, restarted and lost its in-memory "
+                "traces, or no traffic yet) - not overwriting the existing graph. Check the "
+                "port-forward and the load generator, or pass --allow-no-traces to write anyway.")
+    return None
 
 
 # ------------------------------------------------------------------- overrides
@@ -270,6 +288,8 @@ def export_mermaid(graph: dict) -> str:
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--fixtures", action="store_true", help="use fixtures/graph.json, no cluster")
+    parser.add_argument("--allow-no-traces", action="store_true",
+                        help="live: write the graph even if Jaeger yielded no edges")
     args = parser.parse_args()
 
     if args.fixtures:
@@ -288,6 +308,9 @@ def main() -> None:
                 edges.append({"from": a, "to": b, "protocol": proto, "source": "jaeger", "calls": n})
             else:
                 print(f"skipped edge {a}->{b} (not a k8s workload; add a node_fix/override if needed)")
+        reason = refuse_empty_live_graph(len(edges), True, args.allow_no_traces)
+        if reason:
+            raise SystemExit(f"ERROR: {reason}")
 
     nodes, edges = apply_overrides(nodes, edges)
     graph = {"generated_at": datetime.now(timezone.utc).isoformat(), "nodes": nodes, "edges": edges}

@@ -17,20 +17,20 @@ flowchart LR
   recommendation["recommendation"]
   shipping["shipping"]
   valkey_cart[("valkey-cart")]
-  frontend_proxy -->|http| frontend
   frontend -->|grpc| ad
-  frontend -->|http| cart
+  frontend_proxy -->|http| frontend
   frontend -->|unknown| product_catalog
-  shipping -->|http| quote
-  checkout -->|http| cart
-  checkout -->|unknown| currency
-  checkout -->|unknown| product_catalog
+  frontend -->|http| cart
   checkout -->|http| shipping
-  checkout -->|grpc| payment
-  frontend -->|unknown| checkout
+  shipping -->|http| quote
+  checkout -->|unknown| product_catalog
+  checkout -->|http| cart
   checkout -->|http| email
-  frontend -->|unknown| currency
+  frontend -->|unknown| checkout
+  checkout -->|unknown| currency
+  checkout -->|grpc| payment
   frontend -->|http| shipping
+  frontend -->|unknown| currency
   recommendation -->|unknown| product_catalog
   frontend -->|grpc| recommendation
   frontend_proxy -->|http| image_provider

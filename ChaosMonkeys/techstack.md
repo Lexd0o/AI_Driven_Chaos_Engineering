@@ -30,13 +30,14 @@ Pin every version on Day 1 and fill the "Pinned" column. This table also feeds t
 | Storage | `sqlite3` (stdlib) | — | `data/runs.db` |
 | Dashboard | `streamlit`, `plotly` | `____` | Tier 1 |
 | Graph render | `pyvis` or plotly network | `____` | Dependency map in dashboard |
-| LLM SDK | `anthropic` (provisional, O-2) | `1.13.0` | Structured output via `client.beta.messages.parse` + pydantic; model in `config/planner.yaml` |
+| LLM SDK | `anthropic` (provisional, O-2) | `1.13.0` | Structured output via `client.beta.messages.parse` + pydantic; model in `config/planner.yaml`. Shared call helper `src/llm.py` (`structured_call`, used by `plan.py` and `report.py`; every failure returns None -> deterministic fallback) |
+| Scoring config | `pyyaml` | — | `config/scoring.yaml`: D-008 weights, journey weights, aliases, categories, severity bands, report-LLM settings |
 
 ## 3. AI models (fill for team form)
 
 | Use | Model | Provider | Notes |
 |---|---|---|---|
-| Planner hypotheses + report explanations | `TBD` | `TBD` | Fallback: deterministic templates |
+| Planner hypotheses + report explanations | `claude-opus-5-5` (`config/planner.yaml`, `config/scoring.yaml` llm.model) | Anthropic | Provisional pending O-2 (needs `ANTHROPIC_API_KEY`). Fallback: deterministic templates. Text only: the model never picks targets/params or computes scores |
 | Coding assistants used by team | `TBD` | `TBD` | Must be disclosed |
 
 ## 4. Third-party data

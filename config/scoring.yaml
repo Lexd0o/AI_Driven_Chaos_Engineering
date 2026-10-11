@@ -1,0 +1,28 @@
+# Scoring + analytics settings for src/score.py and src/report.py.
+# Formula and weights are Decisions.md D-008 (declared before any run); Architecture.md section 8.
+# Config, not code (Rules.md rule 16) - but changing a weight needs a Decisions.md entry.
+
+# S = 100 x (A*0.45 + L*0.20 + R*0.20 + C*0.15)   per affected journey, then journey-weighted
+weights: {A: 0.45, L: 0.20, R: 0.20, C: 0.15}
+
+# Journey criticality (D-008). Overall score = sum(weight x S) / sum(weight).
+journey_weights: {checkout: 0.4, cart: 0.3, browse: 0.2, ads-recs: 0.1}
+
+# Probe names in run records that belong to a D-008 journey (config/executor.yaml journey_probes).
+journey_aliases: {shipping-quote: cart}
+
+# Category breakdown (Architecture.md section 8).
+categories: {pod_kill: Redundancy, network_delay: Dependency, cpu_stress: Capacity}
+
+# Severity of a tested finding = (100 - S) x service criticality (0.1-0.4, config/criticality.yaml).
+severity_bands: {Critical: 30, High: 15, Medium: 5}   # anything lower is Low
+
+# AI explanations (src/report.py). Same rules as the planner (D-005/D-006): the model only
+# writes prose about facts it is given; every number in the report comes from code.
+llm:
+  model: claude-opus-5-5
+  effort: medium
+  max_tokens: 16000
+  explain_top: 10          # weaknesses that get an AI explanation; the rest use template text
+  min_text_chars: 40
+  max_text_chars: 900

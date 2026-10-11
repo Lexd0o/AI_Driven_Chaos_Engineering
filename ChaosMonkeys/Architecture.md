@@ -24,15 +24,12 @@ DISCOVER → AUDIT → RANK → HYPOTHESISE → VALIDATE → INJECT → OBSERVE 
 |---|---|---|---|
 | Discover | `src/discover.py` | k8s API, Jaeger traces, `config/graph_overrides.yaml` | `data/graph.json` |
 | Audit | `src/audit.py` | `graph.json`, deployment specs | `data/risks.json` (predicted risks) |
-| Rank | `src/rank.py` | `graph.json`, `risks.json`, `config/criticality.yaml` | ranked candidate list |
-| Hypothesise | `src/plan.py` | ranked candidates, `config/fault_catalog.yaml` | `data/plan.json` (LLM; fallback = templates) |
-| Validate | `src/policy.py` | `plan.json`, `config/policy.yaml` | approved / rejected items + reasons |
-| Inject | `src/inject.py` | approved item | feature flag set or Chaos Mesh CR applied |
-| Observe | `src/observe.py` | Prometheus, journey probe, k8s pod status | metric samples → SQLite |
-| Guard | `src/guard.py` | live samples, baseline | ABORT signal + reason |
-| Run | `src/run.py` | one plan item | run record (state machine) |
-| Score | `src/score.py` | run records, baseline | per-experiment + overall score |
-| Explain | `src/report.py` | runs, scores, evidence | `reports/findings_report.md` |
+| Rank | `src/rank.py` | `data/graph.json`, `data/risks.json`, `config/graph_overrides.yaml` (`entry_points`) | `data/ranked_candidates.json` |
+| Hypothesise | `src/plan.py` | ranked candidates, `config/fault_catalog.yaml`, `config/planner.yaml` | `data/plan.json` (LLM text via `src/llm.py`; fallback = templates) |
+| Validate | `src/policy.py` | `plan.json`, `config/policy.yaml` | `data/plan_validated.json` (approved items only; rejections + reasons are printed, not written) |
+| Inject / Guard / Run | `src/run.py` + `agents/chaos_agent_expanded` (D-016) | one approved item, `config/executor.yaml` | run record `data/runs/<exp>-r<n>.json` (state machine, guardrail, watchdog). Planned `inject.py` / `guard.py` / `observe.py` were not built as separate modules; flag injection is not implemented |
+| Score | `src/score.py` | `plan_validated.json`, `data/runs/*.json`, `graph.json`, `risks.json`, `ranked_candidates.json`, `reports/fixes/index.json`, `config/scoring.yaml` | `data/scores.json` (null score when no runs) |
+| Explain | `src/report.py` | `data/scores.json`, `graph.json`, `ranked_candidates.json` | `reports/findings_report.md` + `reports/findings_report.json` |
 | Recommend | `src/fixes.py` | findings | YAML patches in `reports/fixes/` |
 | Benchmark | `src/benchmark.py` | plan order + run outcomes | ranked-vs-random stats |
 | UI | `dashboard/app.py` | SQLite + JSON files | Streamlit dashboard |
@@ -141,11 +138,11 @@ ts | experiment_id | journey_or_service | success_rate | p50_ms | p95_ms | rps |
 | L0 Scope | Policy: namespace allowlist (`otel-demo` only), max 1 target, max intensity, max 120 s; Chaos Mesh restricted to enabled namespaces | n/a (preventive) | 0 |
 | L1 Guardrail | `guard.py` every 2 s: abort on threshold breach (§6) | No | 0 |
 | L2 Hard cap | `duration` set inside every Chaos Mesh spec → auto-expires | **Yes** | 0 |
-| L3 Manual STOP | `make stop-all` / dashboard button: reset all flags + delete all chaos CRs | n/a | 0 |
+| L3 Manual STOP | `python -m src.run --stop-all` (dashboard button planned): deletes all chaos CRs in the namespace and creates `data/STOP` (blocks new runs until removed). Does not reset feature flags - run.py injects none. No Makefile exists | n/a | 0 |
 | L4 StatusCheck | Chaos Mesh Workflow `StatusCheck` with `abortWithStatusCheck: true` | **Yes** | 2 |
 
 Notes:
-- Feature-flag faults have **no built-in expiry** → the runner must always reset them in a `finally` block, and `stop-all` resets them too. Measure flag-flip latency on Day 1.
+- Feature-flag faults have **no built-in expiry** → the runner must always reset them in a `finally` block (not applicable yet: no flag faults are implemented; if added, `--stop-all` must reset them too). Measure flag-flip latency on Day 1.
 - Chaos Mesh docs warn network faults can't be recovered if the controller can't reach the daemon — keep `chaos-mesh` namespace off-limits.
 - Experiment lock: a row in SQLite (`lock` table) or a lock file; `run.py` refuses to start if held.
 

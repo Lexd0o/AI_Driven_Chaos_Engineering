@@ -28,7 +28,7 @@
     "on_checkout_path": true,
     "risk_flags": 4,
     "blast_radius": 4,
-    "inbound_calls": 1094,
+    "inbound_calls": 333,
     "gateway_share": 0.125,
     "high_risks": 1,
     "top_risks": [
@@ -62,27 +62,6 @@
     "rank": 3
   },
   {
-    "service": "cart",
-    "risk_score": 1.45,
-    "criticality": 0.3,
-    "centrality": 0.9667,
-    "fan_in": 2,
-    "on_checkout_path": true,
-    "risk_flags": 4,
-    "blast_radius": 3,
-    "inbound_calls": 296,
-    "gateway_share": 0.125,
-    "high_risks": 1,
-    "top_risks": [
-      "R-cart-single_replica_no_pdb",
-      "R-cart-no_readiness_probe",
-      "R-cart-no_liveness_probe",
-      "R-cart-no_hpa_shared_dependency"
-    ],
-    "reason": "cart: criticality=0.3, fan_in=2, on checkout path, 4 structural risk flag(s), 3 service(s) depend on it",
-    "rank": 4
-  },
-  {
     "service": "currency",
     "risk_score": 1.45,
     "criticality": 0.3,
@@ -91,7 +70,7 @@
     "on_checkout_path": true,
     "risk_flags": 4,
     "blast_radius": 3,
-    "inbound_calls": 221,
+    "inbound_calls": 126,
     "gateway_share": 0.0625,
     "high_risks": 1,
     "top_risks": [
@@ -101,6 +80,27 @@
       "R-currency-no_hpa_shared_dependency"
     ],
     "reason": "currency: criticality=0.3, fan_in=2, on checkout path, 4 structural risk flag(s), 3 service(s) depend on it",
+    "rank": 4
+  },
+  {
+    "service": "cart",
+    "risk_score": 1.45,
+    "criticality": 0.3,
+    "centrality": 0.9667,
+    "fan_in": 2,
+    "on_checkout_path": true,
+    "risk_flags": 4,
+    "blast_radius": 3,
+    "inbound_calls": 109,
+    "gateway_share": 0.125,
+    "high_risks": 1,
+    "top_risks": [
+      "R-cart-single_replica_no_pdb",
+      "R-cart-no_readiness_probe",
+      "R-cart-no_liveness_probe",
+      "R-cart-no_hpa_shared_dependency"
+    ],
+    "reason": "cart: criticality=0.3, fan_in=2, on checkout path, 4 structural risk flag(s), 3 service(s) depend on it",
     "rank": 5
   },
   {
@@ -112,7 +112,7 @@
     "on_checkout_path": true,
     "risk_flags": 4,
     "blast_radius": 3,
-    "inbound_calls": 61,
+    "inbound_calls": 38,
     "gateway_share": 0.125,
     "high_risks": 1,
     "top_risks": [
@@ -133,7 +133,7 @@
     "on_checkout_path": false,
     "risk_flags": 3,
     "blast_radius": 1,
-    "inbound_calls": 801,
+    "inbound_calls": 278,
     "gateway_share": 0.875,
     "high_risks": 3,
     "top_risks": [
@@ -153,7 +153,7 @@
     "on_checkout_path": true,
     "risk_flags": 3,
     "blast_radius": 3,
-    "inbound_calls": 17,
+    "inbound_calls": 9,
     "gateway_share": 0.0625,
     "high_risks": 3,
     "top_risks": [
@@ -173,7 +173,7 @@
     "on_checkout_path": true,
     "risk_flags": 3,
     "blast_radius": 2,
-    "inbound_calls": 17,
+    "inbound_calls": 10,
     "gateway_share": 0.25,
     "high_risks": 3,
     "top_risks": [
@@ -213,7 +213,7 @@
     "on_checkout_path": true,
     "risk_flags": 3,
     "blast_radius": 3,
-    "inbound_calls": 17,
+    "inbound_calls": 10,
     "gateway_share": 0.0625,
     "high_risks": 0,
     "top_risks": [
@@ -254,7 +254,7 @@
     "on_checkout_path": false,
     "risk_flags": 3,
     "blast_radius": 2,
-    "inbound_calls": 175,
+    "inbound_calls": 51,
     "gateway_share": 0.0625,
     "high_risks": 0,
     "top_risks": [
@@ -274,7 +274,7 @@
     "on_checkout_path": false,
     "risk_flags": 3,
     "blast_radius": 2,
-    "inbound_calls": 57,
+    "inbound_calls": 29,
     "gateway_share": 0.0625,
     "high_risks": 0,
     "top_risks": [
@@ -294,7 +294,7 @@
     "on_checkout_path": true,
     "risk_flags": 3,
     "blast_radius": 4,
-    "inbound_calls": 44,
+    "inbound_calls": 25,
     "gateway_share": 0.0625,
     "high_risks": 0,
     "top_risks": [
@@ -314,7 +314,7 @@
     "on_checkout_path": false,
     "risk_flags": 3,
     "blast_radius": 1,
-    "inbound_calls": 185,
+    "inbound_calls": 42,
     "gateway_share": 0.0625,
     "high_risks": 0,
     "top_risks": [

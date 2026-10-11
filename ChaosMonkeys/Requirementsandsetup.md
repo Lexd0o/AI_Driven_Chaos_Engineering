@@ -117,7 +117,7 @@ On each laptop:
 ```bash
 ssh -N -L 8080:localhost:8080 <user>@<vm-ip>
 ```
-Then open: web store `http://localhost:8080/` · Grafana `/grafana/` · load generator `/loadgen/` · Jaeger `/jaeger/ui/` · flag editor `/feature`.
+Then open: web store `http://localhost:8080/` · Grafana `/grafana/` · load generator `/loadgen/` · flag editor `/feature`. Jaeger UI: use `http://localhost:16686/jaeger/ui/` via a second port-forward, `kubectl -n otel-demo port-forward svc/jaeger 16686:16686` (`src.discover` also queries Jaeger here by default). The `/jaeger/ui/` route through 8080 still works but pushes heavy trace responses through frontend-proxy (90Mi limit), which nearly OOMKilled it.
 
 For Prometheus API access: **[verify]** service name with `kubectl -n otel-demo get svc | grep -i prom`, then port-forward it (e.g. 9090).
 

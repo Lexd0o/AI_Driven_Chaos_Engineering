@@ -92,21 +92,21 @@
   {
     "experiment_id": "exp-004",
     "rank": 4,
-    "risk_id": "R-cart-single_replica_no_pdb",
+    "risk_id": "R-currency-single_replica_no_pdb",
     "fault_type": "pod_kill",
     "mechanism": "chaosmesh",
     "target": {
       "namespace": "otel-demo",
-      "service": "cart"
+      "service": "currency"
     },
     "params": {
       "duration_s": 60
     },
-    "hypothesis": "cart: single replica no pdb (replicas=1, has_pdb=False, stateful=False, fan_in=2) - expect cart's callers to see errors or latency until the fault clears.",
-    "reason": "cart: criticality=0.3, fan_in=2, on checkout path, 4 structural risk flag(s), 3 service(s) depend on it",
+    "hypothesis": "currency: single replica no pdb (replicas=1, has_pdb=False, stateful=False, fan_in=2) - expect currency's callers to see errors or latency until the fault clears.",
+    "reason": "currency: criticality=0.3, fan_in=2, on checkout path, 4 structural risk flag(s), 3 service(s) depend on it",
     "expected_impact": {
       "journeys": [
-        "cart",
+        "browse",
         "checkout"
       ]
     },
@@ -120,22 +120,22 @@
   {
     "experiment_id": "exp-005",
     "rank": 5,
-    "risk_id": "R-currency-no_liveness_probe",
+    "risk_id": "R-cart-no_liveness_probe",
     "fault_type": "cpu_stress",
     "mechanism": "chaosmesh",
     "target": {
       "namespace": "otel-demo",
-      "service": "currency"
+      "service": "cart"
     },
     "params": {
       "duration_s": 60,
       "cpu_workers": 2
     },
-    "hypothesis": "currency: no liveness probe (has_liveness=False - a hung (not crashed) process won't be auto-restarted) - expect currency's callers to see errors or latency until the fault clears.",
-    "reason": "currency: criticality=0.3, fan_in=2, on checkout path, 4 structural risk flag(s), 3 service(s) depend on it",
+    "hypothesis": "cart: no liveness probe (has_liveness=False - a hung (not crashed) process won't be auto-restarted) - expect cart's callers to see errors or latency until the fault clears.",
+    "reason": "cart: criticality=0.3, fan_in=2, on checkout path, 4 structural risk flag(s), 3 service(s) depend on it",
     "expected_impact": {
       "journeys": [
-        "browse",
+        "cart",
         "checkout"
       ]
     },

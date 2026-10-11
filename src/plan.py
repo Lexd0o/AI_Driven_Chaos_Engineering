@@ -25,12 +25,15 @@ from typing import Literal
 import yaml
 from pydantic import BaseModel
 
+from src.llm import structured_call
+
 RANKED_PATH = "data/ranked_candidates.json"
 RISKS_PATH = "data/risks.json"
 CATALOG_PATH = "config/fault_catalog.yaml"
 GRAPH_PATH = "data/graph.json"
 BASELINE_PATH = "data/baseline.json"  # P2; optional until it exists
 PLANNER_CONFIG_PATH = "config/planner.yaml"
+OVERRIDES_PATH = "config/graph_overrides.yaml"  # entry_points
 OUT_PATH = "data/plan.json"
 NAMESPACE = os.getenv("NAMESPACE", "otel-demo")
 
@@ -51,27 +54,35 @@ def hypothesis_for(service: str, risk: dict) -> str:
             f"expect {service}'s callers to see errors or latency until the fault clears.")
 
 
-def journey_members(graph: dict, journey_roots: dict) -> dict[str, set[str]]:
+def journey_members(graph: dict, journey_roots: dict, entry_points: list[str]) -> dict[str, set[str]]:
     """Services each user journey (D-008) depends on: its root services (config/planner.yaml),
-    everything they call, and everything on the call path from the entry point down to them
-    (so frontend-proxy and frontend belong to every journey). Replace with P2's measured
-    journey map (T1.3) once it exists."""
+    everything they call, and upstream only the services the journey cannot be reached without
+    from the entry points (so frontend-proxy and frontend belong to every journey, but a sibling
+    caller like checkout does not belong to browse just because it also calls product-catalog).
+    Replace with P2's measured journey map (T1.3) once it exists."""
     down: dict[str, list[str]] = {}
-    up: dict[str, list[str]] = {}
     for e in graph["edges"]:
         down.setdefault(e["from"], []).append(e["to"])
-        up.setdefault(e["to"], []).append(e["from"])
 
-    def walk(start: list[str], adjacency: dict) -> set[str]:
-        seen, stack = set(start), list(start)
+    def walk(start, removed: str | None = None) -> set[str]:
+        seen = {s for s in start if s != removed}
+        stack = list(seen)
         while stack:
-            for nxt in adjacency.get(stack.pop(), []):
-                if nxt not in seen:
+            for nxt in down.get(stack.pop(), []):
+                if nxt != removed and nxt not in seen:
                     seen.add(nxt)
                     stack.append(nxt)
         return seen
 
-    return {j: walk(roots, down) | walk(roots, up) for j, roots in journey_roots.items()}
+    reachable = walk(entry_points)
+    names = {n["name"] for n in graph["nodes"]}
+    members = {}
+    for journey, roots in journey_roots.items():
+        served = [r for r in roots if r in reachable]  # roots users actually reach
+        needed = {n for n in names if n not in roots
+                  and any(r not in walk(entry_points, removed=n) for r in served)}
+        members[journey] = walk(roots) | needed
+    return members
 
 
 def expected_journeys(service: str, members: dict[str, set[str]]) -> list[str]:
@@ -203,58 +214,9 @@ def validate_llm_item(item: LLMItem, known_ids: set[str], cfg: dict) -> list[str
 
 
 def call_llm(context: str, cfg: dict) -> LLMPlanText | None:
-    """One structured call. Returns None (with the reason printed) on any failure."""
-    try:
-        import anthropic
-    except ImportError:
-        print("LLM skipped: `anthropic` not installed (pip install anthropic) - keeping deterministic text")
-        return None
-
-    try:
-        client = anthropic.Anthropic()
-        response = client.beta.messages.parse(
-            model=cfg["model"],
-            max_tokens=cfg["max_tokens"],
-            thinking={"type": "adaptive"},
-            output_config={"effort": cfg["effort"]},
-            # On a safety-classifier decline, re-run server-side on Anthropic's recommended model
-            betas=["server-side-fallback-2026-07-01"],
-            fallbacks="default",
-            system=SYSTEM_PROMPT,
-            messages=[{"role": "user", "content": context}],
-            output_format=LLMPlanText,
-        )
-    except anthropic.AuthenticationError:
-        print("LLM skipped: credentials rejected - keeping deterministic text")
-        return None
-    except anthropic.RateLimitError:
-        print("LLM skipped: rate limited - keeping deterministic text")
-        return None
-    except anthropic.APIStatusError as e:
-        print(f"LLM skipped: API error {e.status_code} - keeping deterministic text")
-        return None
-    except anthropic.APIConnectionError:
-        print("LLM skipped: can't reach the API - keeping deterministic text")
-        return None
-    except anthropic.AnthropicError as e:
-        print(f"LLM skipped: {type(e).__name__}: {str(e)[:120]} - keeping deterministic text")
-        return None
-    except TypeError as e:
-        # The SDK raises a plain TypeError when no credentials are configured at all
-        # (O-2 still open). Anything else is a real bug and must surface.
-        if "authentication method" not in str(e):
-            raise
-        print("LLM skipped: no credentials (set ANTHROPIC_API_KEY or run `ant auth login`) "
-              "- keeping deterministic text")
-        return None
-
-    if response.stop_reason == "refusal":
-        print("LLM skipped: request was declined - keeping deterministic text")
-        return None
-    if response.stop_reason == "max_tokens" or response.parsed_output is None:
-        print(f"LLM skipped: incomplete output (stop_reason={response.stop_reason}) - keeping deterministic text")
-        return None
-    return response.parsed_output
+    """One structured call. Returns None (with the reason printed) on any failure,
+    including off-schema output - see llm.structured_call."""
+    return structured_call(SYSTEM_PROMPT, context, LLMPlanText, cfg, "LLM")
 
 
 def apply_llm_text(plan: list[dict], llm: LLMPlanText, cfg: dict) -> int:
@@ -287,7 +249,7 @@ def main() -> None:
     parser.add_argument("--deterministic", action="store_true", help="never call the LLM")
     args = parser.parse_args()
 
-    for path in (RANKED_PATH, RISKS_PATH, CATALOG_PATH, GRAPH_PATH, PLANNER_CONFIG_PATH):
+    for path in (RANKED_PATH, RISKS_PATH, CATALOG_PATH, GRAPH_PATH, PLANNER_CONFIG_PATH, OVERRIDES_PATH):
         if not os.path.exists(path):
             raise SystemExit(f"{path} not found - run discover.py, audit.py, and rank.py first")
 
@@ -298,7 +260,9 @@ def main() -> None:
 
     cfg = load_yaml(PLANNER_CONFIG_PATH)
     graph = json.load(open(GRAPH_PATH))
-    plan = build_plan(candidates, risks_by_id, catalog, journey_members(graph, cfg["journey_roots"]))
+    entry_points = load_yaml(OVERRIDES_PATH).get("entry_points") or []
+    members = journey_members(graph, cfg["journey_roots"], entry_points)
+    plan = build_plan(candidates, risks_by_id, catalog, members)
 
     if not args.deterministic and plan:
         llm = call_llm(llm_context(plan, candidates, risks_by_id, graph, cfg), cfg)
