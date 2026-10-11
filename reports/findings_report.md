@@ -1,22 +1,22 @@
 # ChaosPilot findings report
 
-Generated 2026-10-11 04:55 UTC by `python -m src.report` from the run files and stored samples. Every number is computed by code; the LLM did not touch the cluster or the scores.
+Generated 2026-10-11 05:53 UTC by `python -m src.report` from the run files and stored samples. Every number is computed by code; the LLM did not touch the cluster or the scores.
 
 ## Summary
 
-**Overall resilience score: 86.5 / 100** (criticality-weighted mean of the scored experiments).
-**Coverage:** 6 of 8 approved experiments scored, 1 inconclusive, 1 not run.
+**Overall resilience score: 90.6 / 100** (criticality-weighted mean of the scored experiments).
+**Coverage:** 2 of 8 approved experiments scored, 0 inconclusive, 6 not run.
 
 | Exp | Fault | Target | Runs scored | Outcome(s) | S | Severity | Prediction |
 |---|---|---|---|---|---|---|---|
 | exp-001 | pod_kill | frontend-proxy | 0/0 | not run | n/a | not run | inconclusive |
-| exp-002 | cpu_stress | product-catalog | 1/1 | survived | 100.0 | Low | not confirmed (no impact seen) |
-| exp-003 | network_delay | astronomy-db | 2/2 | degraded_recovered, degraded_recovered | 82.0 | Medium | confirmed |
-| exp-004 | pod_kill | cart | 4/4 | degraded_recovered, degraded_recovered, degraded_recovered, degraded_recovered | 32.5 | High | confirmed |
-| exp-005 | cpu_stress | currency | 1/1 | survived | 100.0 | Low | not confirmed (no impact seen) |
-| exp-006 | network_delay | shipping | 2/2 | survived, survived | 100.0 | Low | not confirmed (no impact seen) |
-| exp-007 | pod_kill | frontend | 0/1 | degraded_recovered | n/a | inconclusive | inconclusive |
-| exp-008 | cpu_stress | payment | 1/1 | survived | 100.0 | Low | not confirmed (no impact seen) |
+| exp-017 | cpu_stress | frontend | 1/1 | survived | 100.0 | Low | not confirmed (no impact seen) |
+| exp-018 | pod_kill | checkout | 0/0 | not run | n/a | not run | inconclusive |
+| exp-016 | network_delay | astronomy-db | 1/1 | degraded_recovered | 78.1 | Medium | confirmed |
+| exp-022 | network_delay | product-catalog | 0/0 | not run | n/a | not run | inconclusive |
+| exp-023 | pod_kill | cart | 0/0 | not run | n/a | not run | inconclusive |
+| exp-021 | cpu_stress | payment | 0/0 | not run | n/a | not run | inconclusive |
+| exp-014 | cpu_stress | valkey-cart | 0/0 | not run | n/a | not run | inconclusive |
 
 ## How the score works
 
@@ -30,38 +30,15 @@ Generated 2026-10-11 04:55 UTC by `python -m src.report` from the run files and 
 
 ## Findings: impact seen
 
-### cart - pod_kill - High (S 32.5)
+### astronomy-db - network_delay - Medium (S 78.1)
 
-**Predicted:** Killing the sole cart pod will cause add‑to‑cart and checkout steps to return errors or time out, and cart functionality will resume once the pod restarts.
-
-**Prediction status:** confirmed. Expected journeys: cart, checkout.
-
-**Measured:**
-- r1 `run-e3b91f7b1ac9`: **degraded_recovered** - S 32.7 (A 0.00, L 0.00, R 0.88, C 1.00) - impact recovery 14 s - journeys scored: cart, checkout - numbers recomputed from samples
-  - Evidence for r1 (collector quality: ok): 10 trace(s): `951263ef5ea5248a15a8f254080aa1b9`, `c7fc5852dcff3401d3ef1235b06e3875`, `cbcc154bc29dbaece8cdeb8ac7ad5412` (+7 more in the run file); 3 Prometheus queries recorded.
-- r2 `run-ae5c70eadf7f`: **degraded_recovered** - S 32.7 (A 0.00, L 0.00, R 0.88, C 1.00) - impact recovery 14 s - journeys scored: cart, checkout - numbers recomputed from samples
-  - Evidence for r2 (collector quality: ok): 20 trace(s): `345fe2ee500c9cb727b708fb9f52c87a`, `f97118a078f85eb8050d207410ca84ec`, `03de2fb727050d684a00f29792e9c7c4` (+17 more in the run file); 3 Prometheus queries recorded.
-- r3 `run-4287f9064ac8`: **degraded_recovered** - S 32.3 (A 0.00, L 0.00, R 0.87, C 1.00) - impact recovery 16 s - journeys scored: cart, checkout - numbers recomputed from samples
-  - Evidence for r3 (collector quality: ok): 20 trace(s): `d3d6737d12b7c7b3e8d64bdd70dd64f8`, `8e5c86332bdc22e7e90e92f799913c9e`, `9ca6bb268b6ede0d83da9a57e242107f` (+17 more in the run file); 3 Prometheus queries recorded.
-- r4 `run-f7e5a874dd74`: **degraded_recovered** - S 32.3 (A 0.00, L 0.00, R 0.87, C 1.00) - impact recovery 16 s - journeys scored: cart, checkout - numbers recomputed from samples
-  - Evidence for r4 (collector quality: ok): 20 trace(s): `eba1e9b9095dbc6dd3dfd99906a708ae`, `9d8a0f66d82808d9c037707c478f2e05`, `b5636941015bf0fdb6d9cd3baf480dfe` (+17 more in the run file); 3 Prometheus queries recorded.
-
-**Recommendation:**
-- Suggested fix (`R-cart-single_replica_no_pdb`, predicted severity high): scale cart to 2 replicas and add a PDB (minAvailable=1)
-  - `kubectl -n otel-demo patch deployment cart --patch-file reports/fixes/R-cart-single_replica_no_pdb.yaml`
-  - `kubectl apply -f reports/fixes/R-cart-single_replica_no_pdb.pdb.yaml`
-
-### astronomy-db - network_delay - Medium (S 82.0)
-
-**Predicted:** When a 200 ms artificial delay is added to astronomy-db, calls from product‑catalog (affecting browse and checkout) will incur at least 200 ms extra latency, observable as slower page loads, and latency will drop back after the delay ends.
+**Predicted:** astronomy-db: no hpa shared dependency (has_hpa=False, 2 callers - can't absorb a traffic or latency spike) - expect astronomy-db's callers to see errors or latency until the fault clears.
 
 **Prediction status:** confirmed. Expected journeys: browse, checkout.
 
 **Measured:**
-- r1 `run-e4ffabff3d22`: **degraded_recovered** - S 80.6 (A 1.00, L 0.53, R 0.50, C 1.00) - impact recovery 60 s - journeys scored: browse, checkout - numbers recomputed from samples
-  - Evidence for r1 (collector quality: ok): 11 trace(s): `1242a5b728875d35d0a327cca8de94ce`, `f93c60fc50c4c09362da8d8791fc5328`, `27f3590eff6d7a0d14ebd1666f1835a3` (+8 more in the run file); 3 Prometheus queries recorded.
-- r2 `run-0e3e86983032`: **degraded_recovered** - S 83.4 (A 1.00, L 0.66, R 0.51, C 1.00) - impact recovery 58 s - journeys scored: browse, checkout - numbers recomputed from samples
-  - Evidence for r2 (collector quality: ok): 11 trace(s): `c1ecd23db0daab9d07c9b97970b13906`, `03aa7d748a12d42d45f5bbb77db35c69`, `35bffa585e76c9d7a27ec6ae43bb0fac` (+8 more in the run file); 3 Prometheus queries recorded.
+- r1 `run-b72902c8acb3`: **degraded_recovered** - S 78.1 (A 1.00, L 0.42, R 0.48, C 1.00) - impact recovery 62 s - journeys scored: browse, checkout - numbers recomputed from samples
+  - Evidence for r1 (collector quality: ok): 10 trace(s): `7f8becad203d0641456415ae2ebd5689`, `632d297c0f4216160b1aeb99d6b24a68`, `066660ce01fe93c9134a2c9868b0ab3d` (+7 more in the run file); 3 Prometheus queries recorded.
 
 **Recommendation:**
 - Suggested fix (`R-astronomy-db-no_hpa_shared_dependency`, predicted severity medium): absorb load spikes on astronomy-db
@@ -71,42 +48,14 @@ Generated 2026-10-11 04:55 UTC by `python -m src.report` from the run files and 
 
 The static analysis predicted a weakness here, and this fault did not expose it. That is a result of this one fault and these runs, not proof the service is safe.
 
-### product-catalog - cpu_stress (S 100.0)
+### frontend - cpu_stress (S 100.0)
 
-**Predicted:** During the 60‑second CPU stress on product‑catalog, checkout and browse requests will experience errors or added latency from product‑catalog, and normal performance will return after the stress ends.
+**Predicted:** frontend: no liveness probe (has_liveness=False - a hung (not crashed) process won't be auto-restarted) - expect frontend's callers to see errors or latency until the fault clears.
 
-- r1 `run-80ed8d77deab`: **survived** - S 100.0 (A 1.00, L 1.00, R 1.00, C n/a) - journeys scored: browse, cart, checkout - C not applicable, weights rescaled - unrelated blip at 23:59:53 UTC after the fault ended, not scored - numbers recomputed from samples
+- r1 `run-8019ae253ac8`: **survived** - S 100.0 (A 1.00, L 1.00, R 1.00, C n/a) - journeys scored: browse, cart, checkout - C not applicable, weights rescaled - numbers recomputed from samples
 
-- Suggested fix (`R-product-catalog-no_liveness_probe`, predicted severity medium): add a livenessProbe (gRPC health check on port 8080) to product-catalog
-  - `kubectl -n otel-demo patch deployment product-catalog --patch-file reports/fixes/R-product-catalog-no_liveness_probe.yaml`
-
-### currency - cpu_stress (S 100.0)
-
-**Predicted:** CPU‑stress on currency will make price‑conversion calls during checkout and browsing slow or fail, and normal price‑lookup latency will recover after the stress period.
-
-- r1 `run-3b8467c8acf1`: **survived** - S 100.0 (A 1.00, L 1.00, R 1.00, C 1.00) - journeys scored: browse, checkout - numbers recomputed from samples
-
-- Suggested fix (`R-currency-no_liveness_probe`, predicted severity medium): add a livenessProbe (gRPC health check on port 8080) to currency
-  - `kubectl -n otel-demo patch deployment currency --patch-file reports/fixes/R-currency-no_liveness_probe.yaml`
-
-### shipping - network_delay (S 100.0)
-
-**Predicted:** Injecting a 200 ms network delay into shipping will add latency to shipping‑quote retrieval during checkout, causing slower checkout completion, and latency will return to baseline after the delay ends.
-
-- r1 `run-7f0ff7a036e6`: **survived** - S 100.0 (A 1.00, L 1.00, R 1.00, C 1.00) - journeys scored: cart, checkout - unrelated blip at 23:04:43 UTC after the fault ended, not scored - numbers recomputed from samples
-- r2 `run-d16078083a11`: **survived** - S 100.0 (A 1.00, L 1.00, R 1.00, C 1.00) - journeys scored: cart, checkout - numbers recomputed from samples
-
-- Suggested fix (`R-shipping-no_hpa_shared_dependency`, predicted severity medium): autoscale shipping 2-4 replicas at 70% CPU (needs metrics-server)
-  - `kubectl apply -f reports/fixes/R-shipping-no_hpa_shared_dependency.hpa.yaml`
-
-### payment - cpu_stress (S 100.0)
-
-**Predicted:** CPU stress on payment will cause payment processing during checkout to error or be delayed, and successful payment responses will return once the stress stops.
-
-- r1 `run-d723ad986dc9`: **survived** - S 100.0 (A 1.00, L 1.00, R 1.00, C 1.00) - journeys scored: checkout - numbers recomputed from samples
-
-- Suggested fix (`R-payment-no_liveness_probe`, predicted severity high): add a livenessProbe (gRPC health check on port 8080) to payment
-  - `kubectl -n otel-demo patch deployment payment --patch-file reports/fixes/R-payment-no_liveness_probe.yaml`
+- Suggested fix (`R-frontend-no_liveness_probe`, predicted severity high): add a livenessProbe (tcpSocket on port 'service') to frontend
+  - `kubectl -n otel-demo patch deployment frontend --patch-file reports/fixes/R-frontend-no_liveness_probe.yaml`
 
 ## Not scored
 
@@ -114,17 +63,33 @@ The static analysis predicted a weakness here, and this fault did not expose it.
 
 - No run recorded: refused or not run yet (`python -m src.run --list` shows which and why).
 
-### frontend - pod_kill (exp-007): inconclusive
+### checkout - pod_kill (exp-018): not run
 
-- r1 `run-a206dc31d8b0`: **degraded_recovered** - not scored: too few samples in the fault window to score (browse n=2, cart n=2, checkout n=2) - observed impact recovery 10 s (a measured time, not a score) - stopped early by the guardian (probe_failure) - numbers recomputed from samples
+- No run recorded: refused or not run yet (`python -m src.run --list` shows which and why).
+
+### product-catalog - network_delay (exp-022): not run
+
+- No run recorded: refused or not run yet (`python -m src.run --list` shows which and why).
+
+### cart - pod_kill (exp-023): not run
+
+- No run recorded: refused or not run yet (`python -m src.run --list` shows which and why).
+
+### payment - cpu_stress (exp-021): not run
+
+- No run recorded: refused or not run yet (`python -m src.run --list` shows which and why).
+
+### valkey-cart - cpu_stress (exp-014): not run
+
+- No run recorded: refused or not run yet (`python -m src.run --list` shows which and why).
 
 
 ## Ranking benchmark: ranked order vs random order
 
-Scored experiments in the planner's order: exp-002, exp-003, exp-004, exp-005, exp-006, exp-008.
+Scored experiments in the planner's order: exp-017, exp-016.
 
-- The first confirmed finding came at position 2 in the planner's order, versus 2.3 on average over all 720 orderings of the same 6 scored experiments (2 of them hits). A random order would do this well or better 60% of the time.
-- The first High or Critical finding came at position 3 in the planner's order, versus 3.5 on average over all 720 orderings of the same 6 scored experiments (1 of them hits). A random order would do this well or better 50% of the time.
+- The first confirmed finding came at position 2 in the planner's order, versus 1.5 on average over all 2 orderings of the same 2 scored experiments (1 of them hits). A random order would do this well or better 100% of the time.
+- No experiment gave a High or Critical finding yet, so there is nothing to compare for it.
 
 _Small sample: experiments scored so far, in the planner's order. This checks the ranking, not the LLM text._
 

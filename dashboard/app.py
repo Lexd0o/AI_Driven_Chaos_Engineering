@@ -170,12 +170,6 @@ window_label = st.sidebar.selectbox("Time window", ["Last 5 min", "Last 15 min",
                                     disabled=exp_choice != "(latest data)")
 WINDOWS = {"Last 5 min": 300, "Last 15 min": 900, "Last 60 min": 3600, "All": None}
 auto = st.sidebar.toggle("Auto-refresh (5 s)", value=True)
-auto_score = st.sidebar.toggle("Re-score and re-report every 5 min", value=True,
-                               help="Runs python -m src.score and python -m src.report in the background (no cluster access).")
-auto_plan = st.sidebar.toggle("Refresh the plan from the cluster every 30 min", value=False,
-                              help="Rebuilds the plan only if the cluster's risks changed; never during a run; ids are kept.")
-live_monitor = st.sidebar.toggle("Live monitoring (probe the shop every 2 s)", value=True,
-                                 help="Keeps the Live tab current when no experiment runs. Needs the shop port-forward and PROBE_BASE_URL.")
 st.sidebar.divider()
 st.sidebar.subheader("Emergency")
 if st.sidebar.button("⛔ STOP ALL FAULTS", type="primary", width="stretch"):
@@ -383,47 +377,10 @@ with tab_find:
 
 # ----------------------------------------------------------------- Control
 @st.cache_resource
-def ambient() -> control.Ambient:
-    return control.Ambient()
-
-
-@st.cache_resource
-def rescorer() -> control.Rescorer:
-    return control.Rescorer(interval_s=300)
-
-
-@st.cache_resource
-def plan_refresher() -> control.PlanRefresher:
-    return control.PlanRefresher(interval_s=1800)
-
-
-@st.cache_resource
 def run_slot() -> control.RunSlot:
     """The one experiment this dashboard started (shared by every browser tab)."""
     return control.RunSlot()
 
 
-st.session_state["_plan_refresher"] = plan_refresher()
 with tab_ctl:
     control.render(st, run_slot(), auto)
-
-if live_monitor:
-    ambient().start(run_slot())
-    if ambient().last_error:
-        st.sidebar.caption(f"Live monitor error: {ambient().last_error}")
-    else:
-        st.sidebar.caption("Live monitor: probing the shop (no experiment needed).")
-else:
-    ambient().stop()
-
-if auto_score:
-    rescorer().start(run_slot())
-    done = rescorer().last_ok
-    st.sidebar.caption(rescorer().last_error or (f"Scores refreshed {done:%H:%M:%S}" if done else "Scores: first refresh running..."))
-else:
-    rescorer().stop()
-
-if auto_plan:
-    plan_refresher().start(run_slot())
-else:
-    plan_refresher().stop()
