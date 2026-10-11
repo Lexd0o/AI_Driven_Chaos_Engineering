@@ -1,7 +1,7 @@
 # progress.md — Live status board
 
 **Current phase:** Live on branch `integration`: 10 real runs across 3 fault types, scored and reported (`src.score`, `src.report`, `src.benchmark`); dashboard shows scores; STOP works. Left: P4 safety veto, merge, second-machine run, demo video, submission. Presentation 10:00.
-**Last updated:** 11 Oct 2026, 06:45 IST · by: Joy (P2, integrating)
+**Last updated:** 11 Oct 2026, 07:45 IST · by: Joy (P2, integrating)
 **Next gate:** CP4 / G6 freeze (T−3h) · then CP5 submit (~09:30)
 
 Update rule: move a task when you start/finish it; add a log line; flag blockers immediately.
@@ -53,52 +53,31 @@ Update rule: move a task when you start/finish it; add a log line; flag blockers
 
 ## Board
 
-### TODO
+### TODO (release, 07:43 IST → submit ~09:30)
+- [ ] P1 + Joy · Clean run from scratch on a second machine, following the README (G6 "clean run")
+- [ ] Joy · Planner text via Groq (`provider: groq` in `config/planner.yaml`); keep the deterministic plan if it fails
+- [ ] Joy · Final `python -m src.report`; commit `reports/findings_report.md`
+- [ ] Joy · Merge PR `integration` → main by 08:30; confirm the repo link evaluators get is public or shared
+- [ ] Joy · Record the 3-minute video (Demo.md) at ~08:00 + backup take; fresh baseline < 30 min before
+- [ ] Joy · Team form (team, members, tools, AI models, libraries, data); submit by ~09:30 after checking all five deliverables open
 
-**Sprint 1 · D1 H0–H4:30 (limit H5:00) · Day-1 deliverables**
-- [ ] All · Assign names; create repo; freeze contracts (Architecture.md §4, P2 schemas)
-- [ ] P1 · k3s + Helm; OTel Demo (pinned) by ~H2:00; Chaos Mesh + G1/G2; tunnels; snapshot
-- [ ] P2 · On the team machine (code is ready): set URLs → probes + sampler live → 5-min baseline → hand helpers to P4 → watch first injection → breach test (G3) → save real fixtures
-- [ ] P3 · `discover.py` + `audit.py` on fixtures; `graph_overrides.yaml`; real `graph.json`
-- [ ] P4 · Flag injector + flip latency (O-3); Chaos Mesh injector; guardrail; first injections; breach test (G3)
-- [ ] P5 · Scorer skeleton; report template; log/notes; CP2 demo narration
-- [ ] All · CP2 Day-1 demo
-
-**Sprint 2 · D1 bonus window (only if CP2 passed)**
-- [ ] P1 · `bootstrap_vm.sh`, lock hardening, README setup
-- [ ] P4 · Run state machine; 2nd/3rd fault types
-- [ ] P3 · LLM access (O-2), pydantic, `policy.py`, planner skeleton + fallback
-- [x] P2 · `edges_from_traces()`, per-service Prom metrics, evidence collector (all done early, see DONE)
-- [ ] P5 · Scoring on first real runs; report v1
-
-**Sprint 3 · D2 H0–H4 · Think & run**
-- [ ] P2 · 10-min fresh baseline on the team machine
-- [x] P2 · `collect_run_metrics()`: per-run A / L / containment + quality flag for P5 — done 10 Oct (`src/runmetrics.py`)
-- [x] P2 · Dashboard skeleton (Live / Map / Runs / Findings) — v0 done early
-- [ ] P3 · LLM planner + validation + policy; fallback
-- [ ] P4 · 6–8 experiments, ≥3 types, top-2 ×3 (G4)
-- [ ] P5 · Scoring on real data; findings report v1; fix-as-code
-
-**Sprint 4 · D2 H4 → T−3h · Explain & show**
-- [ ] P2 · Dashboard polish (Live shading + guardrail events, Map colours by risk status, Runs scores, Findings score + benchmark) + STOP button tested with the real stop command
-- [ ] P3 + P5 · Predicted-vs-confirmed; benchmark
-- [ ] P5 · Backup video
-- [ ] P4 + P5 · Tier 2 only if G5 passes
-- [ ] P1 · Clean-run dry rehearsal
-
-**Sprint 5 · T−3h → T · Release**
-- [ ] All · Bug fixes only; README sections
-- [ ] P1 + P2 · Clean run from scratch on second machine
-- [ ] P5 · Final video ≤3 min; architecture page; team form; submit at T−30m
+Not done, deliberately dropped (say so if asked):
+- Flag-based injector (O-3) — Chaos Mesh faults only
+- `bootstrap_vm.sh` / VM — local Docker Desktop Kubernetes instead (O-6)
+- Top-2 experiments ×3 repeats — 2 repeats each
+- Tier 2 (apply a fix, re-run) and combined failures — stretch goals, not attempted
+- Dashboard Map colours by risk status, Live guardrail shading — not built
 
 ### DOING
-- [ ] Joy · Open PR `integration` → main; team message; live-test manual STOP and Ctrl+C (self-review labelled "reviewed by Joy, not P4"); merge by 08:30
-- [ ] P4 · Veto check: `src/chaos/guardian.py`, removed duplicate guardian/lifecycle in `agents/chaos_agent_expanded`, gate re-check in `controller.py` (pre-injection only)
-- [ ] P1 · Second-machine clean run from README (fresh install from `config/otel-demo-values.yaml`) **[verify]**
-- [ ] Joy · 3-minute video + backup; one-page architecture picture; submission form (~09:30)
-- [ ] P2 · Evidence: read Jaeger directly (`svc/jaeger` 16686) instead of through frontend-proxy **[verify v3 path]**
+- [ ] Joy · PR open, team message, safety self-review comment (STOP + Ctrl+C passed live 07:00) — waiting on P4 veto (deadline 07:30 passed: merge with "P4 veto pending" unless P4 objects)
+- [ ] P1 · Second-machine clean run [verify]
 
 ### DONE
+- [x] Joy · Evidence reads Jaeger directly (`svc/jaeger` 16686, `/jaeger/ui/api/v3`): 15 services, cart traces returned, no Jaeger restart; now the default in `config/journeys.yaml` + README — 11 Oct 07:53
+- [x] Joy · Architecture overview (one page): `ChaosMonkeys/Architecture_Overview.md` — 11 Oct 07:30
+- [x] Joy · Safety self-review live: STOP button (`--stop-all`) and Ctrl+C both removed the fault, cleanup confirmed; gate refused with shop unreachable — 11 Oct 07:00
+- [x] Joy · Demo script with real numbers (`Demo.md`) — 11 Oct 06:45
+- [x] Sprints 1–4 core: map, baseline, injection, kill switch (G3), planner + policy, 3 fault types (G4), scoring, report, benchmark, dashboard + STOP — see entries below
 - [x] Problem statement analysed; plan finalised (trimmed hybrid) — 10 Oct
 - [x] Roles defined; Joy = P2 — 10 Oct
 - [x] Day 1 compressed to one 4–5 h sprint + bonus window; rest on Day 2 (D-014) — 10 Oct
@@ -192,3 +171,7 @@ Update rule: move a task when you start/finish it; add a log line; flag blockers
 - 11 Oct 05:15–05:20 — Three gate refusals from a lone fast 503 (checkout 0.89 / cart 0.89 / checkout 0.90). No cause found in Envoy/frontend logs; 200 plain GETs all 200. Gate re-check added; worked live (exp-003 r2).
 - 11 Oct 06:00 — Scoring, report and ranking benchmark done. Ranked order only barely beats random (small sample); no Critical finding; CPU stress effect unverified (no CPU metric).
 - 11 Oct 06:33 — Dashboard shows scores; STOP button verified (STOP file created, chaos objects removed).
+- 11 Oct 06:50 — Gate refused (all journeys 0.00): nothing was forwarding the shop; another process held 8080 (401). Shop re-forwarded on 8081 (`PROBE_BASE_URL`; set `JAEGER_URL` too for evidence).
+- 11 Oct 07:00 — Safety tests passed live (STOP, Ctrl+C); test runs moved to `data/safety_tests/`.
+- 11 Oct 07:40 — Planner can use Groq (text only, same validation); deterministic rebuild reproduces the plan exactly.
+- 11 Oct 07:53 — Direct Jaeger read verified (200, 15 services, traces) and made the default.

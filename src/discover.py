@@ -19,7 +19,11 @@ import yaml
 NS = os.getenv("NAMESPACE", "otel-demo")
 # Query Jaeger directly (kubectl -n otel-demo port-forward svc/jaeger 16686:16686), not through
 # frontend-proxy:8080 - large trace responses pushed the proxy to 88.6/90Mi, nearly OOMKilling it.
-JAEGER = os.getenv("JAEGER_URL", "http://localhost:16686/jaeger/ui")
+# JAEGER_URL is shared with src.telemetry, which wants the v3 base (.../jaeger/ui/api/v3); this file uses the v1 API
+# (.../jaeger/ui/api/services), so strip the v3 suffix when it is there.
+JAEGER = os.getenv("JAEGER_URL", "http://localhost:16686/jaeger/ui").rstrip("/")
+if JAEGER.endswith("/api/v3"):
+    JAEGER = JAEGER[: -len("/api/v3")]
 MIN_COUNT = 3  # ignore edges seen fewer times than this (noise)
 # Jaeger is in-memory with a 600Mi limit; 200 traces x 1h per service pushed it into an OOMKill
 # (which wipes every trace). Small samples are enough to see every edge >= MIN_COUNT times.

@@ -1,6 +1,6 @@
 """ChaosPilot dashboard - P2 (Observability).   Run from the repo root:  streamlit run dashboard/app.py
 
-Reads data/runs.db (written by src.observe). Tabs: Live / Map / Runs / Findings. STOP button runs `stop_command`
+Reads data/runs.db (written by src.observe). Tabs: Live / Map / Runs / Findings / Control. STOP button runs `stop_command`
 from config/journeys.yaml (no LLM involved). Every tab degrades gracefully when its data does not exist yet.
 Thresholds below are DISPLAY defaults only - the guardrail thresholds are owned by P4.
 """
@@ -21,6 +21,7 @@ import streamlit as st
 
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
+from dashboard import control  # noqa: E402
 from src.observe import find_breach, find_healthy  # noqa: E402
 from src.telemetry import edges_from_traces, load_config  # noqa: E402
 
@@ -169,6 +170,12 @@ window_label = st.sidebar.selectbox("Time window", ["Last 5 min", "Last 15 min",
                                     disabled=exp_choice != "(latest data)")
 WINDOWS = {"Last 5 min": 300, "Last 15 min": 900, "Last 60 min": 3600, "All": None}
 auto = st.sidebar.toggle("Auto-refresh (5 s)", value=True)
+auto_score = st.sidebar.toggle("Re-score and re-report every 5 min", value=True,
+                               help="Runs python -m src.score and python -m src.report in the background (no cluster access).")
+auto_plan = st.sidebar.toggle("Refresh the plan from the cluster every 30 min", value=False,
+                              help="Rebuilds the plan only if the cluster's risks changed; never during a run; ids are kept.")
+live_monitor = st.sidebar.toggle("Live monitoring (probe the shop every 2 s)", value=True,
+                                 help="Keeps the Live tab current when no experiment runs. Needs the shop port-forward and PROBE_BASE_URL.")
 st.sidebar.divider()
 st.sidebar.subheader("Emergency")
 if st.sidebar.button("⛔ STOP ALL FAULTS", type="primary", width="stretch"):
@@ -188,7 +195,7 @@ base = load_baseline()
 if base is None:
     st.warning("No valid baseline yet (`python -m src.baseline`). Status labels use fixed display thresholds.")
 
-tab_live, tab_map, tab_runs, tab_find = st.tabs(["Live", "Map", "Runs", "Findings"])
+tab_live, tab_map, tab_runs, tab_find, tab_ctl = st.tabs(["Live", "Map", "Runs", "Findings", "Control"])
 
 
 # ----------------------------------------------------------------- Live
@@ -372,3 +379,51 @@ with tab_find:
             break
     else:
         st.info("No findings report yet. Write it with `python -m src.report` (it writes `reports/findings_report.md`).")
+
+
+# ----------------------------------------------------------------- Control
+@st.cache_resource
+def ambient() -> control.Ambient:
+    return control.Ambient()
+
+
+@st.cache_resource
+def rescorer() -> control.Rescorer:
+    return control.Rescorer(interval_s=300)
+
+
+@st.cache_resource
+def plan_refresher() -> control.PlanRefresher:
+    return control.PlanRefresher(interval_s=1800)
+
+
+@st.cache_resource
+def run_slot() -> control.RunSlot:
+    """The one experiment this dashboard started (shared by every browser tab)."""
+    return control.RunSlot()
+
+
+st.session_state["_plan_refresher"] = plan_refresher()
+with tab_ctl:
+    control.render(st, run_slot(), auto)
+
+if live_monitor:
+    ambient().start(run_slot())
+    if ambient().last_error:
+        st.sidebar.caption(f"Live monitor error: {ambient().last_error}")
+    else:
+        st.sidebar.caption("Live monitor: probing the shop (no experiment needed).")
+else:
+    ambient().stop()
+
+if auto_score:
+    rescorer().start(run_slot())
+    done = rescorer().last_ok
+    st.sidebar.caption(rescorer().last_error or (f"Scores refreshed {done:%H:%M:%S}" if done else "Scores: first refresh running..."))
+else:
+    rescorer().stop()
+
+if auto_plan:
+    plan_refresher().start(run_slot())
+else:
+    plan_refresher().stop()

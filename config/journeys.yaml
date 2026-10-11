@@ -4,7 +4,7 @@
 
 base_url: http://localhost:8080        # frontend-proxy [verify port/tunnel with P1]
 prometheus_url: http://localhost:9090  # [verify]
-jaeger_url: http://localhost:8080/jaeger/ui/api/v3   # Jaeger v3 API via frontend-proxy [confirmed locally; VM port per P1]
+jaeger_url: http://localhost:16686/jaeger/ui/api/v3  # direct: kubectl -n otel-demo port-forward svc/jaeger 16686:16686 (confirmed 11 Oct; the proxy path OOMed Jaeger)
 timeout_s: 5
 sample_interval_s: 2
 db_path: data/runs.db

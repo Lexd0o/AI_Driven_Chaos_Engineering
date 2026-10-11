@@ -387,6 +387,15 @@ def render(st, slot: RunSlot, auto_refresh: bool = True) -> None:
         return
 
     st.subheader("1. The plan")
+    refresher = st.session_state.get("_plan_refresher")
+    if st.button("Refresh plan from the cluster now", key="ctl_refresh_plan",
+                 help="Runs discover, audit, rank, plan (no LLM) and policy. Old experiment ids are kept."):
+        with st.spinner("Rebuilding the plan (about a minute)..."):
+            ok, message = (refresher or PlanRefresher()).refresh_once(slot)
+        (st.success if ok else st.warning)(message)
+        st.rerun() if ok and "changed:" in message else None
+    if refresher is not None and refresher.last_message:
+        st.caption(f"Automatic refresh: {refresher.last_message}")
     st.dataframe(pd.DataFrame(plan_rows(plan, scores, refusal_for)), width="stretch", hide_index=True)
     ids = [p["experiment_id"] for p in plan]
     first_runnable = next((n for n, p in enumerate(plan) if refusal_for(p) is None), 0)
@@ -495,3 +504,215 @@ def render_fix_file(st, slot: RunSlot, fix: dict, f: dict) -> None:
     if out is not None:
         (st.success if out[0] else st.error)("Done." if out[0] else "Failed.")
         st.code(out[1] or "(no output)")
+
+
+# ------------------------------------------------------------------ ambient live monitor
+class Ambient:
+    """Background thread that probes the shop every few seconds so the Live tab stays current without an experiment.
+
+    Rows are written with experiment_id NULL, so scoring (which reads by experiment id) never sees them.
+    It pauses while any experiment writes its own samples, so a run is never probed twice."""
+
+    def __init__(self):
+        import threading
+        self._threading = threading
+        self.thread = None
+        self.stop_event = threading.Event()
+        self.last_error = None
+
+    def running(self) -> bool:
+        return self.thread is not None and self.thread.is_alive()
+
+    @staticmethod
+    def experiment_sampling(slot, within_s: int = 15) -> bool:
+        if slot is not None and slot.alive():
+            return True
+        try:
+            from src.observe import connect
+            con = connect()
+            try:
+                row = con.execute("SELECT MAX(ts) FROM samples WHERE experiment_id IS NOT NULL").fetchone()
+            finally:
+                con.close()
+            return bool(row and row[0] and time.time() - row[0] < within_s)
+        except Exception:  # noqa: BLE001 - a locked db must not stop the monitor
+            return False
+
+    def _loop(self, slot):
+        from src.observe import run_sampler
+        while not self.stop_event.is_set():
+            if self.experiment_sampling(slot):
+                self.stop_event.wait(3)
+                continue
+            try:
+                run_sampler(experiment_id=None, stop_after_s=10, stop_event=self.stop_event)
+                self.last_error = None
+            except Exception as error:  # noqa: BLE001
+                self.last_error = f"{type(error).__name__}: {error}"
+                self.stop_event.wait(5)
+
+    def start(self, slot=None) -> None:
+        if self.running():
+            return
+        self.stop_event.clear()
+        self.thread = self._threading.Thread(target=self._loop, args=(slot,), daemon=True, name="ambient-monitor")
+        self.thread.start()
+
+    def stop(self) -> None:
+        self.stop_event.set()
+
+
+class Rescorer:
+    """Re-runs `python -m src.score` then `python -m src.report` every few minutes so the Runs and Findings tabs
+    follow the saved run files. Both commands only read data/runs and write scores/report files (no cluster access).
+    Skipped while an experiment is running so a half-written run file is never read."""
+
+    def __init__(self, interval_s: int = 300, runner=subprocess.run):
+        import threading
+        self._threading = threading
+        self.interval_s = interval_s
+        self.runner = runner
+        self.thread = None
+        self.stop_event = threading.Event()
+        self.last_ok = None      # datetime of the last good refresh
+        self.last_error = None
+
+    def running(self) -> bool:
+        return self.thread is not None and self.thread.is_alive()
+
+    def refresh_once(self, slot=None) -> bool:
+        if Ambient.experiment_sampling(slot):
+            return False
+        for module in ("src.score", "src.report"):
+            result = self.runner([sys.executable, "-m", module], cwd=str(ROOT), capture_output=True, text=True, timeout=180)
+            if result.returncode != 0:
+                self.last_error = f"{module} failed: {(result.stderr or result.stdout or '').strip()[-200:]}"
+                return False
+        self.last_ok, self.last_error = datetime.now(), None
+        return True
+
+    def _loop(self, slot):
+        while not self.stop_event.is_set():
+            try:
+                self.refresh_once(slot)
+            except Exception as error:  # noqa: BLE001
+                self.last_error = f"{type(error).__name__}: {error}"
+            self.stop_event.wait(self.interval_s)
+
+    def start(self, slot=None) -> None:
+        if self.running():
+            return
+        self.stop_event.clear()
+        self.thread = self._threading.Thread(target=self._loop, args=(slot,), daemon=True, name="rescorer")
+        self.thread.start()
+
+    def stop(self) -> None:
+        self.stop_event.set()
+
+
+# ------------------------------------------------------------------ plan refresh
+PLAN_STEPS = (("src.discover",), ("src.audit",), ("src.rank",), ("src.plan", "--deterministic"), ("src.policy",))
+PLAN_BACKUP_DIR = ROOT / "data" / "plan_backups"
+
+
+def plan_key(item: dict) -> tuple:
+    return (item["target"]["service"], item["fault_type"])
+
+
+def remap_ids(old: list[dict], new: list[dict]) -> list[dict]:
+    """Keep the experiment id of every (service, fault) that already existed, so saved runs and scores stay attached
+    to the same experiment. Genuinely new experiments get ids above every id seen before."""
+    by_key = {plan_key(p): p["experiment_id"] for p in old}
+    used = set(by_key.values())
+    numbers = [int(i.rsplit("-", 1)[1]) for i in used if i.rsplit("-", 1)[-1].isdigit()]
+    counter = max(numbers + [0])
+    out = []
+    for item in new:
+        item = dict(item)
+        existing = by_key.get(plan_key(item))
+        if existing:
+            item["experiment_id"] = existing
+        else:
+            counter += 1
+            item["experiment_id"] = f"exp-{counter:03d}"
+        out.append(item)
+    return out
+
+
+class PlanRefresher:
+    """Rebuilds the plan from the live cluster (discover, audit, rank, plan, policy).
+
+    Safeguards: never while an experiment runs or a STOP file exists; the planner runs without the LLM; when the set of
+    (service, fault) experiments is unchanged the previous plan file is put back untouched (so the LLM wording and
+    ids stay); when it changed, old ids are kept for old experiments and the previous plan is saved to data/plan_backups."""
+
+    def __init__(self, interval_s: int = 1800, runner=subprocess.run):
+        import threading
+        self._threading = threading
+        self.interval_s = interval_s
+        self.runner = runner
+        self.thread = None
+        self.stop_event = threading.Event()
+        self.last_ok = None
+        self.last_message = None
+
+    def running(self) -> bool:
+        return self.thread is not None and self.thread.is_alive()
+
+    def refresh_once(self, slot=None) -> tuple[bool, str]:
+        if Ambient.experiment_sampling(slot):
+            return False, "skipped: an experiment is running"
+        if stop_file().exists():
+            return False, "skipped: STOP file exists"
+        paths = [PLAN_PATH, ROOT / "data" / "plan.json"]
+        backups = {p: (p.read_bytes() if p.exists() else None) for p in paths}
+        old = load_plan()
+
+        def restore():
+            for p, data in backups.items():
+                if data is not None:
+                    p.write_bytes(data)
+
+        for step in PLAN_STEPS:
+            result = self.runner([sys.executable, "-m", *step], cwd=str(ROOT), capture_output=True, text=True, timeout=180)
+            if result.returncode != 0:
+                restore()
+                self.last_message = f"{step[0]} failed, previous plan kept: {(result.stderr or result.stdout or '').strip()[-160:]}"
+                return False, self.last_message
+        new = load_plan()
+        if not new:
+            restore()
+            self.last_message = "new plan was empty, previous plan kept"
+            return False, self.last_message
+        self.last_ok = datetime.now()
+        if {plan_key(p) for p in new} == {plan_key(p) for p in old}:
+            restore()
+            self.last_message = "plan unchanged (same experiments), previous file kept"
+            return True, self.last_message
+        PLAN_BACKUP_DIR.mkdir(parents=True, exist_ok=True)
+        if backups[paths[0]] is not None:
+            (PLAN_BACKUP_DIR / f"plan_validated-{datetime.now():%Y%m%d-%H%M%S}.json").write_bytes(backups[paths[0]])
+        merged = remap_ids(old, new)
+        (PLAN_PATH).write_text(json.dumps(merged, indent=2), encoding="utf-8")
+        added = sorted({plan_key(p) for p in new} - {plan_key(p) for p in old})
+        removed = sorted({plan_key(p) for p in old} - {plan_key(p) for p in new})
+        self.last_message = f"plan changed: added {added or 'none'}, removed {removed or 'none'} (old ids kept)"
+        return True, self.last_message
+
+    def _loop(self, slot):
+        while not self.stop_event.is_set():
+            try:
+                self.refresh_once(slot)
+            except Exception as error:  # noqa: BLE001
+                self.last_message = f"{type(error).__name__}: {error}"
+            self.stop_event.wait(self.interval_s)
+
+    def start(self, slot=None) -> None:
+        if self.running():
+            return
+        self.stop_event.clear()
+        self.thread = self._threading.Thread(target=self._loop, args=(slot,), daemon=True, name="plan-refresher")
+        self.thread.start()
+
+    def stop(self) -> None:
+        self.stop_event.set()

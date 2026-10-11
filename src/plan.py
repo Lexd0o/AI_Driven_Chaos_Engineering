@@ -202,8 +202,46 @@ def validate_llm_item(item: LLMItem, known_ids: set[str], cfg: dict) -> list[str
     return problems
 
 
+GROQ_JSON_INSTRUCTIONS = """
+
+Reply with JSON only, exactly this shape:
+{"items": [{"experiment_id": "exp-001", "hypothesis": "...", "reason": "...", "journeys": ["browse"]}]}"""
+
+
+def call_llm_groq(context: str, cfg: dict) -> LLMPlanText | None:
+    """Same contract as call_llm, through Groq (GROQ_API_KEY). The output goes through the same
+    pydantic model and validate_llm_item(), so it can never change a target, fault or param."""
+    if not os.getenv("GROQ_API_KEY"):
+        print("LLM skipped: GROQ_API_KEY not set - keeping deterministic text")
+        return None
+    try:
+        from groq import Groq
+    except ImportError:
+        print("LLM skipped: `groq` not installed (pip install groq) - keeping deterministic text")
+        return None
+    try:
+        response = Groq().chat.completions.create(
+            model=cfg["groq_model"],
+            temperature=0.2,
+            max_tokens=min(cfg["max_tokens"], 8000),
+            response_format={"type": "json_object"},
+            messages=[{"role": "system", "content": SYSTEM_PROMPT + GROQ_JSON_INSTRUCTIONS},
+                      {"role": "user", "content": context}],
+        )
+        choice = response.choices[0]
+        if choice.finish_reason == "length":
+            print("LLM skipped: incomplete output (length) - keeping deterministic text")
+            return None
+        return LLMPlanText.model_validate_json(choice.message.content)
+    except Exception as e:  # noqa: BLE001 - any API or schema failure keeps the deterministic plan
+        print(f"LLM skipped: {type(e).__name__}: {str(e)[:160]} - keeping deterministic text")
+        return None
+
+
 def call_llm(context: str, cfg: dict) -> LLMPlanText | None:
     """One structured call. Returns None (with the reason printed) on any failure."""
+    if cfg.get("provider", "anthropic") == "groq":
+        return call_llm_groq(context, cfg)
     try:
         import anthropic
     except ImportError:
@@ -304,7 +342,11 @@ def main() -> None:
         llm = call_llm(llm_context(plan, candidates, risks_by_id, graph, cfg), cfg)
         if llm is not None:
             n = apply_llm_text(plan, llm, cfg)
-            print(f"LLM ({cfg['model']}) wrote text for {n}/{len(plan)} experiments")
+            model = cfg["groq_model"] if cfg.get("provider") == "groq" else cfg["model"]
+            for item in plan:
+                if item["planner"] == "llm":
+                    item["planner_model"] = model
+            print(f"LLM ({model}) wrote text for {n}/{len(plan)} experiments")
 
     os.makedirs("data", exist_ok=True)
     with open(OUT_PATH, "w") as f:

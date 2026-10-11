@@ -78,19 +78,23 @@ Full setup notes, fixes for Docker Desktop and the reasons behind them: `ChaosMo
 
 ## Running an experiment
 
-Keep two PowerShell windows open for the port-forwards (8081 because 8080 is taken on some laptops):
+Keep three PowerShell windows open for the port-forwards (8081 because 8080 is taken on some laptops):
 
 ```powershell
 kubectl -n otel-demo port-forward svc/frontend-proxy 8081:8080
 kubectl -n otel-demo port-forward svc/prometheus 9090:9090
+kubectl -n otel-demo port-forward svc/jaeger 16686:16686
 ```
 
-In the repo root, with the venv active:
+Jaeger is read directly on 16686, not through frontend-proxy: heavy trace queries through the proxy made the
+in-memory Jaeger run out of memory and restart, which wipes every stored trace.
+
+In the repo root, with the venv active (set the same variables in the dashboard's window):
 
 ```powershell
 $env:PROBE_BASE_URL="http://localhost:8081"
 $env:PROMETHEUS_URL="http://127.0.0.1:9090"
-$env:JAEGER_URL="http://localhost:8081/jaeger/ui/api/v3"
+$env:JAEGER_URL="http://localhost:16686/jaeger/ui/api/v3"
 
 python -m src.run --list                              # which approved experiments are runnable, and why not
 python -m src.chaos.k8s_monitor --baseline 60         # guard baseline (must be under 30 min old)

@@ -3,7 +3,9 @@
 # Credentials come from the environment (ANTHROPIC_API_KEY, or an `ant auth login` profile).
 # No credentials, an API error, a refusal, or invalid output -> the deterministic text is kept.
 
-model: claude-opus-5-5
+provider: groq          # groq (GROQ_API_KEY, pip install groq) or anthropic (ANTHROPIC_API_KEY)
+groq_model: openai/gpt-oss-120b
+model: claude-opus-5-5  # used when provider: anthropic
 effort: medium          # writing hypotheses for 6-8 experiments; raise only if quality is lacking
 max_tokens: 16000
 
