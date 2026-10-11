@@ -66,6 +66,12 @@ Why: its Chaos Mesh lifecycle already has the safety pieces P4 needs. That means
 - `report.py`: the AI writes prose only. Any text containing a number not present in the facts it was given (or outside the length bounds, or with an unknown/duplicate risk_id) is discarded and the template text used (Rules.md 5, 18).
 Why: keeps scores honest and reproducible (D-006) and the report complete with no LLM. Alternatives rejected: treating missing containment as 1 (inflates scores), imputing a score before any run.
 
+**D-018 · 11 Oct · Report explanation text may come from Groq (`openai/gpt-oss-20b`) via a provider switch in `src/llm.py`.**
+`config/scoring.yaml` `llm.provider` is `anthropic` or `groq`; `structured_call` dispatches on it. Groq is called over plain `requests` (JSON-schema response format, falling back to `json_object`). Allowed under D-005/D-006 because the LLM still writes prose only: `report.py`'s guards apply whatever the provider (value-based number check, ASCII normalisation, unknown-service rejection, rejection of failure claims on unmeasured journeys such as checkout, length bounds) and rejected text falls back to the template. Output varies run to run (model nondeterminism); only text that passes every guard is kept. The planner (`config/planner.yaml`) stays on Anthropic. Key handling: `GROQ_API_KEY` from the environment or a repo-root `.env` (gitignored); never logged or committed. Any failure (no key, 401/403, 429, network, bad output) returns None -> template text.
+
+**D-019 · 11 Oct · Benchmark "hit" rule (`src/benchmark.py`).**
+A hit is an experiment with a degraded_recovered or not_recovered outcome, or an aborted run - the same "confirmed" rule as `score.py`. Metric = position of the first hit in our rank order, compared with 1000 seeded (42) random orderings of the same run set. It validates the ranking, not the LLM text (D-009). First result: position 1 of 3 vs random mean 1.96; 36% of random orderings do as well - small sample, not significant.
+
 ---
 
 ## Open decisions (resolve ASAP, then move above)

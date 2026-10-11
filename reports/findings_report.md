@@ -1,6 +1,6 @@
 # ChaosPilot findings report
 
-Snapshot: scores generated 2026-10-11T01:05:15.383789+00:00, graph generated 2026-10-11T00:46:29.523548+00:00
+Snapshot: scores generated 2026-10-11T01:29:49.395926+00:00, graph generated 2026-10-11T00:46:29.523548+00:00
 
 ## Resilience score: 73.0 / 100
 
@@ -16,7 +16,7 @@ Coverage: 3 of 8 planned experiments scored
 
 _AI-written - numbers come from code_
 
-The OpenTelemetry Demo scored 73 out of 100, with only 3 of 8 planned experiments executed. Redundancy and dependency are strong, but capacity is low, indicating that the system can handle failures but may not sustain high load. The most critical issue is the missing liveness probe on product-catalog, which caused real failures in the ads-recs and browse journeys. Addressing this probe first will restore stability for those journeys and reduce the overall risk.
+The OpenTelemetry Demo shows a solid redundancy and dependency posture but a weak capacity profile, reflected in a 73 resilience score and only 3 of 8 planned experiments scored. The most critical issue is the missing liveness probe on product-catalog, which caused real outages in the ads-recs and browse journeys. Addressing this probe first will restore automatic recovery for a key service and immediately improve overall availability.
 
 ## Weaknesses ranked by severity
 
@@ -46,9 +46,9 @@ The OpenTelemetry Demo scored 73 out of 100, with only 3 of 8 planned experiment
 
 **Evidence:** has_liveness=False - a hung (not crashed) process won't be auto-restarted
 
-**Why it matters:** Confirmed by experiment: product-catalog - no liveness probe. Evidence: has_liveness=False - a hung (not crashed) process won't be auto-restarted. product-catalog is called by checkout, frontend, recommendation; has 4 dependent service(s) in its blast radius; carries gateway share 0.125; sits on the checkout path. Severity: High.
+**Why it matters:** Without a liveness probe, a hung product-catalog process is not restarted by Kubernetes. During the experiment the service failed, causing the ads-recs and browse journeys to drop to 25 % availability and 25 % of requests to exceed the latency SLO. The evidence shows the pod was aborted because the probe threshold was breached, and the failure was not recovered.
 
-**Why the fix helps:** A liveness probe restarts a process that is hung or frozen instead of leaving it to time out every request.
+**Why the fix helps:** Adding a livenessProbe (gRPC health check on port 8080) will cause Kubernetes to restart a hung product-catalog pod, restoring service availability and preventing downstream journey failures.
 
 **Recommended fix:** add a livenessProbe (gRPC health check on port 8080) to product-catalog
 
@@ -56,7 +56,7 @@ The OpenTelemetry Demo scored 73 out of 100, with only 3 of 8 planned experiment
 kubectl -n otel-demo patch deployment product-catalog --patch-file reports/fixes/R-product-catalog-no_liveness_probe.yaml
 ```
 
-_Text source: Template_
+_Text source: AI-written_
 
 ### 2. frontend-proxy: no liveness probe
 
@@ -64,9 +64,9 @@ _Text source: Template_
 
 **Evidence:** has_liveness=False - a hung (not crashed) process won't be auto-restarted
 
-**Why it matters:** Prediction (not yet tested): frontend-proxy - no liveness probe. Evidence: has_liveness=False - a hung (not crashed) process won't be auto-restarted. frontend-proxy carries gateway share 1.0. Severity: High.
+**Why it matters:** The frontend-proxy lacks a liveness probe, so if it hangs it will not be restarted. This could cause any journey that routes through the proxy-such as browse, ads-recs, or checkout-to receive traffic from an unhealthy pod, leading to errors or degraded performance. The evidence indicates the probe is missing and a hung process would not be auto-restarted.
 
-**Why the fix helps:** A liveness probe restarts a process that is hung or frozen instead of leaving it to time out every request.
+**Why the fix helps:** Adding a livenessProbe (tcpSocket on the service port) will enable Kubernetes to detect and restart a hung frontend-proxy pod, ensuring continuous routing for all dependent journeys.
 
 **Recommended fix:** add a livenessProbe (tcpSocket on port 'service') to frontend-proxy
 
@@ -74,7 +74,7 @@ _Text source: Template_
 kubectl -n otel-demo patch deployment frontend-proxy --patch-file reports/fixes/R-frontend-proxy-no_liveness_probe.yaml
 ```
 
-_Text source: Template_
+_Text source: AI-written_
 
 ### 3. frontend-proxy: no readiness probe
 
@@ -82,9 +82,9 @@ _Text source: Template_
 
 **Evidence:** has_readiness=False - a restarted pod may receive traffic before it's ready
 
-**Why it matters:** A missing readiness probe means a restarted frontend-proxy pod might receive traffic before it is fully ready, causing transient failures for journeys that route through it. The evidence indicates has_readiness=False, so traffic could be sent to an unready pod.
+**Why it matters:** Without a readiness probe, a restarting frontend-proxy pod may receive traffic before it is fully ready, potentially returning errors to any journey that uses the proxy. The evidence shows readiness is absent, meaning traffic could be sent to an unprepared pod.
 
-**Why the fix helps:** Adding a readiness probe (tcpSocket on the service port) guarantees that traffic is only sent to a pod that is fully ready, reducing the chance of user-facing errors during restarts.
+**Why the fix helps:** Adding a readinessProbe (tcpSocket on the service port) ensures the proxy only receives traffic when it is fully ready, reducing the chance of user-facing errors during restarts.
 
 **Recommended fix:** add a readinessProbe (tcpSocket on port 'service') to frontend-proxy
 
@@ -100,9 +100,9 @@ _Text source: AI-written_
 
 **Evidence:** replicas=1, has_pdb=False, stateful=False, fan_in=0
 
-**Why it matters:** Running frontend-proxy with a single replica and no Pod Disruption Budget means that any voluntary or involuntary disruption (e.g., node drain) will cause a full outage for all journeys that rely on the gateway. The evidence shows replicas=1 and has_pdb=False.
+**Why it matters:** The frontend-proxy runs a single replica without a PodDisruptionBudget. During a voluntary eviction or node failure, the only pod could be removed, causing a complete outage for all journeys that depend on the proxy. The evidence notes the replica count is one and no PDB is configured.
 
-**Why the fix helps:** Scaling to two replicas and adding a PDB (minAvailable=1) ensures that at least one pod remains available during disruptions, maintaining continuous service for all dependent journeys.
+**Why the fix helps:** Scaling to two replicas and adding a PDB (minAvailable = 1) guarantees at least one healthy pod remains during disruptions, maintaining continuous service for all dependent journeys.
 
 **Recommended fix:** scale frontend-proxy to 2 replicas and add a PDB (minAvailable=1)
 
@@ -119,9 +119,9 @@ _Text source: AI-written_
 
 **Evidence:** has_liveness=False - a hung (not crashed) process won't be auto-restarted
 
-**Why it matters:** The frontend service lacks a liveness probe, so if it hangs, downstream services such as ad, cart, checkout, and others will not be restarted automatically, leading to failures in any journey that calls frontend. The evidence shows has_liveness=False.
+**Why it matters:** The frontend service has no liveness probe, so a hung frontend process would not be restarted. This could affect any journey that calls the frontend, such as browse or ads-recs, by returning errors or high latency. The evidence shows the probe is missing and a hung process would not be auto-restarted.
 
-**Why the fix helps:** Adding a liveness probe (tcpSocket on the service port) will trigger a restart of the frontend pod when it becomes unresponsive, preventing cascading failures to its callers.
+**Why the fix helps:** Adding a livenessProbe (tcpSocket on the service port) will allow Kubernetes to restart a hung frontend pod, preserving availability for all journeys that rely on it.
 
 **Recommended fix:** add a livenessProbe (tcpSocket on port 'service') to frontend
 
@@ -137,9 +137,9 @@ _Text source: AI-written_
 
 **Evidence:** has_readiness=False - a restarted pod may receive traffic before it's ready
 
-**Why it matters:** Without a readiness probe, a restarted frontend pod could receive traffic before it is ready, causing brief outages for journeys that depend on it. The evidence shows has_readiness=False.
+**Why it matters:** Without a readiness probe, a restarting frontend pod may receive traffic before it is ready, potentially causing errors for journeys that call the frontend. The evidence indicates readiness is absent, meaning traffic could be sent to an unprepared pod.
 
-**Why the fix helps:** Implementing a readiness probe (tcpSocket on the service port) ensures that traffic is only routed to a fully ready frontend pod, improving reliability during restarts.
+**Why the fix helps:** Adding a readinessProbe (tcpSocket on the service port) ensures the frontend only receives traffic when it is fully ready, reducing user-facing errors during restarts.
 
 **Recommended fix:** add a readinessProbe (tcpSocket on port 'service') to frontend
 
@@ -155,9 +155,9 @@ _Text source: AI-written_
 
 **Evidence:** replicas=1, has_pdb=False, stateful=False, fan_in=1
 
-**Why it matters:** Frontend runs with a single replica and no PDB, so any disruption will bring down all journeys that call frontend, such as browse and checkout. The evidence indicates replicas=1 and has_pdb=False.
+**Why it matters:** The frontend runs a single replica without a PodDisruptionBudget. A voluntary eviction or node failure could remove the only pod, causing a full outage for all journeys that call the frontend. The evidence notes the replica count is one and no PDB is configured.
 
-**Why the fix helps:** Scaling to two replicas and adding a PDB (minAvailable=1) guarantees that at least one pod remains available during disruptions, preserving service for all dependent journeys.
+**Why the fix helps:** Scaling to two replicas and adding a PDB (minAvailable = 1) guarantees at least one healthy pod remains during disruptions, maintaining continuous service for all dependent journeys.
 
 **Recommended fix:** scale frontend to 2 replicas and add a PDB (minAvailable=1)
 
@@ -174,9 +174,9 @@ _Text source: AI-written_
 
 **Evidence:** has_liveness=False - a hung (not crashed) process won't be auto-restarted
 
-**Why it matters:** The payment service has no liveness probe, so a hung payment pod would not be restarted, potentially blocking checkout journeys that rely on it. The evidence shows has_liveness=False.
+**Why it matters:** The payment service lacks a liveness probe, so a hung payment process would not be restarted. This could break the checkout journey, which depends on payment, by causing errors or high latency. The evidence shows the probe is missing and a hung process would not be auto-restarted.
 
-**Why the fix helps:** Adding a liveness probe (gRPC health check on port 8080) will restart a hung payment pod, preventing checkout failures caused by an unresponsive payment service.
+**Why the fix helps:** Adding a livenessProbe (gRPC health check on port 8080) will enable Kubernetes to restart a hung payment pod, ensuring checkout can complete successfully.
 
 **Recommended fix:** add a livenessProbe (gRPC health check on port 8080) to payment
 
@@ -192,9 +192,9 @@ _Text source: AI-written_
 
 **Evidence:** has_readiness=False - a restarted pod may receive traffic before it's ready
 
-**Why it matters:** Without a readiness probe, a restarted payment pod might receive checkout traffic before it is ready, causing checkout failures. The evidence shows has_readiness=False.
+**Why it matters:** Without a readiness probe, a restarting payment pod may receive traffic before it is ready, potentially causing checkout errors. The evidence indicates readiness is absent, meaning traffic could be sent to an unprepared pod.
 
-**Why the fix helps:** Adding a readiness probe (gRPC health check on port 8080) ensures checkout traffic is only sent to a ready payment pod, reducing the chance of transaction errors during restarts.
+**Why the fix helps:** Adding a readinessProbe (gRPC health check on port 8080) ensures the payment service only receives traffic when it is fully ready, reducing checkout failures during restarts.
 
 **Recommended fix:** add a readinessProbe (gRPC health check on port 8080) to payment
 
@@ -210,9 +210,9 @@ _Text source: AI-written_
 
 **Evidence:** replicas=1, has_pdb=False, stateful=False, fan_in=1
 
-**Why it matters:** Payment runs with a single replica and no PDB, so any disruption will take down checkout journeys that depend on it. The evidence indicates replicas=1 and has_pdb=False.
+**Why it matters:** The payment service runs a single replica without a PodDisruptionBudget. A voluntary eviction or node failure could remove the only pod, causing a checkout outage. The evidence notes the replica count is one and no PDB is configured.
 
-**Why the fix helps:** Scaling payment to two replicas and adding a PDB (minAvailable=1) ensures that at least one pod remains available during disruptions, keeping checkout functional.
+**Why the fix helps:** Scaling to two replicas and adding a PDB (minAvailable = 1) guarantees at least one healthy payment pod remains during disruptions, preserving checkout availability.
 
 **Recommended fix:** scale payment to 2 replicas and add a PDB (minAvailable=1)
 
@@ -241,6 +241,12 @@ _Text source: AI-written_
 | exp-006 | shipping | network_delay | survived | 100.0 |
 | exp-007 | frontend | pod_kill | not_run | - |
 | exp-008 | payment | cpu_stress | not_run | - |
+
+## Ranking benchmark
+
+Our ranking found the first confirmed weakness at position 1 of 3. Random orderings average position 1.96 (analytic expectation 2.00); 36% of 1000 random orderings (seed 42) do as well or better.
+
+_Caveat: Small sample: 3 experiments, 1 hit(s); not statistically significant._
 
 ## How the score works
 

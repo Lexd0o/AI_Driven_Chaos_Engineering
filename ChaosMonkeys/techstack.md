@@ -28,16 +28,19 @@ Pin every version on Day 1 and fill the "Pinned" column. This table also feeds t
 | Config | `pyyaml`, `python-dotenv` | `____` | |
 | Numbers | `numpy`, `pandas` | `____` | z-scores, aggregation |
 | Storage | `sqlite3` (stdlib) | — | `data/runs.db` |
-| Dashboard | `streamlit`, `plotly` | `____` | Tier 1 |
+| Dashboard | `streamlit` (built, `dashboard/app.py`), `pandas` | `____` | `streamlit run dashboard/app.py`; plotly not used |
+| Dependencies | `requirements.txt` (repo root) | lower bounds | kubernetes, requests, pyyaml, pydantic, anthropic, streamlit, pandas; `agents/recovery_agent` has its own file |
 | Graph render | `pyvis` or plotly network | `____` | Dependency map in dashboard |
 | LLM SDK | `anthropic` (provisional, O-2) | `1.13.0` | Structured output via `client.beta.messages.parse` + pydantic; model in `config/planner.yaml`. Shared call helper `src/llm.py` (`structured_call`, used by `plan.py` and `report.py`; every failure returns None -> deterministic fallback) |
+| LLM (report text) | Groq via plain `requests` (no SDK) | - | `config/scoring.yaml` llm.provider: groq, model `openai/gpt-oss-20b`; key from `GROQ_API_KEY` env or repo-root `.env` (gitignored). `src/llm.py` `structured_call` switches on `provider` (D-018) |
 | Scoring config | `pyyaml` | — | `config/scoring.yaml`: D-008 weights, journey weights, aliases, categories, severity bands, report-LLM settings |
 
 ## 3. AI models (fill for team form)
 
 | Use | Model | Provider | Notes |
 |---|---|---|---|
-| Planner hypotheses + report explanations | `claude-opus-5-5` (`config/planner.yaml`, `config/scoring.yaml` llm.model) | Anthropic | Provisional pending O-2 (needs `ANTHROPIC_API_KEY`). Fallback: deterministic templates. Text only: the model never picks targets/params or computes scores |
+| Planner hypotheses | `claude-opus-5-5` (`config/planner.yaml`) | Anthropic | Provisional pending O-2 (needs `ANTHROPIC_API_KEY`). Fallback: deterministic templates. Text only |
+| Report explanations | `openai/gpt-oss-20b` (`config/scoring.yaml` llm) | Groq | Needs `GROQ_API_KEY` (env or `.env`). Text only: the model never picks targets/params or computes scores; guards + template fallback apply (D-018) |
 | Coding assistants used by team | `TBD` | `TBD` | Must be disclosed |
 
 ## 4. Third-party data

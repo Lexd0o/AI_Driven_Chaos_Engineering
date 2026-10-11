@@ -29,10 +29,10 @@ DISCOVER → AUDIT → RANK → HYPOTHESISE → VALIDATE → INJECT → OBSERVE 
 | Validate | `src/policy.py` | `plan.json`, `config/policy.yaml` | `data/plan_validated.json` (approved items only; rejections + reasons are printed, not written) |
 | Inject / Guard / Run | `src/run.py` + `agents/chaos_agent_expanded` (D-016) | one approved item, `config/executor.yaml` | run record `data/runs/<exp>-r<n>.json` (state machine, guardrail, watchdog). Planned `inject.py` / `guard.py` / `observe.py` were not built as separate modules; flag injection is not implemented |
 | Score | `src/score.py` | `plan_validated.json`, `data/runs/*.json`, `graph.json`, `risks.json`, `ranked_candidates.json`, `reports/fixes/index.json`, `config/scoring.yaml` | `data/scores.json` (null score when no runs) |
-| Explain | `src/report.py` | `data/scores.json`, `graph.json`, `ranked_candidates.json` | `reports/findings_report.md` + `reports/findings_report.json` |
+| Explain | `src/report.py` | `data/scores.json`, `graph.json`, `ranked_candidates.json`, `data/benchmark.json` | `reports/findings_report.md` + `reports/findings_report.json` |
 | Recommend | `src/fixes.py` | findings | YAML patches in `reports/fixes/` |
-| Benchmark | `src/benchmark.py` | plan order + run outcomes | ranked-vs-random stats |
-| UI | `dashboard/app.py` | SQLite + JSON files | Streamlit dashboard |
+| Benchmark | `src/benchmark.py` (built) | `data/plan_validated.json`, `data/runs/*.json`, `config/scoring.yaml` | `data/benchmark.json` (first-hit position vs seeded random orderings; shown in the report) |
+| UI | `dashboard/app.py` + `dashboard/dash_data.py` (built) | `data/*.json`, `data/runs/*.json`, `reports/` (JSON files, no SQLite) | Streamlit dashboard; the only action is STOP ALL (`python -m src.run --stop-all`) |
 
 ---
 

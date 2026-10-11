@@ -310,5 +310,24 @@ class TestTemplateText(unittest.TestCase):
         self.assertIn("| exp-001 | cart | pod_kill | confirmed | 72.4 |", md)
 
 
+class BenchmarkSectionTests(unittest.TestCase):
+    def test_absent_says_not_run(self):
+        md = R.render_markdown(R.build_report(scores_not_scored(), GRAPH, RANKED, CFG, False))
+        self.assertIn("## Ranking benchmark", md)
+        self.assertIn("python -m src.benchmark", md)
+
+    def test_applicable_numbers_and_caveat(self):
+        b = {"status": "applicable", "n_run": 3, "n_hits": 1, "our_first_hit_position": 1,
+             "random_mean_first_hit_position": 2.0, "analytic_expected_position": 2.0,
+             "share_random_as_good_or_better": 0.33, "iterations": 1000, "seed": 42,
+             "caveat": "Small sample: 3 experiments, 1 hit(s)."}
+        rep = R.build_report(scores_not_scored(), GRAPH, RANKED, CFG, False, benchmark=b)
+        md = R.render_markdown(rep)
+        self.assertIn("position 1 of 3", md)
+        self.assertIn("33%", md)
+        self.assertIn("Small sample", md)
+        self.assertEqual(rep["benchmark"], b)
+
+
 if __name__ == "__main__":
     unittest.main()

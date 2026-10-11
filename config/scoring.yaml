@@ -27,3 +27,6 @@ llm:
   explain_top: 10          # weaknesses that get an AI explanation; the rest use template text
   min_text_chars: 40
   max_text_chars: 900
+
+# Planner benchmark (src/benchmark.py, Architecture.md section 9): our ranked order vs random orderings.
+benchmark: {iterations: 1000, seed: 42}

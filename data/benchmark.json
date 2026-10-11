@@ -1,0 +1,21 @@
+{
+  "generated_at": "2026-10-11T01:29:49.663538+00:00",
+  "n_run": 3,
+  "n_hits": 1,
+  "our_order": [
+    "exp-002",
+    "exp-004",
+    "exp-006"
+  ],
+  "hits": [
+    "exp-002"
+  ],
+  "our_first_hit_position": 1,
+  "random_mean_first_hit_position": 1.96,
+  "analytic_expected_position": 2.0,
+  "share_random_as_good_or_better": 0.358,
+  "iterations": 1000,
+  "seed": 42,
+  "status": "applicable",
+  "caveat": "Small sample: 3 experiments, 1 hit(s); not statistically significant."
+}

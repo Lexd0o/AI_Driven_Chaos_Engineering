@@ -29,6 +29,7 @@ GRAPH_PATH = "data/graph.json"
 RANKED_PATH = "data/ranked_candidates.json"
 RUNS_DIR = "data/runs"
 PLAN_PATH = "data/plan_validated.json"
+BENCHMARK_PATH = "data/benchmark.json"
 EXECUTOR_PATH = "config/executor.yaml"
 CONFIG_PATH = "config/scoring.yaml"
 OUT_MD = "reports/findings_report.md"
@@ -432,7 +433,7 @@ def apply_ai_text(llm: ReportText, rfacts: dict, facts_by_id: dict, cfg: dict,
 
 def build_report(scores: dict, graph: dict, ranked: list[dict], cfg: dict, use_llm: bool,
                  plan: list[dict] | None = None, executor: dict | None = None,
-                 run_records: dict | None = None) -> dict:
+                 run_records: dict | None = None, benchmark: dict | None = None) -> dict:
     """Pure data -> report dict (no file I/O except through structured_call)."""
     llm_cfg = cfg["llm"]
     ranked_by_service = {c["service"]: c for c in ranked}
@@ -475,6 +476,7 @@ def build_report(scores: dict, graph: dict, ranked: list[dict], cfg: dict, use_l
         "counts": scores.get("counts"),
         "executive_summary": {"text": summary_ai or template_summary(rfacts),
                               "text_source": "ai" if summary_ai else "template"},
+        "benchmark": benchmark,
         "findings": findings,
         "explained": explained,
         "experiments": scores.get("experiments", []),
@@ -543,6 +545,20 @@ def fix_block(f: dict) -> list[str]:
     return lines
 
 
+def benchmark_section(b: dict | None) -> list[str]:
+    if not b:
+        return ["## Ranking benchmark", "", "Not run yet - `python -m src.benchmark`.", ""]
+    if b.get("status") != "applicable":
+        return ["## Ranking benchmark", "", f"{b.get('caveat')} ({b.get('n_run')} experiment(s) run)", ""]
+    return ["## Ranking benchmark", "",
+            f"Our ranking found the first confirmed weakness at position {b['our_first_hit_position']} of "
+            f"{b['n_run']}. Random orderings average position {b['random_mean_first_hit_position']:.2f} "
+            f"(analytic expectation {b['analytic_expected_position']:.2f}); "
+            f"{b['share_random_as_good_or_better']:.0%} of {b['iterations']} random orderings "
+            f"(seed {b['seed']}) do as well or better.", "",
+            f"_Caveat: {b['caveat']}_", ""]
+
+
 def render_markdown(report: dict) -> str:
     score = report["score"]
     es = report["executive_summary"]
@@ -584,6 +600,8 @@ def render_markdown(report: dict) -> str:
     else:
         L += ["No experiments have been scored yet.", ""]
 
+    L += benchmark_section(report.get("benchmark"))
+
     jw = report["config"].get("journey_weights") or {}
     w = report["config"].get("weights") or {}
     jw_text = ", ".join(f"{k} {v}" for k, v in jw.items())
@@ -620,7 +638,8 @@ def main() -> None:
     cfg = load_yaml(CONFIG_PATH)
     executor = load_yaml(EXECUTOR_PATH) if os.path.exists(EXECUTOR_PATH) else {}
     report = build_report(scores, load_json(GRAPH_PATH, {}), load_json(RANKED_PATH, []), cfg,
-                          use_llm=not args.no_llm, plan=load_json(PLAN_PATH, []), executor=executor)
+                          use_llm=not args.no_llm, plan=load_json(PLAN_PATH, []), executor=executor,
+                          benchmark=load_json(BENCHMARK_PATH, None))
     write_outputs(report)
 
     n_ai = sum(1 for f in report["explained"] if f["text_source"] == "ai")

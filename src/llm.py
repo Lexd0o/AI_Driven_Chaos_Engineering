@@ -1,4 +1,4 @@
-"""llm.py - one structured Claude call, shared by plan.py and report.py.
+"""llm.py - one structured LLM call (Anthropic Claude or Groq, per cfg["provider"]), shared by plan.py and report.py.
 
 The LLM never acts (Decisions.md D-005): callers give it facts, it returns text in a pydantic
 schema, and callers validate and decide what to keep. Every failure - no `anthropic` package,

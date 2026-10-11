@@ -1,0 +1,9 @@
+# ChaosPilot (src/ + dashboard/). Lower bounds only. Install: pip install -r requirements.txt
+# agents/recovery_agent has its own requirements file.
+kubernetes>=28
+requests>=2.31
+pyyaml>=6
+pydantic>=2
+anthropic>=0.40
+streamlit>=1.30
+pandas>=2
