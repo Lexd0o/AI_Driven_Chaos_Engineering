@@ -12,6 +12,7 @@ import os
 import sqlite3
 import subprocess
 import sys
+from datetime import datetime
 from pathlib import Path
 
 import pandas as pd
@@ -130,6 +131,35 @@ def status_label(success: float | None, p95: float | None, base_p95: float | Non
     return "✅ Healthy"
 
 
+DEFAULT_STOP = "python -m src.run --stop-all"
+SCORES_PATH = ROOT / "data" / "scores.json"
+
+
+def stop_command() -> str:
+    """The configured STOP command; a leading `python` means the interpreter this dashboard runs under."""
+    cmd = CFG.get("stop_command", DEFAULT_STOP).split("#")[0].strip()
+    if cmd.startswith("python "):
+        cmd = f'"{sys.executable}" ' + cmd[len("python "):]
+    return cmd
+
+
+def stop_file() -> Path:
+    """Where src.run --stop-all leaves its STOP file (config/executor.yaml stop_path)."""
+    try:
+        import yaml
+        path = yaml.safe_load((ROOT / "config" / "executor.yaml").read_text(encoding="utf-8")).get("stop_path")
+    except Exception:  # noqa: BLE001
+        path = None
+    return ROOT / (path or "data/STOP")
+
+
+def load_scores() -> dict | None:
+    try:
+        return json.loads(SCORES_PATH.read_text(encoding="utf-8"))
+    except Exception:  # noqa: BLE001
+        return None
+
+
 # ----------------------------------------------------------------- sidebar
 st.sidebar.title("🧪 ChaosPilot")
 db_path = Path(st.sidebar.text_input("Database", os.getenv("DASHBOARD_DB", str(ROOT / CFG["db_path"]))))
@@ -142,7 +172,7 @@ auto = st.sidebar.toggle("Auto-refresh (5 s)", value=True)
 st.sidebar.divider()
 st.sidebar.subheader("Emergency")
 if st.sidebar.button("⛔ STOP ALL FAULTS", type="primary", width="stretch"):
-    cmd = CFG.get("stop_command", "make stop-all")
+    cmd = stop_command()
     try:
         r = subprocess.run(cmd, shell=True, cwd=ROOT, capture_output=True, text=True, timeout=60)
         (st.sidebar.success if r.returncode == 0 else st.sidebar.error)(f"`{cmd}` exited {r.returncode}")
@@ -150,7 +180,9 @@ if st.sidebar.button("⛔ STOP ALL FAULTS", type="primary", width="stretch"):
             st.sidebar.code((r.stdout + r.stderr)[-1500:])
     except Exception as e:  # noqa: BLE001
         st.sidebar.error(f"Could not run `{cmd}`: {e}")
-st.sidebar.caption(f"Runs `{CFG.get('stop_command', 'make stop-all')}` - no LLM involved.")
+st.sidebar.caption(f"Runs `{CFG.get('stop_command', DEFAULT_STOP)}` - no LLM involved.")
+if stop_file().exists():
+    st.sidebar.warning(f"STOP file present: new runs are refused. Delete `{stop_file()}` after checking the shop.")
 
 base = load_baseline()
 if base is None:
@@ -269,7 +301,43 @@ with tab_map:
 
 
 # ----------------------------------------------------------------- Runs
+def render_scores() -> None:
+    """Scored runs from data/scores.json (python -m src.score). Numbers are computed by code, shown as stored."""
+    scores = load_scores()
+    if scores is None:
+        st.info("No scores yet. After runs finish:  `python -m src.score`  (then `python -m src.report`).")
+        return
+    cov = scores["coverage"]
+    c1, c2, c3 = st.columns(3)
+    c1.metric("Overall resilience score", "n/a" if scores["overall"] is None else f"{scores['overall']:.1f} / 100")
+    c2.metric("Coverage", f"{cov['scored']} of {cov['planned']} scored")
+    c3.metric("Inconclusive / not run", f"{cov['inconclusive']} / {cov['not_run']}")
+    rows = []
+    for e in scores["experiments"]:
+        rows.append({"experiment": e["experiment_id"], "fault": e["fault_type"], "target": e["target"],
+                     "runs scored": f"{e['n_scored']}/{e['n_runs']}",
+                     "outcome": ", ".join(r["outcome"] for r in e["runs"]) or "not run",
+                     "S": None if e["S"] is None else round(e["S"], 1),
+                     "severity": e["severity"] or e["status"], "prediction": e["prediction"]})
+    st.dataframe(pd.DataFrame(rows), width="stretch", hide_index=True)
+    with st.expander("Per-run details (A, L, R, C)"):
+        detail = []
+        for e in scores["experiments"]:
+            for r in e["runs"]:
+                detail.append({"experiment": e["experiment_id"], "repeat": r["repeat"], "run": r["run_id"],
+                               "outcome": r["outcome"], "S": None if r["S"] is None else round(r["S"], 1),
+                               "A": r["A"], "L": r["L"], "R": r["R"], "C": r["C"],
+                               "impact_recovery_s": r["impact_recovery_s"], "stopped_by_guardian": r["aborted"],
+                               "not scored because": "; ".join(r["reasons"])})
+        st.dataframe(pd.DataFrame(detail), width="stretch", hide_index=True)
+    st.caption(f"Formula {scores['formula']}. C = n/a when every probed journey is a target. "
+               f"Scores file updated {datetime.fromtimestamp(SCORES_PATH.stat().st_mtime).strftime('%H:%M:%S')}.")
+
+
 with tab_runs:
+    st.subheader("Scored runs")
+    render_scores()
+    st.subheader("Raw samples per run")
     df_all, _ = read_db(db_path, None, None)
     jall = df_all[df_all.journey.notna() & df_all.experiment_id.notna()] if not df_all.empty else df_all
     jall = jall[~jall.experiment_id.astype(str).str.startswith("baseline")] if not jall.empty else jall
@@ -303,4 +371,4 @@ with tab_find:
             st.markdown(p.read_text(encoding="utf-8"))
             break
     else:
-        st.info("No findings report yet. P5's report generator writes `reports/findings_report.md`.")
+        st.info("No findings report yet. Write it with `python -m src.report` (it writes `reports/findings_report.md`).")

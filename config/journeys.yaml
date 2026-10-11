@@ -51,4 +51,4 @@ journeys:
           creditCard: {creditCardNumber: "4432-8015-6152-0454", creditCardCvv: 672, creditCardExpirationYear: 2030, creditCardExpirationMonth: 1}
 
 # Dashboard STOP button runs this (must work without the LLM). P1 owns the real target [verify].
-stop_command: make stop-all
+stop_command: python -m src.run --stop-all    # STOP file (blocks new runs) + deletes every chaos object in otel-demo; no LLM
