@@ -219,22 +219,20 @@ Same setup as P1 (D-021). PowerShell, any folder, no venv. Use PowerShell, not G
    kubectl get nodes -o wide        # node docker-desktop, Ready, runtime docker://...
    ```
 2. **Helm:** `winget install Helm.Helm`, then open a new terminal; `helm version`.
-3. **OTel Demo** (OpenSearch off to save memory):
+3. **OTel Demo**, from the pinned values file (D-034), run from the repo root:
    ```powershell
    helm repo add open-telemetry https://open-telemetry.github.io/opentelemetry-helm-charts
    helm repo update
-   helm install otel-demo open-telemetry/opentelemetry-demo -n otel-demo --create-namespace --set opensearch.enabled=false
+   helm install otel-demo open-telemetry/opentelemetry-demo -n otel-demo --create-namespace --version 0.42.3 -f config/otel-demo-values.yaml
    ```
-   First image pulls took about 35 min on Joy's laptop.
-4. **Fixes needed on Docker Desktop:**
-   - Collector `otel-collector-agent` fails with "path / is mounted on / but it is not a shared or slave mount" → turn off host metrics:
-     `helm upgrade otel-demo open-telemetry/opentelemetry-demo -n otel-demo --reuse-values --set opentelemetry-collector.presets.hostMetrics.enabled=false`
-   - Pods `Pending` with "Insufficient memory" (node ~7.7 GB, 99 % reserved) → scale extras to 0 (re-run after every `helm upgrade`, which brings them back):
-     `kubectl -n otel-demo scale deploy load-generator mcp chatbot agent grafana accounting fraud-detection --replicas=0`
-     Kept on purpose: `quote` (shipping calls it), `kafka` (checkout uses it).
-   - Collector memory headroom: `helm upgrade otel-demo open-telemetry/opentelemetry-demo -n otel-demo --reuse-values --set opentelemetry-collector.resources.limits.memory=900Mi`
+   First image pulls took about 35 min on Joy's laptop. **[verify]** a fresh install from this values file on a second machine (it was applied as an upgrade on Joy's cluster, revision 6).
+   Change the cluster only with `helm upgrade otel-demo open-telemetry/opentelemetry-demo -n otel-demo --version 0.42.3 -f config/otel-demo-values.yaml`. Never use `--reuse-values` or `--set` after the install: on 11 Oct it brought back 7 optional services and the collector went `Pending`. Undo: `helm rollback otel-demo <revision> -n otel-demo` (see `helm history otel-demo -n otel-demo`).
+4. **What the values file fixes on Docker Desktop** (no manual steps needed):
+   - Host metrics off: the collector otherwise fails with "path / is mounted on / but it is not a shared or slave mount".
+   - Optional services off (`accounting`, `agent`, `chatbot`, `fraud-detection`, `mcp`, `load-generator`) and `grafana` off: the node has about 7.7 GB and was 99 % reserved, so pods stayed `Pending` with "Insufficient memory". Kept on purpose: `quote` (shipping calls it), `kafka` (checkout uses it). No load generator, so the only traffic is P2's probes.
+   - Collector memory limit 900Mi.
+   - Collector logs go to `debug` only. **The chart sends logs to `opensearch` even when it is disabled; the failing exports blocked `quote` (single-threaded PHP) for about 5 s, which timed out shipping and made checkout return 500/504.** Earlier notes called these export errors harmless; they are not.
    - Collector restarts during heavy image pulls are liveness-probe timeouts, not crashes; if span metrics stop, `kubectl -n otel-demo rollout restart daemonset otel-collector-agent`.
-   - Collector logs full of `opensearch` export errors are expected (OpenSearch is off) and harmless.
 5. **Chaos Mesh** (Docker runtime, 1 controller replica, no dashboard) [verify chart version with `helm list -A`]:
    ```powershell
    helm repo add chaos-mesh https://charts.chaos-mesh.org
