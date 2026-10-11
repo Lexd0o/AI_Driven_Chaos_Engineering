@@ -10,7 +10,7 @@ import argparse
 import os
 from datetime import datetime, timezone
 
-from src import score
+from src import benchmark, score
 
 FIXES_INDEX_PATH = "reports/fixes/index.json"
 REPORT_PATH = "reports/findings_report.md"
@@ -143,6 +143,12 @@ def build_report(scores, fixes, generated_at=None):
         out += [f"- {e['experiment_id']}: repeats not scored: "
                 + "; ".join(f"r{r['repeat']} ({'; '.join(r['reasons'])})" for r in e["runs"] if r["status"] != "scored")]
     out += [""]
+
+    out += ["## Ranking benchmark: ranked order vs random order", ""]
+    bench = benchmark.build_benchmark(scores)
+    out += ["Scored experiments in the planner's order: " + ", ".join(bench["order"]) + ".", ""]
+    out += [f"- {line}" for line in benchmark.describe(bench)]
+    out += ["", f"_{bench['note']}_", ""]
 
     out += ["## Notes and limits", "",
             "- Numbers come from the runs listed above on one cluster. Repeats are shown where they exist; a single "
