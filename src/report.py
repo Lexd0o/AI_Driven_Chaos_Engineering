@@ -71,6 +71,7 @@ impact on journeys listed in `journeys_not_measured`; you may say they were not 
 The service lists in `service_context` are named after the service they belong to \
 (`callers_of_X` are the services that call X; `services_called_by_X` are what X calls). Only describe \
 them as X's callers or dependencies; do not attach them to any other service or journey.
+If a finding has `fix_verification`/`fix_comparisons`, the weakness was real and the fix was re-tested: \nreport the before and after numbers exactly as given and say the fix is verified only when `fix_verified` is true.
 Write in plain words. Never print raw field names or key=value text (such as blast_radius=0, \
 has_liveness=False or journeys_failed); explain what they mean instead. Use plain ASCII punctuation."""
 
@@ -142,7 +143,9 @@ def load_run_records(experiments: dict, runs_dir: str | None = None) -> dict:
         for path in sorted(glob.glob(os.path.join(runs_dir, f"{exp_id}-r*.json"))):
             try:
                 with open(path, encoding="utf-8") as f:
-                    recs.append(json.load(f))
+                    rec = json.load(f)
+                if not (isinstance(rec, dict) and rec.get("label")):   # pre-fix state only
+                    recs.append(rec)
             except (OSError, ValueError):
                 continue
         if recs:
@@ -168,7 +171,8 @@ def run_measurements(records: list[dict], exp: dict, plan_item: dict | None) -> 
 
 
 def finding_facts(finding: dict, experiments: dict, graph: dict, ranked_by_service: dict,
-                  plan_by_id: dict | None = None, run_records: dict | None = None) -> dict:
+                  plan_by_id: dict | None = None, run_records: dict | None = None,
+                  comparisons: dict | None = None) -> dict:
     facts = {k: finding.get(k) for k in (
         "rank", "risk_id", "service", "check", "status", "basis", "severity", "severity_value",
         "evidence", "S", "criticality")}
@@ -185,6 +189,9 @@ def finding_facts(finding: dict, experiments: dict, graph: dict, ranked_by_servi
             (run_records or {}).get(exp.get("experiment_id")) or [], exp, plan_item)
     else:
         facts["note"] = "not tested: any impact is a prediction"
+    if finding.get("fix_verified"):
+        facts["fix_verification"] = {"fix_verified": True, "label": finding.get("fix_verified_by")}
+    facts.update(comparison_facts(finding.get("experiment_id"), comparisons))
     facts["service_context"] = service_context(finding["service"], graph, ranked_by_service)
     fix = finding.get("fix")
     facts["fix"] = fix["summary"] if fix else None
@@ -193,8 +200,31 @@ def finding_facts(finding: dict, experiments: dict, graph: dict, ranked_by_servi
     return facts
 
 
+def comparison_facts(exp_id: str | None, comparisons: dict | None) -> dict:
+    """Before/after numbers for one experiment, straight from score.py's comparisons block."""
+    rows = [r for r in (comparisons or {}).get("rows") or [] if r["experiment_id"] == exp_id]
+    if not rows:
+        return {}
+    flat = [{**r, "label": r.get("label"), "before_S": (r.get("before") or {}).get("S"),
+             "after_S": (r.get("after") or {}).get("S"), "delta_S": r.get("delta_S"),
+             "before_outcome": (r.get("before") or {}).get("outcome"),
+             "after_outcome": (r.get("after") or {}).get("outcome"),
+             "before_repeats": (r.get("before") or {}).get("repeats"),
+             "after_repeats": (r.get("after") or {}).get("repeats")} for r in rows]
+    return {"fix_comparisons": flat}
+
+
 def report_facts(scores: dict, top: list[dict]) -> dict:
-    return {
+    comp = scores.get("comparisons") or {}
+    extra = ({"fix_verification": {"score_before_fixes": comp.get("before_score"),
+                                   "score_after_fixes": comp.get("after_fixes_score"),
+                                   "comparisons": comp["rows"]}} if comp.get("rows") else {})
+    journeys = sorted({j for e in scores.get("experiments") or []
+                       for j in [*(e.get("journeys") or {}), *(e.get("uncovered_journeys") or [])]})
+    return {**extra,
+        "before_score": comp.get("before_score"),
+        "after_fixes_score": comp.get("after_fixes_score"),
+        "journey_names": journeys,
         "resilience_score": scores.get("resilience_score"),
         "score_status": scores.get("score_status"),
         "coverage": scores.get("coverage"),
@@ -219,6 +249,8 @@ def badge(f: dict) -> str:
         text = f"Inconclusive ({exp})" if exp else "Inconclusive"
     else:
         text = "Predicted (static audit, not yet tested)"
+    if f.get("fix_verified"):
+        text += f" | Fix verified by {f.get('fix_verified_by')} runs"
     return f"**{text}** - severity **{f['severity']}**"
 
 
@@ -306,6 +338,8 @@ def template_explanation(f: dict) -> tuple[str, str]:
         why = f"No automated fix is available yet. In general, {mech}"
     else:
         why = "No automated fix is available yet; this needs a manual change."
+    if f.get("fix_verified"):
+        parts.append(f"After the fix ({f.get('fix_verification', {}).get('label')}) the same experiment survived.")
     return " ".join(parts), why
 
 
@@ -322,6 +356,10 @@ def template_summary(rf: dict) -> str:
     if rf["top_findings"]:
         t = rf["top_findings"][0]
         tail += f" Highest-ranked weakness: {t['service']} - {humanise(t['check'])} ({t['severity']})."
+    comp = rf.get("fix_verification")
+    if comp and comp.get("score_after_fixes") is not None:
+        tail += (f" With fix-verification runs the score moves from {comp['score_before_fixes']} to "
+                 f"{comp['score_after_fixes']}.")
     return head + tail
 
 
@@ -446,7 +484,8 @@ def build_report(scores: dict, graph: dict, ranked: list[dict], cfg: dict, use_l
     services = sorted(n["name"] for n in graph.get("nodes", []) if n.get("name"))
     if run_records is None:
         run_records = load_run_records(experiments)
-    facts_by_id = {f["risk_id"]: finding_facts(f, experiments, graph, ranked_by_service, plan_by_id, run_records)
+    facts_by_id = {f["risk_id"]: finding_facts(f, experiments, graph, ranked_by_service, plan_by_id, run_records,
+                                    scores.get("comparisons"))
                    for f in top}
     rfacts = report_facts(scores, top)
 
@@ -474,6 +513,7 @@ def build_report(scores: dict, graph: dict, ranked: list[dict], cfg: dict, use_l
         "score": {k: scores.get(k) for k in (
             "resilience_score", "score_status", "score_note", "coverage", "categories", "weights")},
         "counts": scores.get("counts"),
+        "comparisons": scores.get("comparisons"),
         "executive_summary": {"text": summary_ai or template_summary(rfacts),
                               "text_source": "ai" if summary_ai else "template"},
         "benchmark": benchmark,
@@ -559,6 +599,18 @@ def benchmark_section(b: dict | None) -> list[str]:
             f"_Caveat: {b['caveat']}_", ""]
 
 
+def fix_verification_section(comp: dict | None) -> list[str]:
+    if not comp or not comp.get("rows"):
+        return []
+    rows = [[r["experiment_id"], r["label"], r["before"]["S"], r["before"]["outcome"],
+             r["after"]["S"], r["after"]["outcome"],
+             "-" if r["delta_S"] is None else f"{r['delta_S']:+.1f}"] for r in comp["rows"]]
+    return ["## Fix verification", "",
+            f"Overall score: {comp.get('before_score')} before fixes, {comp.get('after_fixes_score')} "
+            "after fixes (labelled re-runs replace the unlabelled score of the same experiment).", ""]         + table(["Experiment", "Label", "Before S", "Before outcome", "After S", "After outcome", "Delta S"],
+                rows) + [""]
+
+
 def render_markdown(report: dict) -> str:
     score = report["score"]
     es = report["executive_summary"]
@@ -569,6 +621,8 @@ def render_markdown(report: dict) -> str:
 
     label = "AI-written - numbers come from code" if es["text_source"] == "ai" else "Template"
     L += ["## Executive summary", "", f"_{label}_", "", es["text"], ""]
+
+    L += fix_verification_section(report.get("comparisons"))
 
     L += ["## Weaknesses ranked by severity", ""]
     rows = [[f["rank"], f["severity"], f["status"], f["service"], humanise(f["check"]),

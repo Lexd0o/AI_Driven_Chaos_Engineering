@@ -1,10 +1,12 @@
-# LLM planner settings (plan.py). O-2 (provider/model/key) is still open for the team -
-# Claude is the provisional choice; change the model here, not in code (Rules.md rule 16).
-# Credentials come from the environment (ANTHROPIC_API_KEY, or an `ant auth login` profile).
+# LLM planner settings (plan.py). O-2 resolved in practice: the team has a Groq key, so the
+# planner uses Groq (same provider as the report, D-018). Switch back with provider: anthropic
+# + model: claude-opus-5-5 (needs ANTHROPIC_API_KEY). Change it here, not in code (Rules.md rule 16).
+# Groq key: GROQ_API_KEY env or the gitignored repo-root .env.
 # No credentials, an API error, a refusal, or invalid output -> the deterministic text is kept.
 
-model: claude-opus-5-5
-effort: medium          # writing hypotheses for 6-8 experiments; raise only if quality is lacking
+provider: groq          # anthropic | groq
+model: openai/gpt-oss-20b
+effort: medium          # anthropic only
 max_tokens: 16000
 
 # The only journeys an LLM may name in expected_impact (Decisions.md D-008 weights).
@@ -22,3 +24,14 @@ journey_roots:
 # Bounds on LLM-written text; anything outside is dropped and the template text kept.
 min_text_chars: 20
 max_text_chars: 400
+
+# Journey baseline (src/baseline.py) and the SLOs plan.py derives from data/baseline.json.
+baseline:
+  minutes: 5
+  interval_s: 5
+  timeout_s: 5
+  checkout_every_n: 3     # checkout places a real order per sample, so sample it every Nth interval
+  p95_factor: 2.0        # slo.p95_ms_max = max(p95_floor_ms, max baseline p95 x p95_factor)
+  p95_floor_ms: 1000
+  success_margin: 0.02   # slo.success_rate_min = min(0.95, max(success_floor, min baseline rate - margin))
+  success_floor: 0.80

@@ -62,17 +62,26 @@ class RefusalTests(unittest.TestCase):
     def test_probe_path_service_refused(self):
         self.assertIn("port-forward", run.refusal(item(service="frontend-proxy"), POLICY, EXECUTOR))
 
-    def test_checkout_only_refused(self):
-        self.assertIn("no GET probe", run.refusal(item("cpu_stress", "payment", ("checkout",), cpu_workers=2),
-                                                  POLICY, EXECUTOR))
+    def test_checkout_only_no_longer_refused(self):
+        # checkout now has a (synthetic POST) probe, so a checkout-only item is runnable
+        self.assertIsNone(run.refusal(item("cpu_stress", "payment", ("checkout",), cpu_workers=2),
+                                      POLICY, EXECUTOR))
 
     def test_policy_rechecked(self):
         self.assertIn("forbidden", run.refusal(item(service="flagd"), POLICY, EXECUTOR))
 
     def test_target_specific_probe_added(self):
         probes, uncovered = run.pick_probes(item("network_delay", "shipping", latency_ms=200), EXECUTOR)
-        self.assertEqual(sorted(probes), ["cart", "shipping-quote"])
-        self.assertEqual(uncovered, ["checkout"])
+        self.assertEqual(sorted(probes), ["cart", "checkout", "shipping-quote"])
+        self.assertEqual(uncovered, [])
+
+    def test_extra_probe_fields_pass_through(self):
+        probes, _ = run.pick_probes(item(journeys=("checkout",)), EXECUTOR)
+        cfg = EXECUTOR["journey_probes"]["checkout"]
+        for f in run.EXTRA:
+            self.assertEqual(probes["checkout"][f], cfg[f])
+        cart, _ = run.pick_probes(item(journeys=("cart",)), EXECUTOR)
+        self.assertEqual(sorted(cart["cart"]), ["expect_products", "url"])
 
 
 class RecordTests(unittest.TestCase):
@@ -82,6 +91,12 @@ class RecordTests(unittest.TestCase):
 
     def test_no_breach_is_survived(self):
         self.assertEqual(run.run_record(item(), self.report(), 1, [])["outcome"], "survived")
+
+    def test_label_and_note_stored(self):
+        rec = run.run_record(item(), self.report(), 1, [], "fix-applied", "liveness added")
+        self.assertEqual((rec["label"], rec["note"]), ("fix-applied", "liveness added"))
+        plain = run.run_record(item(), self.report(), 2, [])
+        self.assertEqual((plain["label"], plain["note"]), (None, None))
 
     def test_breach_without_healthy_is_not_recovered(self):
         rec = run.run_record(item(), self.report(t_breach="2026-10-11T10:00:05+00:00"), 1, [])
@@ -104,6 +119,35 @@ class RecordTests(unittest.TestCase):
         rep["samples"] += [sample("during_fault", ok=False), sample("during_fault", latency=1600.0)]
         cart = run.run_record(item(), rep, 1, [])["journeys"]["cart"]
         self.assertEqual((cart["A"], cart["L"], cart["samples"]), (0.667, 0.333, 3))
+
+
+class PerJourneyLatencyTests(unittest.TestCase):
+    def rep(self):
+        s = {"stage": "during_fault", "ok": True, "latency_ms": 900.0,
+             "observed_at": "2026-10-11T10:00:00+00:00",
+             "journeys": {"browse": {"ok": True, "latency_ms": 900.0},
+                          "checkout": {"ok": True, "latency_ms": 900.0}}}
+        return {"run_id": "r", "started_at": "2026-10-11T10:00:00+00:00", "fault_injected": True,
+                "status": "completed", "samples": [s, dict(s)], "probes": {}}
+
+    def test_each_journey_uses_own_limit(self):
+        it = item()
+        it["slo"] = {"success_rate_min": 0.95, "p95_ms_max": 3972,
+                     "p95_ms_by_journey": {"browse": 890, "checkout": 3972}}
+        j = run.run_record(it, self.rep(), 1, [])["journeys"]
+        self.assertEqual((j["browse"]["L"], j["checkout"]["L"]), (0.0, 1.0))
+
+    def test_without_field_uses_max(self):
+        it = item()
+        it["slo"] = {"success_rate_min": 0.95, "p95_ms_max": 3972}
+        j = run.run_record(it, self.rep(), 1, [])["journeys"]
+        self.assertEqual((j["browse"]["L"], j["checkout"]["L"]), (1.0, 1.0))
+
+    def test_journey_missing_from_map_falls_back(self):
+        it = item()
+        it["slo"] = {"success_rate_min": 0.95, "p95_ms_max": 3972, "p95_ms_by_journey": {"browse": 890}}
+        j = run.run_record(it, self.rep(), 1, [])["journeys"]
+        self.assertEqual((j["browse"]["L"], j["checkout"]["L"]), (0.0, 1.0))
 
 
 class WatchdogTests(unittest.TestCase):

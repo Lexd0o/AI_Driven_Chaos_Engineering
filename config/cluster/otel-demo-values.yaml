@@ -1,0 +1,47 @@
+# Helm values for the OpenTelemetry Demo as deployed for ChaosPilot (exported from the live
+# release `otel-demo`, chart open-telemetry/opentelemetry-demo 0.42.3, app 3.1.0).
+# Install:  helm install otel-demo open-telemetry/opentelemetry-demo --version 0.42.3 \
+#             -n otel-demo --create-namespace -f config/cluster/otel-demo-values.yaml
+# Tuned for a single-node Docker Desktop cluster with ~16 GB host RAM: optional AI components off,
+# memory limits sized so flagd/load-generator/grafana don't OOM.
+# Not covered by values (applied with kubectl after install - see README "Run from scratch"):
+#   - Jaeger trace cap: kubectl -n otel-demo set env deploy/jaeger MEMORY_MAX_TRACES=10000
+#   - Chaos Mesh namespace filter: kubectl annotate ns otel-demo chaos-mesh.org/inject=enabled
+components:
+  agent:
+    enabled: false
+  chatbot:
+    enabled: false
+  flagd:
+    envOverrides:
+    - name: GOMEMLIMIT
+      value: 200MiB
+    resources:
+      limits:
+        memory: 256Mi
+  load-generator:
+    resources:
+      limits:
+        memory: 1000Mi
+  mcp:
+    enabled: false
+grafana:
+  deploymentStrategy:
+    rollingUpdate:
+      maxSurge: 0
+      maxUnavailable: 1
+    type: RollingUpdate
+  livenessProbe:
+    initialDelaySeconds: 300
+  resources:
+    limits:
+      memory: 640Mi
+  sidecar:
+    resources:
+      limits:
+        cpu: 150m
+        memory: 128Mi
+opentelemetry-collector:
+  presets:
+    hostMetrics:
+      enabled: false

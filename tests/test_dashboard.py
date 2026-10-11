@@ -68,5 +68,30 @@ class DashTests(unittest.TestCase):
         self.assertIn("digraph", dd.build_dot({}))
 
 
+class FixTrackingDashTests(unittest.TestCase):
+    def test_run_rows_group_by_label(self):
+        runs = [{"experiment_id": "e2", "repeat": 1, "outcome": "survived"},
+                {"experiment_id": "e1", "repeat": 4, "outcome": "survived", "label": "fix-applied"},
+                {"experiment_id": "e1", "repeat": 2, "outcome": "not_recovered"}]
+        rows = dd.run_rows(runs)
+        self.assertEqual([(r["experiment_id"], r["label"]) for r in rows],
+                         [("e1", "current"), ("e1", "fix-applied"), ("e2", "current")])
+
+    def test_labelled_run_does_not_mark_experiment_run(self):
+        plan = [{"experiment_id": "e1", "target": {"service": "cart"}, "fault_type": "pod_kill",
+                 "expected_impact": {"journeys": ["cart"]}}]
+        rows = dd.experiment_rows(plan, {}, [{"experiment_id": "e1", "label": "fix-applied"}])
+        self.assertEqual(rows[0]["status"], "not run")
+
+    def test_comparison_rows_and_finding_badge(self):
+        scores = {"comparisons": {"rows": [{"experiment_id": "e1", "label": "fx", "delta_S": 5.0,
+                                            "before": {"S": 70, "outcome": "not_recovered"},
+                                            "after": {"S": 75, "outcome": "survived"}}]}}
+        self.assertEqual(dd.comparison_rows(scores)[0]["after_S"], 75)
+        self.assertEqual(dd.comparison_rows({}), [])
+        fr = dd.finding_rows({"findings": [{"risk_id": "r", "fix_verified": True, "fix_verified_by": "fx"}]})
+        self.assertEqual((fr[0]["fix_verified"], fr[0]["fix_verified_by"]), (True, "fx"))
+
+
 if __name__ == "__main__":
     unittest.main()

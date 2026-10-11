@@ -1,0 +1,52 @@
+{
+  "experiment_id": "exp-002",
+  "repeat": 2,
+  "run_id": "run-4afd988a3b7b",
+  "label": null,
+  "note": null,
+  "fault_type": "cpu_stress",
+  "target": "product-catalog",
+  "t_start": "2026-10-11T04:04:10.683013+00:00",
+  "t_inject": "2026-10-11T04:04:57.046149+00:00",
+  "t_breach": "2026-10-11T04:04:54.568250+00:00",
+  "t_detect": "2026-10-11T04:05:15.642739+00:00",
+  "t_clear": "2026-10-11T04:05:18.918842+00:00",
+  "t_healthy": "2026-10-11T04:05:49.703752+00:00",
+  "aborted": true,
+  "abort_reason": "probe_threshold_breach",
+  "stop_reason": "probe_threshold_breach",
+  "error": null,
+  "outcome": "degraded_recovered",
+  "peak_error_rate": 1.0,
+  "peak_p95_ms": 6014.3,
+  "impact_recovery_s": 55.135502,
+  "post_fault_recovery_s": 30.78491,
+  "journeys": {
+    "ads-recs": {
+      "A": 0.333,
+      "L": 0.333,
+      "samples": 3
+    },
+    "browse": {
+      "A": 0.333,
+      "L": 0.333,
+      "samples": 3
+    },
+    "checkout": {
+      "A": 0.0,
+      "L": 0.0,
+      "samples": 3
+    }
+  },
+  "uncovered_journeys": [],
+  "evidence": {
+    "probe_urls": {
+      "ads-recs": "http://localhost:8080/api/recommendations?productIds=OLJCESPC7Z&sessionId=chaospilot-probe&currencyCode=USD",
+      "browse": "http://localhost:8080/api/products",
+      "checkout": "http://localhost:8080/api/checkout"
+    },
+    "agent_report": "data/runs/run-4afd988a3b7b.json",
+    "trace_ids": [],
+    "prom_queries": []
+  }
+}

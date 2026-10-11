@@ -15,7 +15,7 @@ from uuid import uuid4
 
 from .core import (CHAOS_KINDS, build_manifest, chaos_kind, cleanup, condition, deployment_labels,
                    get_resource, kubectl, now, ready, validate_target, write_json)
-from .guardian import Guardian, healthy, probe_journeys
+from .guardian import Guardian, healthy, over_latency, probe_journeys
 from .watchdog import cancel_watchdog, start_watchdog
 
 
@@ -67,7 +67,7 @@ def run_plan(settings, plan, mode, paths, observe_seconds=15, slo_latency_ms=Non
         value["stage"] = stage
         report["samples"].append(value)
         if stage == "during_fault" and "t_breach" not in report and (
-                not value["ok"] or value["latency_ms"] > breach_latency):
+                not value["ok"] or over_latency(value, breach_latency)):
             report["t_breach"] = value["observed_at"]
         write_json(path, report)
         return value

@@ -1,0 +1,23 @@
+# Helm values for Chaos Mesh as deployed for ChaosPilot (exported from the live release
+# `chaos-mesh`, chart chaos-mesh/chaos-mesh 2.8.4).
+# Install:  helm install chaos-mesh chaos-mesh/chaos-mesh --version 2.8.4 \
+#             -n chaos-mesh --create-namespace -f config/cluster/chaos-mesh-values.yaml
+# Docker Desktop's Kubernetes uses the Docker runtime, so chaos-daemon talks to docker.sock.
+# enableFilterNamespace: true -> Chaos Mesh only acts on namespaces annotated
+#   chaos-mesh.org/inject=enabled  (kubectl annotate ns otel-demo chaos-mesh.org/inject=enabled)
+# Dashboard and DNS server are off to save memory on the single node.
+chaosDaemon:
+  runtime: docker
+  socketPath: /var/run/docker.sock
+controllerManager:
+  enableFilterNamespace: true
+  leaderElection:
+    enabled: false
+  replicaCount: 1
+  resources:
+    requests:
+      memory: 128Mi
+dashboard:
+  create: false
+dnsServer:
+  create: false

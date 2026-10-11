@@ -1,0 +1,52 @@
+{
+  "experiment_id": "exp-003",
+  "repeat": 2,
+  "run_id": "run-7ef9565346d3",
+  "label": null,
+  "note": null,
+  "fault_type": "network_delay",
+  "target": "astronomy-db",
+  "t_start": "2026-10-11T04:29:12.691370+00:00",
+  "t_inject": "2026-10-11T04:29:55.885383+00:00",
+  "t_breach": "2026-10-11T04:30:10.252464+00:00",
+  "t_detect": null,
+  "t_clear": "2026-10-11T04:30:54.960679+00:00",
+  "t_healthy": "2026-10-11T04:31:51.488921+00:00",
+  "aborted": false,
+  "abort_reason": null,
+  "stop_reason": "duration_finished",
+  "error": null,
+  "outcome": "degraded_recovered",
+  "peak_error_rate": 0.091,
+  "peak_p95_ms": 6423.6,
+  "impact_recovery_s": 101.236457,
+  "post_fault_recovery_s": 56.528242,
+  "journeys": {
+    "ads-recs": {
+      "A": 0.909,
+      "L": 0.545,
+      "samples": 11
+    },
+    "browse": {
+      "A": 1.0,
+      "L": 0.818,
+      "samples": 11
+    },
+    "checkout": {
+      "A": 1.0,
+      "L": 0.727,
+      "samples": 11
+    }
+  },
+  "uncovered_journeys": [],
+  "evidence": {
+    "probe_urls": {
+      "ads-recs": "http://localhost:8080/api/recommendations?productIds=OLJCESPC7Z&sessionId=chaospilot-probe&currencyCode=USD",
+      "browse": "http://localhost:8080/api/products",
+      "checkout": "http://localhost:8080/api/checkout"
+    },
+    "agent_report": "data/runs/run-7ef9565346d3.json",
+    "trace_ids": [],
+    "prom_queries": []
+  }
+}

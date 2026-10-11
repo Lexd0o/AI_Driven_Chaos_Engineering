@@ -1,0 +1,36 @@
+{
+  "experiment_id": "exp-002",
+  "repeat": 3,
+  "run_id": "run-7e24fe5670c2",
+  "label": null,
+  "note": null,
+  "fault_type": "cpu_stress",
+  "target": "product-catalog",
+  "t_start": "2026-10-11T04:07:14.312923+00:00",
+  "t_inject": null,
+  "t_breach": null,
+  "t_detect": null,
+  "t_clear": null,
+  "t_healthy": null,
+  "aborted": false,
+  "abort_reason": null,
+  "stop_reason": "monitoring_or_controller_error",
+  "error": "Baseline unhealthy: no fault injected. Check probe URLs and thresholds.",
+  "outcome": "inconclusive",
+  "peak_error_rate": null,
+  "peak_p95_ms": null,
+  "impact_recovery_s": null,
+  "post_fault_recovery_s": null,
+  "journeys": {},
+  "uncovered_journeys": [],
+  "evidence": {
+    "probe_urls": {
+      "ads-recs": "http://localhost:8080/api/recommendations?productIds=OLJCESPC7Z&sessionId=chaospilot-probe&currencyCode=USD",
+      "browse": "http://localhost:8080/api/products",
+      "checkout": "http://localhost:8080/api/checkout"
+    },
+    "agent_report": "data/runs/run-7e24fe5670c2.json",
+    "trace_ids": [],
+    "prom_queries": []
+  }
+}

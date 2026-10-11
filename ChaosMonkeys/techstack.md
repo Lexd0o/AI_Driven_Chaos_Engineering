@@ -10,7 +10,7 @@ Pin every version on Day 1 and fill the "Pinned" column. This table also feeds t
 | Kubernetes | k3s (single node) | `____` | Lightweight, one-line install, real K8s API | kind / minikube |
 | Package mgr | Helm 3.14+ | `____` | Required by OTel Demo chart | `helm template` + `kubectl apply` |
 | Target app | OpenTelemetry Demo (Helm chart) | `____` | Microservice e-commerce app with built-in traces, metrics, Grafana, Jaeger, load generator, ~18 feature-flag fault scenarios | Google Online Boutique |
-| Infra faults | Chaos Mesh 2.8.4 | 2.8.4 | Pod kill, network delay/loss/partition, CPU stress as K8s CRDs; `duration` auto-expiry; Workflow StatusCheck | Native k8s faults (delete pod, scale 0) |
+| Infra faults | Chaos Mesh 2.8.4 (Docker runtime socket, namespace filter; `config/cluster/chaos-mesh-values.yaml`) | 2.8.4 | Pod kill, network delay/loss/partition, CPU stress as K8s CRDs; `duration` auto-expiry; Workflow StatusCheck | Native k8s faults (delete pod, scale 0) |
 | App faults | flagd feature flags (part of demo) | (demo) | Ready-made payment/cart/catalog/Kafka failures | — |
 | Metrics | Prometheus (bundled with demo) | (demo) | Span metrics per service | Journey probe only |
 | Traces | Jaeger (bundled with demo) | (demo) | Dependency edges + evidence trace IDs | `graph_overrides.yaml` |
@@ -31,15 +31,18 @@ Pin every version on Day 1 and fill the "Pinned" column. This table also feeds t
 | Dashboard | `streamlit` (built, `dashboard/app.py`), `pandas` | `____` | `streamlit run dashboard/app.py`; plotly not used |
 | Dependencies | `requirements.txt` (repo root) | lower bounds | kubernetes, requests, pyyaml, pydantic, anthropic, streamlit, pandas; `agents/recovery_agent` has its own file |
 | Graph render | `pyvis` or plotly network | `____` | Dependency map in dashboard |
-| LLM SDK | `anthropic` (provisional, O-2) | `1.13.0` | Structured output via `client.beta.messages.parse` + pydantic; model in `config/planner.yaml`. Shared call helper `src/llm.py` (`structured_call`, used by `plan.py` and `report.py`; every failure returns None -> deterministic fallback) |
+| LLM SDK | `anthropic` (optional, only if the planner is switched back to Anthropic) | `1.13.0` | Structured output via `client.beta.messages.parse` + pydantic; model in `config/planner.yaml`. Shared call helper `src/llm.py` (`structured_call`, used by `plan.py` and `report.py`; every failure returns None -> deterministic fallback) |
 | LLM (report text) | Groq via plain `requests` (no SDK) | - | `config/scoring.yaml` llm.provider: groq, model `openai/gpt-oss-20b`; key from `GROQ_API_KEY` env or repo-root `.env` (gitignored). `src/llm.py` `structured_call` switches on `provider` (D-018) |
+| Baseline | `src/baseline.py` (`requests`, `pyyaml`) | - | `python -m src.baseline` samples every journey probe for 5 min (every 5 s; checkout every 3rd tick) -> `data/baseline.json`; `plan.py` derives per-journey SLOs from it (`config/planner.yaml` `baseline:`) |
+| Checkout probe | `agents/chaos_agent_expanded/guardian.py` `probe_checkout` | - | Synthetic POST journey: add to cart + place order, per-probe 6 s timeout, 5000 ms limit (`config/executor.yaml`); places a real (fake) order per poll |
+| Cluster values | Helm values in `config/cluster/` | OTel Demo chart 0.42.3 (app 3.1.0), Chaos Mesh chart 2.8.4 | `otel-demo-values.yaml`, `chaos-mesh-values.yaml` exported from the live releases; plus `kubectl annotate ns otel-demo chaos-mesh.org/inject=enabled` and `kubectl -n otel-demo set env deploy/jaeger MEMORY_MAX_TRACES=10000` (README "Run from scratch") |
 | Scoring config | `pyyaml` | — | `config/scoring.yaml`: D-008 weights, journey weights, aliases, categories, severity bands, report-LLM settings |
 
 ## 3. AI models (fill for team form)
 
 | Use | Model | Provider | Notes |
 |---|---|---|---|
-| Planner hypotheses | `claude-opus-5-5` (`config/planner.yaml`) | Anthropic | Provisional pending O-2 (needs `ANTHROPIC_API_KEY`). Fallback: deterministic templates. Text only |
+| Planner hypotheses and reasons | `openai/gpt-oss-20b` (`config/planner.yaml` `provider: groq`) | Groq | Needs `GROQ_API_KEY` (env or `.env`). Text only; journeys, targets and params are deterministic (D-012). Switch back to Anthropic (`claude-opus-5-5`, `ANTHROPIC_API_KEY`) in the same file. Fallback: deterministic templates |
 | Report explanations | `openai/gpt-oss-20b` (`config/scoring.yaml` llm) | Groq | Needs `GROQ_API_KEY` (env or `.env`). Text only: the model never picks targets/params or computes scores; guards + template fallback apply (D-018) |
 | Coding assistants used by team | `TBD` | `TBD` | Must be disclosed |
 

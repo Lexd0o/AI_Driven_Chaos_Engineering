@@ -68,7 +68,14 @@ with tabs[0]:
     else:
         cov = scores.get("coverage", {})
         if scores.get("resilience_score") is not None and scores.get("score_status") == "scored":
-            st.metric("Resilience score", "%.0f / 100" % scores["resilience_score"])
+            after = (scores.get("comparisons") or {}).get("after_fixes_score")
+            if after is not None:
+                m = st.columns(2)
+                m[0].metric("Resilience score (current)", "%.0f / 100" % scores["resilience_score"])
+                m[1].metric("After fixes", "%.0f / 100" % after,
+                            "%+.1f" % (after - scores["resilience_score"]))
+            else:
+                st.metric("Resilience score", "%.0f / 100" % scores["resilience_score"])
         else:
             st.subheader("Not scored yet")
         st.caption(cov.get("text", ""))
@@ -130,11 +137,19 @@ with tabs[3]:
                    "'refused' = target is on the probe path or only checkout is impacted.")
     if not runs:
         need("data/runs/exp-*.json", "python -m src.run --execute <exp-id>")
+    else:
+        st.subheader("Runs by experiment and label")
+        st.dataframe(pd.DataFrame(dd.run_rows(runs)), hide_index=True, width="stretch")
+    comp_rows = dd.comparison_rows(scores)
+    if comp_rows:
+        st.subheader("Before / after fix")
+        st.dataframe(pd.DataFrame(comp_rows), hide_index=True, width="stretch")
     sc_by = {e["experiment_id"]: e for e in scores.get("experiments", [])} if scores else {}
     for run in runs:
-        title = "%s r%s - %s" % (run["experiment_id"], run.get("repeat"), run.get("outcome"))
+        title = "%s r%s - %s [%s]" % (run["experiment_id"], run.get("repeat"), run.get("outcome"),
+                                      run.get("label") or "current")
         with st.expander(title):
-            s = (sc_by.get(run["experiment_id"]) or {}).get("S")
+            s = (sc_by.get(run["experiment_id"]) or {}).get("S") if not run.get("label") else None
             st.write("S:", s, "| peak error rate:", run.get("peak_error_rate"),
                      "| peak p95 ms:", run.get("peak_p95_ms"))
             st.write({k: run.get(k) for k in ("t_inject", "t_breach", "t_clear", "t_healthy")})
@@ -162,7 +177,8 @@ with tabs[4]:
         for r in frows:
             if only and r["status"] not in only:
                 continue
-            with st.expander("[%s] %s - %s (%s)" % (r["severity"], r["service"], r["check"], r["status"])):
+            tag = " - fix verified by %s" % r["fix_verified_by"] if r.get("fix_verified") else ""
+            with st.expander("[%s] %s - %s (%s)%s" % (r["severity"], r["service"], r["check"], r["status"], tag)):
                 st.write(r["explanation"])
                 st.caption("text source: %s" % r["text_source"])
                 if r["why_fix_helps"]:

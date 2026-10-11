@@ -37,6 +37,8 @@ from src.policy import check_item
 PLAN_PATH = "data/plan_validated.json"
 POLICY_PATH = "config/policy.yaml"
 EXECUTOR_PATH = "config/executor.yaml"
+# optional probe fields passed through to the agent (e.g. the checkout journey probe)
+EXTRA = ("type", "base_url", "product_id", "timeout_seconds", "max_latency_ms")
 
 
 def load_yaml(path: str) -> dict:
@@ -72,8 +74,8 @@ def pick_probes(item: dict, executor: dict) -> tuple[dict, list[str]]:
     for name, cfg in all_probes.items():
         if service in (cfg.get("for_targets") or []):
             probes[name] = cfg
-    return {k: {"url": v["url"], "expect_products": v.get("expect_products", False)}
-            for k, v in probes.items()}, uncovered
+    return {k: {"url": v["url"], "expect_products": v.get("expect_products", False),
+                **{f: v[f] for f in EXTRA if f in v}} for k, v in probes.items()}, uncovered
 
 
 def refusal(item: dict, policy: dict, executor: dict) -> str | None:
@@ -105,15 +107,18 @@ def _ts(value):
     return datetime.fromisoformat(value) if value else None
 
 
-def run_record(item: dict, report: dict, repeat: int, uncovered: list[str]) -> dict:
+def run_record(item: dict, report: dict, repeat: int, uncovered: list[str],
+               label: str | None = None, note: str | None = None) -> dict:
     """Agent report -> run record (Architecture.md section 4.4). Numbers come only from probe samples."""
     during = [s for s in report["samples"] if s.get("stage") == "during_fault"]
     p95_max = item["slo"]["p95_ms_max"]
+    by_journey = item["slo"].get("p95_ms_by_journey") or {}
     journeys = {}
     for name in (during[0]["journeys"] if during else {}):
         values = [s["journeys"][name] for s in during]
+        limit = by_journey.get(name, p95_max)
         journeys[name] = {"A": round(sum(v["ok"] for v in values) / len(values), 3),
-                          "L": round(sum(v["ok"] and v["latency_ms"] <= p95_max for v in values) / len(values), 3),
+                          "L": round(sum(v["ok"] and v["latency_ms"] <= limit for v in values) / len(values), 3),
                           "samples": len(values)}
     latencies = sorted(s["latency_ms"] for s in during)
     if report.get("status", "").endswith("failed") or not report.get("fault_injected") or not during:
@@ -128,6 +133,7 @@ def run_record(item: dict, report: dict, repeat: int, uncovered: list[str]) -> d
     t_breach, t_clear, t_healthy = _ts(report.get("t_breach")), _ts(report.get("t_clear")), _ts(report.get("t_healthy"))
     return {
         "experiment_id": item["experiment_id"], "repeat": repeat, "run_id": report["run_id"],
+        "label": label or None, "note": note or None,
         "fault_type": item["fault_type"], "target": item["target"]["service"],
         "t_start": report["started_at"], "t_inject": report.get("fault_confirmed_at"),
         "t_breach": report.get("t_breach"), "t_detect": report.get("t_detect"),
@@ -169,6 +175,8 @@ def main() -> None:
     parser.add_argument("--exp", help="experiment_id from data/plan_validated.json")
     parser.add_argument("--list", action="store_true")
     parser.add_argument("--stop-all", action="store_true")
+    parser.add_argument("--label", help="tag the run record, e.g. fix-applied (before/after-fix tracking)")
+    parser.add_argument("--note", help="free-text note stored in the run record")
     mode = parser.add_mutually_exclusive_group()
     mode.add_argument("--preview", action="store_true")
     mode.add_argument("--execute", action="store_true")
@@ -204,7 +212,8 @@ def main() -> None:
     _, uncovered = pick_probes(item, executor)
     paths = {"runs_dir": executor["runs_dir"], "ops_dir": os.path.join(executor["runs_dir"], "operations"),
              "lock": executor["lock_path"], "stop": executor["stop_path"]}
-    log_event(executor, args.exp, f"{run_mode} start ({item['fault_type']} on {item['target']['service']})")
+    log_event(executor, args.exp, f"{run_mode} start ({item['fault_type']} on {item['target']['service']})"
+              + (f" label={args.label}" if args.label else ""))
     report = run_plan(settings, to_agent_plan(item), run_mode, paths,
                       observe_seconds=item["params"]["duration_s"],
                       slo_latency_ms=item["slo"]["p95_ms_max"],
@@ -216,11 +225,12 @@ def main() -> None:
 
     os.makedirs(executor["runs_dir"], exist_ok=True)
     repeat = 1 + sum(1 for f in os.listdir(executor["runs_dir"]) if f.startswith(f"{args.exp}-r"))
-    record = run_record(item, report, repeat, uncovered)
+    record = run_record(item, report, repeat, uncovered, args.label, args.note)
     out = os.path.join(executor["runs_dir"], f"{args.exp}-r{repeat}.json")
     with open(out, "w") as f:
         json.dump(record, f, indent=2)
-    log_event(executor, args.exp, f"outcome={record['outcome']} record={out}")
+    log_event(executor, args.exp, f"outcome={record['outcome']} record={out}"
+              + (f" label={args.label}" if args.label else ""))
     print(f"wrote {out}: outcome={record['outcome']}, t_breach={record['t_breach']}, "
           f"t_healthy={record['t_healthy']}, uncovered journeys={uncovered}")
     if report["status"] == "failed":

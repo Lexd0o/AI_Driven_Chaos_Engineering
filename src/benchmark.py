@@ -8,6 +8,8 @@ Inputs : data/plan_validated.json (experiments with "rank"), data/runs/*.json (r
 Output : data/benchmark.json (consumed by src/report.py)
 
 Architecture.md section 9 / Decisions.md D-009: this validates the RANKING, not the LLM text.
+Only unlabelled records (the pre-fix, current state) count: labelled after-fix runs are
+ignored, since the benchmark validates the ranking against untouched infrastructure.
 Run set = experiments with at least one non-inconclusive run record, in plan rank order.
 A hit = an experiment that confirmed a weakness (same rule as score.py: a degraded_recovered or
 not_recovered outcome, or an aborted run). Metric = 1-based position of the first hit.
@@ -18,7 +20,7 @@ import os
 import random
 from datetime import datetime, timezone
 
-from src.score import load_json, load_run_records, load_yaml
+from src.score import load_json, load_run_records, load_yaml, unlabelled_records
 
 PLAN_PATH = "data/plan_validated.json"
 CONFIG_PATH = "config/scoring.yaml"
@@ -68,7 +70,7 @@ def build_benchmark(plan: list[dict], records: list[dict], cfg: dict) -> dict:
     bcfg = cfg.get("benchmark") or {}
     iterations = bcfg.get("iterations", DEFAULT_ITERATIONS)
     seed = bcfg.get("seed", DEFAULT_SEED)
-    ids, hits = run_set(plan, records)
+    ids, hits = run_set(plan, unlabelled_records(records))
     n, k = len(ids), len(hits)
     out = {"generated_at": datetime.now(timezone.utc).isoformat(), "n_run": n, "n_hits": k,
            "our_order": ids, "hits": [i for i in ids if i in hits], "our_first_hit_position": None,

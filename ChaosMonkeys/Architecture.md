@@ -25,13 +25,15 @@ DISCOVER → AUDIT → RANK → HYPOTHESISE → VALIDATE → INJECT → OBSERVE 
 | Discover | `src/discover.py` | k8s API, Jaeger traces, `config/graph_overrides.yaml` | `data/graph.json` |
 | Audit | `src/audit.py` | `graph.json`, deployment specs | `data/risks.json` (predicted risks) |
 | Rank | `src/rank.py` | `data/graph.json`, `data/risks.json`, `config/graph_overrides.yaml` (`entry_points`) | `data/ranked_candidates.json` |
-| Hypothesise | `src/plan.py` | ranked candidates, `config/fault_catalog.yaml`, `config/planner.yaml` | `data/plan.json` (LLM text via `src/llm.py`; fallback = templates) |
+| Baseline | `src/baseline.py` | `config/executor.yaml` `journey_probes`, `config/planner.yaml` `baseline:` | `data/baseline.json` (success rate and p50/p95/p99 per journey, 5 min steady state; checkout via the checkout probe) |
+| Hypothesise | `src/plan.py` | ranked candidates, `data/baseline.json`, `config/fault_catalog.yaml`, `config/planner.yaml` | `data/plan.json` (LLM text via `src/llm.py`, Groq `openai/gpt-oss-20b`; fallback = templates; per-journey `slo` derived from the baseline: p95 x 2, floor 1000 ms, success min 0.95) |
 | Validate | `src/policy.py` | `plan.json`, `config/policy.yaml` | `data/plan_validated.json` (approved items only; rejections + reasons are printed, not written) |
-| Inject / Guard / Run | `src/run.py` + `agents/chaos_agent_expanded` (D-016) | one approved item, `config/executor.yaml` | run record `data/runs/<exp>-r<n>.json` (state machine, guardrail, watchdog). Planned `inject.py` / `guard.py` / `observe.py` were not built as separate modules; flag injection is not implemented |
-| Score | `src/score.py` | `plan_validated.json`, `data/runs/*.json`, `graph.json`, `risks.json`, `ranked_candidates.json`, `reports/fixes/index.json`, `config/scoring.yaml` | `data/scores.json` (null score when no runs) |
+| Inject / Guard / Run | `src/run.py` + `agents/chaos_agent_expanded` (D-016) | one approved item, `config/executor.yaml` | run record `data/runs/<exp>-r<n>.json` (state machine, guardrail, watchdog; optional `--label` / `--note` tag a run, e.g. `fix-applied`; checkout is probed by `probe_checkout` in `guardian.py`: add-to-cart + place order, 6 s timeout, 5000 ms limit). Planned `inject.py` / `guard.py` / `observe.py` were not built as separate modules; flag injection is not implemented |
+| Score | `src/score.py` | `plan_validated.json`, `data/runs/*.json`, `graph.json`, `risks.json`, `ranked_candidates.json`, `reports/fixes/index.json`, `config/scoring.yaml` | `data/scores.json` (null score when no runs; `comparisons` block = before/after for labelled runs, with `after_fixes_score`) |
 | Explain | `src/report.py` | `data/scores.json`, `graph.json`, `ranked_candidates.json`, `data/benchmark.json` | `reports/findings_report.md` + `reports/findings_report.json` |
 | Recommend | `src/fixes.py` | findings | YAML patches in `reports/fixes/` |
 | Benchmark | `src/benchmark.py` (built) | `data/plan_validated.json`, `data/runs/*.json`, `config/scoring.yaml` | `data/benchmark.json` (first-hit position vs seeded random orderings; shown in the report) |
+| Cluster setup | `config/cluster/otel-demo-values.yaml`, `config/cluster/chaos-mesh-values.yaml` | Helm releases exported from the live cluster (OTel Demo chart 0.42.3, Chaos Mesh chart 2.8.4) | Rebuild recipe in README "Run from scratch" (Level B), incl. namespace annotation and Jaeger trace cap |
 | UI | `dashboard/app.py` + `dashboard/dash_data.py` (built) | `data/*.json`, `data/runs/*.json`, `reports/` (JSON files, no SQLite) | Streamlit dashboard; the only action is STOP ALL (`python -m src.run --stop-all`) |
 
 ---

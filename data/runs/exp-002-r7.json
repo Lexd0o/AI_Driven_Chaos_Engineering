@@ -1,0 +1,52 @@
+{
+  "experiment_id": "exp-002",
+  "repeat": 7,
+  "run_id": "run-d028aa0a1f4e",
+  "label": "fix-applied",
+  "note": "product-catalog liveness+readiness gRPC probes applied (R-product-catalog-no_liveness_probe + no_readiness_probe patches)",
+  "fault_type": "cpu_stress",
+  "target": "product-catalog",
+  "t_start": "2026-10-11T04:46:32.684716+00:00",
+  "t_inject": null,
+  "t_breach": "2026-10-11T04:47:16.600685+00:00",
+  "t_detect": "2026-10-11T04:47:28.360630+00:00",
+  "t_clear": "2026-10-11T04:47:49.196545+00:00",
+  "t_healthy": null,
+  "aborted": true,
+  "abort_reason": "probe_threshold_breach",
+  "stop_reason": "probe_threshold_breach",
+  "error": "Injection was not confirmed; report is inconclusive",
+  "outcome": "inconclusive",
+  "peak_error_rate": 1.0,
+  "peak_p95_ms": 6027.7,
+  "impact_recovery_s": null,
+  "post_fault_recovery_s": null,
+  "journeys": {
+    "ads-recs": {
+      "A": 0.5,
+      "L": 0.5,
+      "samples": 2
+    },
+    "browse": {
+      "A": 0.5,
+      "L": 0.5,
+      "samples": 2
+    },
+    "checkout": {
+      "A": 0.0,
+      "L": 0.0,
+      "samples": 2
+    }
+  },
+  "uncovered_journeys": [],
+  "evidence": {
+    "probe_urls": {
+      "ads-recs": "http://localhost:8080/api/recommendations?productIds=OLJCESPC7Z&sessionId=chaospilot-probe&currencyCode=USD",
+      "browse": "http://localhost:8080/api/products",
+      "checkout": "http://localhost:8080/api/checkout"
+    },
+    "agent_report": "data/runs/run-d028aa0a1f4e.json",
+    "trace_ids": [],
+    "prom_queries": []
+  }
+}

@@ -67,5 +67,14 @@ class BenchmarkTests(unittest.TestCase):
         self.assertIn("small sample: 3 experiments, 1 hit", line)
 
 
+class LabelledIgnoredTests(unittest.TestCase):
+    def test_labelled_records_ignored(self):
+        recs = [rec("e1", "survived"), rec("e2", "survived"), rec("e3", "not_recovered")]
+        fixed = {**rec("e3", "survived"), "label": "fix-applied"}
+        extra_hit = {**rec("e1", "not_recovered"), "label": "fix-applied"}
+        self.assertEqual(b.build_benchmark(plan(3), recs + [extra_hit], {})["hits"], ["e3"])
+        self.assertEqual(b.build_benchmark(plan(3), recs + [fixed], {})["our_first_hit_position"], 3)
+
+
 if __name__ == "__main__":
     unittest.main()

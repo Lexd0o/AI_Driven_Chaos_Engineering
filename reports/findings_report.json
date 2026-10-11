@@ -1,17 +1,17 @@
 {
-  "generated_at": "2026-10-11T01:29:54.239795+00:00",
-  "scores_generated_at": "2026-10-11T01:29:49.395926+00:00",
+  "generated_at": "2026-10-11T04:55:12.882609+00:00",
+  "scores_generated_at": "2026-10-11T04:53:30.456091+00:00",
   "graph_generated_at": "2026-10-11T00:46:29.523548+00:00",
   "score": {
-    "resilience_score": 73.0,
+    "resilience_score": 73.2,
     "score_status": "scored",
     "score_note": "Journey-weighted per D-008: each experiment's S counts in proportion to the criticality of the journeys it can affect (checkout 0.4, cart 0.3, browse 0.2, ads-recs 0.1).",
     "coverage": {
       "planned": 8,
-      "run": 3,
-      "scored": 3,
+      "run": 4,
+      "scored": 4,
       "inconclusive": 0,
-      "text": "3 of 8 planned experiments scored"
+      "text": "4 of 8 planned experiments scored"
     },
     "categories": {
       "Redundancy": {
@@ -19,11 +19,11 @@
         "experiments": 1
       },
       "Dependency": {
-        "score": 100.0,
-        "experiments": 1
+        "score": 86.1,
+        "experiments": 2
       },
       "Capacity": {
-        "score": 19.1,
+        "score": 20.6,
         "experiments": 1
       }
     },
@@ -43,35 +43,65 @@
     }
   },
   "counts": {
-    "confirmed": 1,
+    "confirmed": 2,
     "refuted": 2,
     "inconclusive": 0,
-    "predicted": 57
+    "predicted": 56
+  },
+  "comparisons": {
+    "rows": [
+      {
+        "experiment_id": "exp-002",
+        "label": "fix-applied",
+        "target": "product-catalog",
+        "risk_id": "R-product-catalog-no_liveness_probe",
+        "before": {
+          "S": 20.6,
+          "outcome": "not_recovered",
+          "R": 0.0,
+          "repeats": 4
+        },
+        "after": {
+          "S": 10.9,
+          "outcome": "not_recovered",
+          "R": 0.0,
+          "repeats": 3
+        },
+        "delta_S": -9.7
+      }
+    ],
+    "before_score": 73.2,
+    "after_fixes_score": 70.8,
+    "labels_used": {
+      "exp-002": "fix-applied"
+    }
   },
   "executive_summary": {
-    "text": "The OpenTelemetry Demo shows a solid redundancy and dependency posture but a weak capacity profile, reflected in a 73 resilience score and only 3 of 8 planned experiments scored. The most critical issue is the missing liveness probe on product-catalog, which caused real outages in the ads-recs and browse journeys. Addressing this probe first will restore automatic recovery for a key service and immediately improve overall availability.",
+    "text": "The OpenTelemetry Demo achieved a resilience score of 73.2 after testing 4 of 8 planned experiments. The most critical weakness is the product-catalog service lacking a liveness probe, which caused failures in the ads-recs, browse and checkout journeys. Addressing this probe and improving load-spike handling for astronomy-db should be the first priority to raise overall resilience.",
     "text_source": "ai"
   },
   "benchmark": {
-    "generated_at": "2026-10-11T01:29:49.663538+00:00",
-    "n_run": 3,
-    "n_hits": 1,
+    "generated_at": "2026-10-11T04:51:48.424370+00:00",
+    "n_run": 4,
+    "n_hits": 2,
     "our_order": [
       "exp-002",
+      "exp-003",
       "exp-004",
       "exp-006"
     ],
     "hits": [
-      "exp-002"
+      "exp-002",
+      "exp-003"
     ],
     "our_first_hit_position": 1,
-    "random_mean_first_hit_position": 1.96,
-    "analytic_expected_position": 2.0,
-    "share_random_as_good_or_better": 0.358,
+    "random_mean_first_hit_position": 1.66,
+    "analytic_expected_position": 1.67,
+    "share_random_as_good_or_better": 0.513,
     "iterations": 1000,
     "seed": 42,
     "status": "applicable",
-    "caveat": "Small sample: 3 experiments, 1 hit(s); not statistically significant."
+    "caveat": "Small sample: 4 experiments, 2 hit(s); not statistically significant."
   },
   "findings": [
     {
@@ -82,10 +112,10 @@
       "status": "confirmed",
       "basis": "tested",
       "severity": "High",
-      "severity_value": 24.27,
+      "severity_value": 23.82,
       "evidence": "has_liveness=False - a hung (not crashed) process won't be auto-restarted",
       "experiment_id": "exp-002",
-      "S": 19.1,
+      "S": 20.6,
       "criticality": 0.3,
       "fix": {
         "summary": "add a livenessProbe (gRPC health check on port 8080) to product-catalog",
@@ -96,10 +126,33 @@
           }
         ],
         "manual": null
-      }
+      },
+      "fix_verified": false,
+      "fix_verified_by": null
     },
     {
       "rank": 2,
+      "risk_id": "R-astronomy-db-no_hpa_shared_dependency",
+      "service": "astronomy-db",
+      "check": "no_hpa_shared_dependency",
+      "status": "confirmed",
+      "basis": "tested",
+      "severity": "Medium",
+      "severity_value": 8.31,
+      "evidence": "has_hpa=False, 2 callers - can't absorb a traffic or latency spike",
+      "experiment_id": "exp-003",
+      "S": 72.3,
+      "criticality": 0.3,
+      "fix": {
+        "summary": "absorb load spikes on astronomy-db",
+        "files": [],
+        "manual": "astronomy-db is a data store; horizontal autoscaling doesn't apply without replication."
+      },
+      "fix_verified": false,
+      "fix_verified_by": null
+    },
+    {
+      "rank": 3,
       "risk_id": "R-frontend-proxy-no_liveness_probe",
       "service": "frontend-proxy",
       "check": "no_liveness_probe",
@@ -120,10 +173,12 @@
           }
         ],
         "manual": null
-      }
+      },
+      "fix_verified": false,
+      "fix_verified_by": null
     },
     {
-      "rank": 3,
+      "rank": 4,
       "risk_id": "R-frontend-proxy-no_readiness_probe",
       "service": "frontend-proxy",
       "check": "no_readiness_probe",
@@ -144,10 +199,12 @@
           }
         ],
         "manual": null
-      }
+      },
+      "fix_verified": false,
+      "fix_verified_by": null
     },
     {
-      "rank": 4,
+      "rank": 5,
       "risk_id": "R-frontend-proxy-single_replica_no_pdb",
       "service": "frontend-proxy",
       "check": "single_replica_no_pdb",
@@ -172,10 +229,12 @@
           }
         ],
         "manual": null
-      }
+      },
+      "fix_verified": false,
+      "fix_verified_by": null
     },
     {
-      "rank": 5,
+      "rank": 6,
       "risk_id": "R-frontend-no_liveness_probe",
       "service": "frontend",
       "check": "no_liveness_probe",
@@ -196,10 +255,12 @@
           }
         ],
         "manual": null
-      }
+      },
+      "fix_verified": false,
+      "fix_verified_by": null
     },
     {
-      "rank": 6,
+      "rank": 7,
       "risk_id": "R-frontend-no_readiness_probe",
       "service": "frontend",
       "check": "no_readiness_probe",
@@ -220,10 +281,12 @@
           }
         ],
         "manual": null
-      }
+      },
+      "fix_verified": false,
+      "fix_verified_by": null
     },
     {
-      "rank": 7,
+      "rank": 8,
       "risk_id": "R-frontend-single_replica_no_pdb",
       "service": "frontend",
       "check": "single_replica_no_pdb",
@@ -248,10 +311,12 @@
           }
         ],
         "manual": null
-      }
+      },
+      "fix_verified": false,
+      "fix_verified_by": null
     },
     {
-      "rank": 8,
+      "rank": 9,
       "risk_id": "R-payment-no_liveness_probe",
       "service": "payment",
       "check": "no_liveness_probe",
@@ -272,10 +337,12 @@
           }
         ],
         "manual": null
-      }
+      },
+      "fix_verified": false,
+      "fix_verified_by": null
     },
     {
-      "rank": 9,
+      "rank": 10,
       "risk_id": "R-payment-no_readiness_probe",
       "service": "payment",
       "check": "no_readiness_probe",
@@ -296,10 +363,12 @@
           }
         ],
         "manual": null
-      }
+      },
+      "fix_verified": false,
+      "fix_verified_by": null
     },
     {
-      "rank": 10,
+      "rank": 11,
       "risk_id": "R-payment-single_replica_no_pdb",
       "service": "payment",
       "check": "single_replica_no_pdb",
@@ -324,10 +393,12 @@
           }
         ],
         "manual": null
-      }
+      },
+      "fix_verified": false,
+      "fix_verified_by": null
     },
     {
-      "rank": 11,
+      "rank": 12,
       "risk_id": "R-checkout-no_liveness_probe",
       "service": "checkout",
       "check": "no_liveness_probe",
@@ -348,10 +419,12 @@
           }
         ],
         "manual": null
-      }
+      },
+      "fix_verified": false,
+      "fix_verified_by": null
     },
     {
-      "rank": 12,
+      "rank": 13,
       "risk_id": "R-checkout-no_readiness_probe",
       "service": "checkout",
       "check": "no_readiness_probe",
@@ -372,10 +445,12 @@
           }
         ],
         "manual": null
-      }
+      },
+      "fix_verified": false,
+      "fix_verified_by": null
     },
     {
-      "rank": 13,
+      "rank": 14,
       "risk_id": "R-checkout-single_replica_no_pdb",
       "service": "checkout",
       "check": "single_replica_no_pdb",
@@ -400,10 +475,12 @@
           }
         ],
         "manual": null
-      }
+      },
+      "fix_verified": false,
+      "fix_verified_by": null
     },
     {
-      "rank": 14,
+      "rank": 15,
       "risk_id": "R-product-catalog-single_replica_no_pdb",
       "service": "product-catalog",
       "check": "single_replica_no_pdb",
@@ -428,10 +505,12 @@
           }
         ],
         "manual": null
-      }
+      },
+      "fix_verified": false,
+      "fix_verified_by": null
     },
     {
-      "rank": 15,
+      "rank": 16,
       "risk_id": "R-astronomy-db-stateful_single_replica",
       "service": "astronomy-db",
       "check": "stateful_single_replica",
@@ -447,10 +526,12 @@
         "summary": "make astronomy-db highly available",
         "files": [],
         "manual": "astronomy-db is a stateful single replica. Raising replicas without replication would split its data; real HA needs a replicated setup (e.g. a clustered Helm chart or operator). Not auto-generated."
-      }
+      },
+      "fix_verified": false,
+      "fix_verified_by": null
     },
     {
-      "rank": 16,
+      "rank": 17,
       "risk_id": "R-cart-single_replica_no_pdb",
       "service": "cart",
       "check": "single_replica_no_pdb",
@@ -475,10 +556,12 @@
           }
         ],
         "manual": null
-      }
+      },
+      "fix_verified": false,
+      "fix_verified_by": null
     },
     {
-      "rank": 17,
+      "rank": 18,
       "risk_id": "R-shipping-single_replica_no_pdb",
       "service": "shipping",
       "check": "single_replica_no_pdb",
@@ -503,10 +586,12 @@
           }
         ],
         "manual": null
-      }
+      },
+      "fix_verified": false,
+      "fix_verified_by": null
     },
     {
-      "rank": 18,
+      "rank": 19,
       "risk_id": "R-valkey-cart-stateful_single_replica",
       "service": "valkey-cart",
       "check": "stateful_single_replica",
@@ -522,10 +607,12 @@
         "summary": "make valkey-cart highly available",
         "files": [],
         "manual": "valkey-cart is a stateful single replica. Raising replicas without replication would split its data; real HA needs a replicated setup (e.g. a clustered Helm chart or operator). Not auto-generated."
-      }
+      },
+      "fix_verified": false,
+      "fix_verified_by": null
     },
     {
-      "rank": 19,
+      "rank": 20,
       "risk_id": "R-product-catalog-no_hpa_shared_dependency",
       "service": "product-catalog",
       "check": "no_hpa_shared_dependency",
@@ -546,10 +633,12 @@
           }
         ],
         "manual": null
-      }
+      },
+      "fix_verified": false,
+      "fix_verified_by": null
     },
     {
-      "rank": 20,
+      "rank": 21,
       "risk_id": "R-product-catalog-no_readiness_probe",
       "service": "product-catalog",
       "check": "no_readiness_probe",
@@ -570,26 +659,9 @@
           }
         ],
         "manual": null
-      }
-    },
-    {
-      "rank": 21,
-      "risk_id": "R-astronomy-db-no_hpa_shared_dependency",
-      "service": "astronomy-db",
-      "check": "no_hpa_shared_dependency",
-      "status": "predicted",
-      "basis": "predicted",
-      "severity": "Medium",
-      "severity_value": null,
-      "evidence": "has_hpa=False, 2 callers - can't absorb a traffic or latency spike",
-      "experiment_id": null,
-      "S": null,
-      "criticality": 0.3,
-      "fix": {
-        "summary": "absorb load spikes on astronomy-db",
-        "files": [],
-        "manual": "astronomy-db is a data store; horizontal autoscaling doesn't apply without replication."
-      }
+      },
+      "fix_verified": false,
+      "fix_verified_by": null
     },
     {
       "rank": 22,
@@ -613,7 +685,9 @@
           }
         ],
         "manual": null
-      }
+      },
+      "fix_verified": false,
+      "fix_verified_by": null
     },
     {
       "rank": 23,
@@ -637,7 +711,9 @@
           }
         ],
         "manual": null
-      }
+      },
+      "fix_verified": false,
+      "fix_verified_by": null
     },
     {
       "rank": 24,
@@ -661,7 +737,9 @@
           }
         ],
         "manual": null
-      }
+      },
+      "fix_verified": false,
+      "fix_verified_by": null
     },
     {
       "rank": 25,
@@ -685,7 +763,9 @@
           }
         ],
         "manual": null
-      }
+      },
+      "fix_verified": false,
+      "fix_verified_by": null
     },
     {
       "rank": 26,
@@ -709,7 +789,9 @@
           }
         ],
         "manual": null
-      }
+      },
+      "fix_verified": false,
+      "fix_verified_by": null
     },
     {
       "rank": 27,
@@ -733,7 +815,9 @@
           }
         ],
         "manual": null
-      }
+      },
+      "fix_verified": false,
+      "fix_verified_by": null
     },
     {
       "rank": 28,
@@ -757,7 +841,9 @@
           }
         ],
         "manual": null
-      }
+      },
+      "fix_verified": false,
+      "fix_verified_by": null
     },
     {
       "rank": 29,
@@ -781,7 +867,9 @@
           }
         ],
         "manual": null
-      }
+      },
+      "fix_verified": false,
+      "fix_verified_by": null
     },
     {
       "rank": 30,
@@ -805,7 +893,9 @@
           }
         ],
         "manual": null
-      }
+      },
+      "fix_verified": false,
+      "fix_verified_by": null
     },
     {
       "rank": 31,
@@ -829,7 +919,9 @@
           }
         ],
         "manual": null
-      }
+      },
+      "fix_verified": false,
+      "fix_verified_by": null
     },
     {
       "rank": 32,
@@ -853,7 +945,9 @@
           }
         ],
         "manual": null
-      }
+      },
+      "fix_verified": false,
+      "fix_verified_by": null
     },
     {
       "rank": 33,
@@ -877,7 +971,9 @@
           }
         ],
         "manual": null
-      }
+      },
+      "fix_verified": false,
+      "fix_verified_by": null
     },
     {
       "rank": 34,
@@ -901,7 +997,9 @@
           }
         ],
         "manual": null
-      }
+      },
+      "fix_verified": false,
+      "fix_verified_by": null
     },
     {
       "rank": 35,
@@ -925,7 +1023,9 @@
           }
         ],
         "manual": null
-      }
+      },
+      "fix_verified": false,
+      "fix_verified_by": null
     },
     {
       "rank": 36,
@@ -953,7 +1053,9 @@
           }
         ],
         "manual": null
-      }
+      },
+      "fix_verified": false,
+      "fix_verified_by": null
     },
     {
       "rank": 37,
@@ -977,7 +1079,9 @@
           }
         ],
         "manual": null
-      }
+      },
+      "fix_verified": false,
+      "fix_verified_by": null
     },
     {
       "rank": 38,
@@ -1001,7 +1105,9 @@
           }
         ],
         "manual": null
-      }
+      },
+      "fix_verified": false,
+      "fix_verified_by": null
     },
     {
       "rank": 39,
@@ -1029,7 +1135,9 @@
           }
         ],
         "manual": null
-      }
+      },
+      "fix_verified": false,
+      "fix_verified_by": null
     },
     {
       "rank": 40,
@@ -1053,7 +1161,9 @@
           }
         ],
         "manual": null
-      }
+      },
+      "fix_verified": false,
+      "fix_verified_by": null
     },
     {
       "rank": 41,
@@ -1077,7 +1187,9 @@
           }
         ],
         "manual": null
-      }
+      },
+      "fix_verified": false,
+      "fix_verified_by": null
     },
     {
       "rank": 42,
@@ -1105,7 +1217,9 @@
           }
         ],
         "manual": null
-      }
+      },
+      "fix_verified": false,
+      "fix_verified_by": null
     },
     {
       "rank": 43,
@@ -1124,7 +1238,9 @@
         "summary": "make kafka highly available",
         "files": [],
         "manual": "kafka is a stateful single replica. Raising replicas without replication would split its data; real HA needs a replicated setup (e.g. a clustered Helm chart or operator). Not auto-generated."
-      }
+      },
+      "fix_verified": false,
+      "fix_verified_by": null
     },
     {
       "rank": 44,
@@ -1143,7 +1259,9 @@
         "summary": "absorb load spikes on kafka",
         "files": [],
         "manual": "kafka is a data store; horizontal autoscaling doesn't apply without replication."
-      }
+      },
+      "fix_verified": false,
+      "fix_verified_by": null
     },
     {
       "rank": 45,
@@ -1167,7 +1285,9 @@
           }
         ],
         "manual": null
-      }
+      },
+      "fix_verified": false,
+      "fix_verified_by": null
     },
     {
       "rank": 46,
@@ -1191,7 +1311,9 @@
           }
         ],
         "manual": null
-      }
+      },
+      "fix_verified": false,
+      "fix_verified_by": null
     },
     {
       "rank": 47,
@@ -1215,7 +1337,9 @@
           }
         ],
         "manual": null
-      }
+      },
+      "fix_verified": false,
+      "fix_verified_by": null
     },
     {
       "rank": 48,
@@ -1239,7 +1363,9 @@
           }
         ],
         "manual": null
-      }
+      },
+      "fix_verified": false,
+      "fix_verified_by": null
     },
     {
       "rank": 49,
@@ -1267,7 +1393,9 @@
           }
         ],
         "manual": null
-      }
+      },
+      "fix_verified": false,
+      "fix_verified_by": null
     },
     {
       "rank": 50,
@@ -1291,7 +1419,9 @@
           }
         ],
         "manual": null
-      }
+      },
+      "fix_verified": false,
+      "fix_verified_by": null
     },
     {
       "rank": 51,
@@ -1315,7 +1445,9 @@
           }
         ],
         "manual": null
-      }
+      },
+      "fix_verified": false,
+      "fix_verified_by": null
     },
     {
       "rank": 52,
@@ -1343,7 +1475,9 @@
           }
         ],
         "manual": null
-      }
+      },
+      "fix_verified": false,
+      "fix_verified_by": null
     },
     {
       "rank": 53,
@@ -1362,7 +1496,9 @@
         "summary": "add a livenessProbe to accounting",
         "files": [],
         "manual": "accounting exposes no container port and no health endpoint (Kafka consumer), so no probe can be generated - needs an app-level health check."
-      }
+      },
+      "fix_verified": false,
+      "fix_verified_by": null
     },
     {
       "rank": 54,
@@ -1381,7 +1517,9 @@
         "summary": "add a readinessProbe to accounting",
         "files": [],
         "manual": "accounting exposes no container port and no health endpoint (Kafka consumer), so no probe can be generated - needs an app-level health check."
-      }
+      },
+      "fix_verified": false,
+      "fix_verified_by": null
     },
     {
       "rank": 55,
@@ -1409,7 +1547,9 @@
           }
         ],
         "manual": null
-      }
+      },
+      "fix_verified": false,
+      "fix_verified_by": null
     },
     {
       "rank": 56,
@@ -1428,7 +1568,9 @@
         "summary": "add a livenessProbe to fraud-detection",
         "files": [],
         "manual": "fraud-detection exposes no container port and no health endpoint (Kafka consumer), so no probe can be generated - needs an app-level health check."
-      }
+      },
+      "fix_verified": false,
+      "fix_verified_by": null
     },
     {
       "rank": 57,
@@ -1447,7 +1589,9 @@
         "summary": "add a readinessProbe to fraud-detection",
         "files": [],
         "manual": "fraud-detection exposes no container port and no health endpoint (Kafka consumer), so no probe can be generated - needs an app-level health check."
-      }
+      },
+      "fix_verified": false,
+      "fix_verified_by": null
     },
     {
       "rank": 58,
@@ -1475,7 +1619,9 @@
           }
         ],
         "manual": null
-      }
+      },
+      "fix_verified": false,
+      "fix_verified_by": null
     },
     {
       "rank": 59,
@@ -1503,7 +1649,9 @@
           }
         ],
         "manual": null
-      }
+      },
+      "fix_verified": false,
+      "fix_verified_by": null
     },
     {
       "rank": 60,
@@ -1527,7 +1675,9 @@
           }
         ],
         "manual": null
-      }
+      },
+      "fix_verified": false,
+      "fix_verified_by": null
     }
   ],
   "explained": [
@@ -1539,10 +1689,10 @@
       "status": "confirmed",
       "basis": "tested",
       "severity": "High",
-      "severity_value": 24.27,
+      "severity_value": 23.82,
       "evidence": "has_liveness=False - a hung (not crashed) process won't be auto-restarted",
       "experiment_id": "exp-002",
-      "S": 19.1,
+      "S": 20.6,
       "criticality": 0.3,
       "fix": {
         "summary": "add a livenessProbe (gRPC health check on port 8080) to product-catalog",
@@ -1554,12 +1704,38 @@
         ],
         "manual": null
       },
-      "explanation": "Without a liveness probe, a hung product-catalog process is not restarted by Kubernetes. During the experiment the service failed, causing the ads-recs and browse journeys to drop to 25 % availability and 25 % of requests to exceed the latency SLO. The evidence shows the pod was aborted because the probe threshold was breached, and the failure was not recovered.",
-      "why_fix_helps": "Adding a livenessProbe (gRPC health check on port 8080) will cause Kubernetes to restart a hung product-catalog pod, restoring service availability and preventing downstream journey failures.",
+      "fix_verified": false,
+      "fix_verified_by": null,
+      "explanation": "The product-catalog service was unable to recover from a CPU-stress fault, causing the ads-recs, browse and checkout journeys to fail. The failure was confirmed by a peak error rate of 1.0 and an abort due to a probe threshold breach, showing that a hung process was not restarted by Kubernetes.",
+      "why_fix_helps": "Adding a liveness probe that performs a gRPC health check on port 8080 will allow Kubernetes to detect and restart a hung product-catalog pod, preventing prolonged outages for the affected journeys.",
       "text_source": "ai"
     },
     {
       "rank": 2,
+      "risk_id": "R-astronomy-db-no_hpa_shared_dependency",
+      "service": "astronomy-db",
+      "check": "no_hpa_shared_dependency",
+      "status": "confirmed",
+      "basis": "tested",
+      "severity": "Medium",
+      "severity_value": 8.31,
+      "evidence": "has_hpa=False, 2 callers - can't absorb a traffic or latency spike",
+      "experiment_id": "exp-003",
+      "S": 72.3,
+      "criticality": 0.3,
+      "fix": {
+        "summary": "absorb load spikes on astronomy-db",
+        "files": [],
+        "manual": "astronomy-db is a data store; horizontal autoscaling doesn't apply without replication."
+      },
+      "fix_verified": false,
+      "fix_verified_by": null,
+      "explanation": "The astronomy-db service, which has no horizontal pod autoscaler, suffered degraded performance under a network-delay fault. All measured journeys-ads-recs, browse and checkout-experienced availability below the 0.95 threshold, indicating that the service could not absorb traffic spikes.",
+      "why_fix_helps": "Implementing a strategy to absorb load spikes, such as adding replication or a custom scaling mechanism, would enable astronomy-db to handle sudden traffic increases and prevent downstream degradation.",
+      "text_source": "ai"
+    },
+    {
+      "rank": 3,
       "risk_id": "R-frontend-proxy-no_liveness_probe",
       "service": "frontend-proxy",
       "check": "no_liveness_probe",
@@ -1581,12 +1757,14 @@
         ],
         "manual": null
       },
-      "explanation": "The frontend-proxy lacks a liveness probe, so if it hangs it will not be restarted. This could cause any journey that routes through the proxy-such as browse, ads-recs, or checkout-to receive traffic from an unhealthy pod, leading to errors or degraded performance. The evidence indicates the probe is missing and a hung process would not be auto-restarted.",
-      "why_fix_helps": "Adding a livenessProbe (tcpSocket on the service port) will enable Kubernetes to detect and restart a hung frontend-proxy pod, ensuring continuous routing for all dependent journeys.",
+      "fix_verified": false,
+      "fix_verified_by": null,
+      "explanation": "The frontend-proxy service lacks a liveness probe, meaning a hung process would not be automatically restarted. This could affect any journey that routes traffic through the proxy, potentially causing widespread failures.",
+      "why_fix_helps": "Adding a liveness probe that checks a TCP socket on the service port will enable Kubernetes to restart hung proxy pods, reducing the risk of extended outages.",
       "text_source": "ai"
     },
     {
-      "rank": 3,
+      "rank": 4,
       "risk_id": "R-frontend-proxy-no_readiness_probe",
       "service": "frontend-proxy",
       "check": "no_readiness_probe",
@@ -1608,12 +1786,14 @@
         ],
         "manual": null
       },
-      "explanation": "Without a readiness probe, a restarting frontend-proxy pod may receive traffic before it is fully ready, potentially returning errors to any journey that uses the proxy. The evidence shows readiness is absent, meaning traffic could be sent to an unprepared pod.",
-      "why_fix_helps": "Adding a readinessProbe (tcpSocket on the service port) ensures the proxy only receives traffic when it is fully ready, reducing the chance of user-facing errors during restarts.",
+      "fix_verified": false,
+      "fix_verified_by": null,
+      "explanation": "Without a readiness probe, the frontend-proxy may receive traffic before a pod is fully ready, leading to errors for users. This risk could impact all journeys that depend on the proxy.",
+      "why_fix_helps": "Adding a readiness probe that checks a TCP socket on the service port ensures traffic is only sent to fully ready pods, improving reliability for all dependent journeys.",
       "text_source": "ai"
     },
     {
-      "rank": 4,
+      "rank": 5,
       "risk_id": "R-frontend-proxy-single_replica_no_pdb",
       "service": "frontend-proxy",
       "check": "single_replica_no_pdb",
@@ -1639,12 +1819,14 @@
         ],
         "manual": null
       },
-      "explanation": "The frontend-proxy runs a single replica without a PodDisruptionBudget. During a voluntary eviction or node failure, the only pod could be removed, causing a complete outage for all journeys that depend on the proxy. The evidence notes the replica count is one and no PDB is configured.",
-      "why_fix_helps": "Scaling to two replicas and adding a PDB (minAvailable = 1) guarantees at least one healthy pod remains during disruptions, maintaining continuous service for all dependent journeys.",
+      "fix_verified": false,
+      "fix_verified_by": null,
+      "explanation": "The frontend-proxy runs a single replica without a pod disruption budget, so a pod failure or eviction could bring down the entire proxy, affecting all traffic that passes through it.",
+      "why_fix_helps": "Scaling the proxy to two replicas and adding a pod disruption budget protects against pod failures and evictions, providing redundancy for all dependent journeys.",
       "text_source": "ai"
     },
     {
-      "rank": 5,
+      "rank": 6,
       "risk_id": "R-frontend-no_liveness_probe",
       "service": "frontend",
       "check": "no_liveness_probe",
@@ -1666,12 +1848,14 @@
         ],
         "manual": null
       },
-      "explanation": "The frontend service has no liveness probe, so a hung frontend process would not be restarted. This could affect any journey that calls the frontend, such as browse or ads-recs, by returning errors or high latency. The evidence shows the probe is missing and a hung process would not be auto-restarted.",
-      "why_fix_helps": "Adding a livenessProbe (tcpSocket on the service port) will allow Kubernetes to restart a hung frontend pod, preserving availability for all journeys that rely on it.",
+      "fix_verified": false,
+      "fix_verified_by": null,
+      "explanation": "The frontend service has no liveness probe, so a hung frontend pod would not be restarted, potentially disrupting all downstream services and user journeys.",
+      "why_fix_helps": "Adding a liveness probe that checks a TCP socket on the service port will allow Kubernetes to restart hung frontend pods, maintaining service availability.",
       "text_source": "ai"
     },
     {
-      "rank": 6,
+      "rank": 7,
       "risk_id": "R-frontend-no_readiness_probe",
       "service": "frontend",
       "check": "no_readiness_probe",
@@ -1693,12 +1877,14 @@
         ],
         "manual": null
       },
-      "explanation": "Without a readiness probe, a restarting frontend pod may receive traffic before it is ready, potentially causing errors for journeys that call the frontend. The evidence indicates readiness is absent, meaning traffic could be sent to an unprepared pod.",
-      "why_fix_helps": "Adding a readinessProbe (tcpSocket on the service port) ensures the frontend only receives traffic when it is fully ready, reducing user-facing errors during restarts.",
+      "fix_verified": false,
+      "fix_verified_by": null,
+      "explanation": "Without a readiness probe, the frontend may receive traffic before it is fully ready, causing errors for users across all journeys that rely on it.",
+      "why_fix_helps": "Adding a readiness probe that checks a TCP socket on the service port ensures only ready frontend pods receive traffic, improving reliability.",
       "text_source": "ai"
     },
     {
-      "rank": 7,
+      "rank": 8,
       "risk_id": "R-frontend-single_replica_no_pdb",
       "service": "frontend",
       "check": "single_replica_no_pdb",
@@ -1724,12 +1910,14 @@
         ],
         "manual": null
       },
-      "explanation": "The frontend runs a single replica without a PodDisruptionBudget. A voluntary eviction or node failure could remove the only pod, causing a full outage for all journeys that call the frontend. The evidence notes the replica count is one and no PDB is configured.",
-      "why_fix_helps": "Scaling to two replicas and adding a PDB (minAvailable = 1) guarantees at least one healthy pod remains during disruptions, maintaining continuous service for all dependent journeys.",
+      "fix_verified": false,
+      "fix_verified_by": null,
+      "explanation": "The frontend runs a single replica without a pod disruption budget, so a pod failure or eviction could cause an outage for all journeys that depend on it.",
+      "why_fix_helps": "Scaling the frontend to two replicas and adding a pod disruption budget provides redundancy and protects against pod evictions, reducing outage risk.",
       "text_source": "ai"
     },
     {
-      "rank": 8,
+      "rank": 9,
       "risk_id": "R-payment-no_liveness_probe",
       "service": "payment",
       "check": "no_liveness_probe",
@@ -1751,12 +1939,14 @@
         ],
         "manual": null
       },
-      "explanation": "The payment service lacks a liveness probe, so a hung payment process would not be restarted. This could break the checkout journey, which depends on payment, by causing errors or high latency. The evidence shows the probe is missing and a hung process would not be auto-restarted.",
-      "why_fix_helps": "Adding a livenessProbe (gRPC health check on port 8080) will enable Kubernetes to restart a hung payment pod, ensuring checkout can complete successfully.",
+      "fix_verified": false,
+      "fix_verified_by": null,
+      "explanation": "The payment service lacks a liveness probe, meaning a hung payment pod would not be restarted, potentially breaking the checkout journey.",
+      "why_fix_helps": "Adding a liveness probe that performs a gRPC health check on port 8080 will allow Kubernetes to restart hung payment pods, preventing checkout failures.",
       "text_source": "ai"
     },
     {
-      "rank": 9,
+      "rank": 10,
       "risk_id": "R-payment-no_readiness_probe",
       "service": "payment",
       "check": "no_readiness_probe",
@@ -1778,39 +1968,10 @@
         ],
         "manual": null
       },
-      "explanation": "Without a readiness probe, a restarting payment pod may receive traffic before it is ready, potentially causing checkout errors. The evidence indicates readiness is absent, meaning traffic could be sent to an unprepared pod.",
-      "why_fix_helps": "Adding a readinessProbe (gRPC health check on port 8080) ensures the payment service only receives traffic when it is fully ready, reducing checkout failures during restarts.",
-      "text_source": "ai"
-    },
-    {
-      "rank": 10,
-      "risk_id": "R-payment-single_replica_no_pdb",
-      "service": "payment",
-      "check": "single_replica_no_pdb",
-      "status": "predicted",
-      "basis": "predicted",
-      "severity": "High",
-      "severity_value": null,
-      "evidence": "replicas=1, has_pdb=False, stateful=False, fan_in=1",
-      "experiment_id": null,
-      "S": null,
-      "criticality": 0.4,
-      "fix": {
-        "summary": "scale payment to 2 replicas and add a PDB (minAvailable=1)",
-        "files": [
-          {
-            "path": "reports/fixes/R-payment-single_replica_no_pdb.yaml",
-            "apply": "kubectl -n otel-demo patch deployment payment --patch-file reports/fixes/R-payment-single_replica_no_pdb.yaml"
-          },
-          {
-            "path": "reports/fixes/R-payment-single_replica_no_pdb.pdb.yaml",
-            "apply": "kubectl apply -f reports/fixes/R-payment-single_replica_no_pdb.pdb.yaml"
-          }
-        ],
-        "manual": null
-      },
-      "explanation": "The payment service runs a single replica without a PodDisruptionBudget. A voluntary eviction or node failure could remove the only pod, causing a checkout outage. The evidence notes the replica count is one and no PDB is configured.",
-      "why_fix_helps": "Scaling to two replicas and adding a PDB (minAvailable = 1) guarantees at least one healthy payment pod remains during disruptions, preserving checkout availability.",
+      "fix_verified": false,
+      "fix_verified_by": null,
+      "explanation": "Without a readiness probe, the payment service may receive traffic before it is ready, which could cause checkout errors for users.",
+      "why_fix_helps": "Adding a readiness probe that performs a gRPC health check on port 8080 ensures traffic is only sent to ready payment pods, improving checkout reliability.",
       "text_source": "ai"
     }
   ],
@@ -1839,30 +2000,33 @@
       "fault_type": "cpu_stress",
       "category": "Capacity",
       "risk_id": "R-product-catalog-no_liveness_probe",
-      "repeats_run": 1,
+      "repeats_run": 4,
       "outcome": "not_recovered",
-      "S": 19.1,
+      "S": 20.6,
       "R": 0.0,
       "C": null,
-      "recovery_s": null,
+      "recovery_s": 55.1,
       "journeys": {
         "ads-recs": {
-          "A": 0.25,
-          "L": 0.25,
-          "S": 19.1
+          "A": 0.278,
+          "L": 0.278,
+          "S": 25.5
         },
         "browse": {
-          "A": 0.25,
-          "L": 0.25,
-          "S": 19.1
+          "A": 0.278,
+          "L": 0.278,
+          "S": 25.5
+        },
+        "checkout": {
+          "A": 0.125,
+          "L": 0.125,
+          "S": 15.9
         }
       },
-      "uncovered_journeys": [
-        "checkout"
-      ],
+      "uncovered_journeys": [],
       "weight": 0.4,
       "severity": "High",
-      "severity_value": 24.27
+      "severity_value": 23.82
     },
     {
       "experiment_id": "exp-003",
@@ -1870,17 +2034,33 @@
       "fault_type": "network_delay",
       "category": "Dependency",
       "risk_id": "R-astronomy-db-no_hpa_shared_dependency",
-      "repeats_run": 0,
-      "outcome": "not_run",
-      "S": null,
-      "R": null,
+      "repeats_run": 3,
+      "outcome": "degraded_recovered",
+      "S": 72.3,
+      "R": 0.0,
       "C": null,
-      "recovery_s": null,
-      "journeys": {},
+      "recovery_s": 104.1,
+      "journeys": {
+        "ads-recs": {
+          "A": 0.936,
+          "L": 0.487,
+          "S": 67.2
+        },
+        "browse": {
+          "A": 0.967,
+          "L": 0.845,
+          "S": 77.2
+        },
+        "checkout": {
+          "A": 0.906,
+          "L": 0.726,
+          "S": 71.2
+        }
+      },
       "uncovered_journeys": [],
       "weight": 0.4,
-      "severity": null,
-      "severity_value": null
+      "severity": "Medium",
+      "severity_value": 8.31
     },
     {
       "experiment_id": "exp-004",
@@ -1991,11 +2171,6 @@
   ],
   "runnable_experiments": [
     {
-      "experiment_id": "exp-003",
-      "target": "astronomy-db",
-      "fault_type": "network_delay"
-    },
-    {
       "experiment_id": "exp-005",
       "target": "cart",
       "fault_type": "cpu_stress"
@@ -2004,6 +2179,11 @@
       "experiment_id": "exp-007",
       "target": "frontend",
       "fault_type": "pod_kill"
+    },
+    {
+      "experiment_id": "exp-008",
+      "target": "payment",
+      "fault_type": "cpu_stress"
     }
   ],
   "config": {

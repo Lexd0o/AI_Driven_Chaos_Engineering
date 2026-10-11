@@ -109,7 +109,7 @@ def classify_experiment(item, executor_cfg, run_ids):
 
 
 def experiment_rows(plan, executor_cfg, runs):
-    run_ids = {r.get("experiment_id") for r in runs}
+    run_ids = {r.get("experiment_id") for r in runs if not r.get("label")}
     rows = []
     for it in plan or []:
         rows.append({
@@ -120,6 +120,28 @@ def experiment_rows(plan, executor_cfg, runs):
             "status": classify_experiment(it, executor_cfg, run_ids),
         })
     return rows
+
+
+def run_rows(runs):
+    """One row per run record with its label ('current' when unlabelled), grouped by experiment/label."""
+    rows = [{"experiment_id": r.get("experiment_id"), "label": r.get("label") or "current",
+             "repeat": r.get("repeat"), "outcome": r.get("outcome"), "note": r.get("note"),
+             "peak_error_rate": r.get("peak_error_rate"), "peak_p95_ms": r.get("peak_p95_ms")}
+            for r in runs or []]
+    return sorted(rows, key=lambda x: (str(x["experiment_id"]), x["label"] != "current", x["label"],
+                                       x["repeat"] or 0))
+
+
+def comparison_rows(scores):
+    """Flat before/after rows from scores['comparisons']['rows']."""
+    out = []
+    for r in ((scores or {}).get("comparisons") or {}).get("rows") or []:
+        b, a = r.get("before") or {}, r.get("after") or {}
+        out.append({"experiment_id": r.get("experiment_id"), "label": r.get("label"),
+                    "before_S": b.get("S"), "before_outcome": b.get("outcome"),
+                    "after_S": a.get("S"), "after_outcome": a.get("outcome"),
+                    "delta_S": r.get("delta_S")})
+    return out
 
 
 def load_runs(runs_dir):
@@ -184,6 +206,7 @@ def finding_rows(report):
             "text_source": {"ai": "AI-written", "template": "template"}.get(e.get("text_source"), "evidence only"),
             "fix_summary": fix.get("summary") or "",
             "apply_commands": cmds, "manual": fix.get("manual"),
+            "fix_verified": bool(f.get("fix_verified")), "fix_verified_by": f.get("fix_verified_by"),
         })
     return rows
 

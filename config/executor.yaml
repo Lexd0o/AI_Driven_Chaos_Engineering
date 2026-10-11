@@ -8,10 +8,12 @@ namespace: otel-demo
 kubectl_path: kubectl
 
 # One GET probe per D-008 journey, through the frontend-proxy port-forward.
-# All verified to return 200 on 11 Oct. checkout has no GET endpoint (placing an order is a
-# POST that needs a filled cart), so an experiment is probed only on its other journeys and
-# the run record lists checkout under `uncovered_journeys`. An experiment with no probed
-# journey at all (e.g. payment -> checkout only) is refused in --execute.
+# GET probes verified to return 200 on 11 Oct. checkout is a synthetic POST journey (type: checkout):
+# POST /api/cart (1 x product_id) then POST /api/checkout with a fake customer; ok = both 200 and an
+# orderId returned; latency = both calls. It places a real (fake) order per poll in the demo, same as
+# the load generator. Per-probe max_latency_ms overrides guardian.max_latency_ms for that journey
+# (measured checkout: median ~550 ms, p90 ~1.6 s, max ~4.7 s); timeout_seconds bounds the whole probe.
+# NOTE: src/run.py pick_probes must pass these extra fields through (see its allowlist).
 journey_probes:
   browse:
     url: http://localhost:8080/api/products
@@ -24,6 +26,13 @@ journey_probes:
   shipping-quote:
     url: http://localhost:8080/api/shipping?itemList=%5B%7B%22productId%22%3A%22OLJCESPC7Z%22%2C%22quantity%22%3A1%7D%5D&currencyCode=USD&address=%7B%22streetAddress%22%3A%221600%20Amphitheatre%20Parkway%22%2C%22city%22%3A%22Mountain%20View%22%2C%22state%22%3A%22CA%22%2C%22country%22%3A%22United%20States%22%2C%22zipCode%22%3A%2294043%22%7D
     for_targets: [shipping, quote]
+  checkout:
+    type: checkout
+    url: http://localhost:8080/api/checkout   # evidence label only; the probe POSTs cart then checkout
+    base_url: http://localhost:8080
+    product_id: OLJCESPC7Z
+    timeout_seconds: 6
+    max_latency_ms: 5000
 
 # The probes reach the app through `kubectl port-forward svc/frontend-proxy 8080:8080`, which
 # binds to one pod and dies with it. Faulting these services would break the probe path, not

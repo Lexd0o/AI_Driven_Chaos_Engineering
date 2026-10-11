@@ -329,5 +329,94 @@ class BenchmarkSectionTests(unittest.TestCase):
         self.assertEqual(rep["benchmark"], b)
 
 
+def scores_with_fix():
+    s = scores_scored()
+    s["findings"][0].update({"fix_verified": True, "fix_verified_by": "fix-applied"})
+    s["comparisons"] = {
+        "rows": [{"experiment_id": "exp-001", "label": "fix-applied", "target": "cart", "risk_id": "R-cart-c1",
+                  "before": {"S": 72.4, "outcome": "degraded_recovered", "R": 0.5, "repeats": 2},
+                  "after": {"S": 100.0, "outcome": "survived", "R": 1.0, "repeats": 3}, "delta_S": 27.6}],
+        "before_score": 72.4, "after_fixes_score": 100.0, "labels_used": {"exp-001": "fix-applied"}}
+    return s
+
+
+class FixVerificationTests(unittest.TestCase):
+    def test_section_and_badge(self):
+        with patch("src.report.structured_call", return_value=None):
+            rep = R.build_report(scores_with_fix(), GRAPH, RANKED, CFG, False)
+        md = R.render_markdown(rep)
+        self.assertIn("## Fix verification", md)
+        self.assertIn("| exp-001 | fix-applied | 72.4 | degraded_recovered | 100.0 | survived | +27.6 |", md)
+        self.assertIn("72.4 before fixes, 100.0", md)
+        self.assertIn("Fix verified by fix-applied runs", md)
+        self.assertEqual(rep["comparisons"]["after_fixes_score"], 100.0)
+
+    def test_no_section_without_comparisons(self):
+        with patch("src.report.structured_call", return_value=None):
+            rep = R.build_report(scores_scored(), GRAPH, RANKED, CFG, False)
+        md = R.render_markdown(rep)
+        self.assertNotIn("Fix verification", md)
+        self.assertNotIn("Fix verified by", md)
+
+    def test_facts_carry_numbers_and_guard_accepts_them(self):
+        s = scores_with_fix()
+        facts = R.finding_facts(s["findings"][0], {e["experiment_id"]: e for e in s["experiments"]}, GRAPH,
+                                {}, None, {}, s["comparisons"])
+        self.assertTrue(facts["fix_verification"]["fix_verified"])
+        self.assertEqual(facts["fix_comparisons"][0]["after"]["S"], 100.0)
+        self.assertIn("score_after_fixes", R.report_facts(s, s["findings"][:1])["fix_verification"])
+        self.assertEqual(R.invented_numbers("Score rose from 72.4 to 100.", json.dumps(facts)), [])
+
+    def test_journeys_not_measured_follows_scores_and_checkout_as_journey(self):
+        s = tested_scores()
+        s["experiments"][0]["uncovered_journeys"] = []
+        s["experiments"][0]["journeys"]["checkout"] = {"A": 0.0, "L": 0.0, "S": 0.0}
+        exps = {e["experiment_id"]: e for e in s["experiments"]}
+        recs = {"exp-002": [{"peak_error_rate": 0.5, "uncovered_journeys": ["checkout"]}]}
+        facts = R.finding_facts(s["findings"][0], exps, GRAPH_NODES, {}, None, recs)
+        self.assertEqual(facts["journeys_not_measured"], [])
+        self.assertIn("checkout", facts["journeys_failed"])
+        facts["service_context"] = {}
+        item = R.Explained(risk_id="R-pc-1", explanation=good_text("The checkout journey failed too."),
+                           why_fix_helps=good_text())
+        self.assertEqual(R.validate_item(item, {"R-pc-1": facts}, set(), CFG["llm"], ["checkout", "payment"]), [])
+        # a service/journey name absent from the facts is still rejected
+        bad = R.Explained(risk_id="R-pc-1", explanation=good_text("The payment service was hit."),
+                          why_fix_helps=good_text())
+        self.assertTrue(R.validate_item(bad, {"R-pc-1": facts}, set(), CFG["llm"], ["checkout", "payment"]))
+        # summary: journey-only mention accepted via report-level journey names
+        rf = R.report_facts(s, s["findings"][:1])
+        self.assertEqual(R.validate_text(good_text("Checkout was measured."), json.dumps(rf), CFG["llm"],
+                                         ["checkout"]), [])
+        self.assertTrue(R.validate_text(good_text("Payment broke."), json.dumps(rf), CFG["llm"], ["payment"]))
+
+    def test_comparison_numbers_in_facts_without_fix_verified_flag(self):
+        s = tested_scores()
+        s["comparisons"] = {"rows": [{"experiment_id": "exp-002", "label": "fix-applied",
+                                      "before": {"S": 20.6, "outcome": "not_recovered", "repeats": 4},
+                                      "after": {"S": 10.9, "outcome": "not_recovered", "repeats": 3},
+                                      "delta_S": -9.7}], "before_score": 73.2, "after_fixes_score": 70.8}
+        exps = {e["experiment_id"]: e for e in s["experiments"]}
+        facts = R.finding_facts(s["findings"][0], exps, GRAPH_NODES, {}, None, None, s["comparisons"])
+        c = facts["fix_comparisons"][0]
+        self.assertEqual((c["before_S"], c["after_S"], c["delta_S"], c["label"]), (20.6, 10.9, -9.7, "fix-applied"))
+        item = R.Explained(risk_id="R-pc-1", explanation=good_text(),
+                           why_fix_helps=good_text("Score moved from 20.6 to 10.9."))
+        self.assertEqual(R.validate_item(item, {"R-pc-1": facts}, set(), CFG["llm"]), [])
+        rf = R.report_facts(s, s["findings"][:1])
+        self.assertEqual((rf["before_score"], rf["after_fixes_score"]), (73.2, 70.8))
+        self.assertEqual(R.validate_text(good_text("Overall 73.2 became 70.8."), json.dumps(rf), CFG["llm"]), [])
+
+    def test_labelled_run_files_not_used_for_measurements(self):
+        import os
+        import tempfile
+        with tempfile.TemporaryDirectory() as d:
+            for name, label in (("exp-001-r1.json", None), ("exp-001-r2.json", "fix-applied")):
+                with open(os.path.join(d, name), "w") as fh:
+                    json.dump({"experiment_id": "exp-001", "label": label}, fh)
+            recs = R.load_run_records({"exp-001": {}}, d)
+        self.assertEqual(len(recs["exp-001"]), 1)
+
+
 if __name__ == "__main__":
     unittest.main()

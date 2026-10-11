@@ -66,12 +66,32 @@ Repeats: top-2 ranked experiments × 3; others × 1.
 
 ## 5. Results log (auto-generated table pasted here at the end)
 
-| Exp | Fault | Target | Repeats | Outcome | Peak err | Peak p95 | Recovery (s) | Score | Prediction status |
-|---|---|---|---|---|---|---|---|---|---|
-| | | | | | | | | | |
+Source: `data/runs/exp-*.json` (11 Oct 2026). Peak err = peak probe error rate during the run. Score S per experiment comes from `data/scores.json` (inconclusive runs are not scored). Label `-` = none; `fix-applied` = product-catalog liveness + readiness probes applied (Decisions.md D-020).
+
+| Exp | Repeat | Fault / target | Label | Outcome | Peak err | Notes |
+|---|---|---|---|---|---|---|
+| exp-002 | r1 | cpu_stress / product-catalog | - | not_recovered | 0.75 | Guardrail abort (probe_threshold_breach); pod stuck at 32Mi limit, restarted manually |
+| exp-002 | r2 | cpu_stress / product-catalog | - | degraded_recovered | 1.0 | Aborted; impact recovery ~55 s |
+| exp-002 | r3 | cpu_stress / product-catalog | - | inconclusive | - | Pre-check refused (checkout slow); nothing injected |
+| exp-002 | r4 | cpu_stress / product-catalog | - | not_recovered | 0.75 | Aborted; self-recovered after ~4 min, beyond the 120 s budget |
+| exp-002 | r5 | cpu_stress / product-catalog | fix-applied | not_recovered | 1.0 | Pod restarted automatically by the liveness probe (no manual restart), too slow for the budget |
+| exp-002 | r6 | cpu_stress / product-catalog | fix-applied | inconclusive | - | Pre-check unhealthy after the restart; nothing injected |
+| exp-002 | r7 | cpu_stress / product-catalog | fix-applied | inconclusive | 1.0 | Breach ~3 s before Chaos Mesh confirmed injection -> "no fault injected" (measurement quirk) |
+| exp-003 | r1 | network_delay / astronomy-db | - | degraded_recovered | 0.2 | Guardrail abort; impact recovery ~167 s |
+| exp-003 | r2 | network_delay / astronomy-db | - | degraded_recovered | 0.091 | Ran to duration; impact recovery ~101 s |
+| exp-003 | r3 | network_delay / astronomy-db | - | degraded_recovered | 0.083 | Ran to duration; impact recovery ~44 s |
+| exp-004 | r1 | pod_kill / currency | - | survived | 0.0 | Checkout listed uncovered (run predates the checkout probe) |
+| exp-006 | r1 | network_delay / shipping | - | survived | 0.0 | Checkout listed uncovered (run predates the checkout probe) |
+
+Not run: exp-001 (pod_kill frontend-proxy; refused by design, carries the probe port-forward), exp-005 (cpu_stress cart), exp-007 (pod_kill frontend), exp-008 (cpu_stress payment; runnable since the checkout probe).
+
+Scores (11 Oct): exp-002 S 20.6 (Capacity), exp-003 S 72.3 and exp-006 S 100 (Dependency 86.1), exp-004 S 100 (Redundancy). Headline 73.2/100, 4 of 8 scored; after-fixes overall 70.8 (exp-002 S 10.9 with one scored post-fix run).
 
 ## 6. Predicted vs confirmed (Tier 1)
 
 | Risk ID | Predicted by audit | Experiment | Status (confirmed / refuted / inconclusive) | Evidence |
 |---|---|---|---|---|
-| | | | | |
+| R-product-catalog-no_liveness_probe | no liveness probe (High) | exp-002 | confirmed | Stuck at 32Mi limit, not recovered in 120 s; with the probe applied the pod restarts automatically but too slowly (D-020) |
+| R-astronomy-db-no_hpa_shared_dependency | no HPA on shared dependency (Medium) | exp-003 | confirmed | degraded_recovered in 3 of 3 runs, S 72.3 |
+
+Full list (56 predicted, 2 confirmed, 2 refuted): `data/scores.json` `findings`.

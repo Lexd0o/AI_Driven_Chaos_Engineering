@@ -25,7 +25,9 @@ from typing import Literal
 import yaml
 from pydantic import BaseModel
 
+from src.baseline import derive_slo
 from src.llm import structured_call
+from src.report import normalise_text
 
 RANKED_PATH = "data/ranked_candidates.json"
 RISKS_PATH = "data/risks.json"
@@ -34,12 +36,13 @@ GRAPH_PATH = "data/graph.json"
 BASELINE_PATH = "data/baseline.json"  # P2; optional until it exists
 PLANNER_CONFIG_PATH = "config/planner.yaml"
 OVERRIDES_PATH = "config/graph_overrides.yaml"  # entry_points
+EXECUTOR_CONFIG_PATH = "config/executor.yaml"  # journey_probes (for_targets), read-only
 OUT_PATH = "data/plan.json"
 NAMESPACE = os.getenv("NAMESPACE", "otel-demo")
 
 MAX_EXPERIMENTS = 8  # Plan.md S5 target: 6-8 experiments covering >= 3 fault types
 
-# Placeholders until P2's baseline.json exists (Architecture.md section 6: "tune after baseline")
+# Fallback when data/baseline.json is missing or has no matching journey (Architecture.md section 6: "tune after baseline")
 DEFAULT_SLO = {"success_rate_min": 0.95, "p95_ms_max": 1500}
 DEFAULT_RECOVERY_BUDGET_S = 120
 
@@ -101,8 +104,16 @@ def choose_risk(candidate_risks: list[dict], used_counts: dict, catalog: dict) -
     return min(eligible, key=lambda r: used_counts.get(r["suggested_experiment"], 0))
 
 
+def slo_journeys(service: str, journeys: list[str], probes: dict) -> list[str]:
+    """Baseline journey names an item is measured on: its expected journeys plus any probe
+    whose for_targets lists the service (e.g. shipping-quote)."""
+    extra = [n for n, p in probes.items() if service in (p.get("for_targets") or [])]
+    return sorted(set(journeys) | set(extra))
+
+
 def build_plan(candidates: list[dict], risks_by_id: dict, catalog: dict,
-               members: dict[str, set[str]]) -> list[dict]:
+               members: dict[str, set[str]], baseline: dict | None = None,
+               probes: dict | None = None, baseline_cfg: dict | None = None) -> list[dict]:
     items = []
     used_counts: dict[str, int] = {}
     for candidate in candidates:
@@ -119,6 +130,11 @@ def build_plan(candidates: list[dict], risks_by_id: dict, catalog: dict,
         fault_type = risk["suggested_experiment"]
         spec = catalog[fault_type]
         used_counts[fault_type] = used_counts.get(fault_type, 0) + 1
+        journeys = expected_journeys(candidate["service"], members)
+        slo, slo_source = DEFAULT_SLO, "default"
+        if baseline and baseline_cfg:
+            slo, slo_source = derive_slo(slo_journeys(candidate["service"], journeys, probes or {}),
+                                         baseline, DEFAULT_SLO, baseline_cfg)
 
         items.append({
             "experiment_id": f"exp-{len(items) + 1:03d}",
@@ -130,8 +146,9 @@ def build_plan(candidates: list[dict], risks_by_id: dict, catalog: dict,
             "params": {"duration_s": spec["default_duration_s"], **spec.get("default_params", {})},
             "hypothesis": hypothesis_for(candidate["service"], risk),
             "reason": candidate["reason"],
-            "expected_impact": {"journeys": expected_journeys(candidate["service"], members)},
-            "slo": DEFAULT_SLO,
+            "expected_impact": {"journeys": journeys},
+            "slo": slo,
+            "slo_source": slo_source,
             "recovery_budget_s": DEFAULT_RECOVERY_BUDGET_S,
             "planner": "deterministic",
         })
@@ -150,10 +167,10 @@ and when it should recover. Name the measurable symptom (errors, latency, which 
 and ground it in the evidence given (replicas, probes, callers, call volume).
 - reason: one sentence on why this experiment is worth running, citing the graph facts given \
 (callers, blast radius, call volume, risk flags).
-- journeys: the user journeys the fault should affect, chosen only from allowed_journeys.
 
 Use only facts present in the input. Do not invent services, metrics, or numbers. \
-Return exactly one entry per experiment_id."""
+Each experiment's journeys are given and fixed (computed from the service graph); name only those \
+journeys in your text and do not change them. Plain ASCII only. Return exactly one entry per experiment_id."""
 
 Journey = Literal["browse", "cart", "checkout", "ads-recs"]  # keep in sync with config/planner.yaml
 
@@ -162,7 +179,7 @@ class LLMItem(BaseModel):
     experiment_id: str
     hypothesis: str
     reason: str
-    journeys: list[Journey]
+    journeys: list[Journey] = []  # ignored: journeys are deterministic
 
 
 class LLMPlanText(BaseModel):
@@ -189,10 +206,11 @@ def llm_context(plan: list[dict], candidates: list[dict], risks_by_id: dict, gra
             "blast_radius": c.get("blast_radius"),
             "inbound_calls_sampled": c.get("inbound_calls"),
             "on_checkout_path": c["on_checkout_path"],
+            "journeys": item["expected_impact"]["journeys"],
             "template_hypothesis": item["hypothesis"],
         })
     baseline = json.load(open(BASELINE_PATH)) if os.path.exists(BASELINE_PATH) else "not measured yet"
-    return json.dumps({"allowed_journeys": cfg["journeys"], "baseline": baseline,
+    return json.dumps({"baseline": baseline,
                        "experiments": experiments}, indent=1)
 
 
@@ -205,11 +223,6 @@ def validate_llm_item(item: LLMItem, known_ids: set[str], cfg: dict) -> list[str
         n = len(getattr(item, field).strip())
         if not cfg["min_text_chars"] <= n <= cfg["max_text_chars"]:
             problems.append(f"{field} is {n} chars (allowed {cfg['min_text_chars']}-{cfg['max_text_chars']})")
-    if not item.journeys:
-        problems.append("no journeys")
-    extra = set(item.journeys) - set(cfg["journeys"])
-    if extra:
-        problems.append(f"journeys {sorted(extra)} not allowed")
     return problems
 
 
@@ -221,7 +234,7 @@ def call_llm(context: str, cfg: dict) -> LLMPlanText | None:
 
 def apply_llm_text(plan: list[dict], llm: LLMPlanText, cfg: dict) -> int:
     """Copy validated text fields onto plan items in place. Returns how many items changed.
-    Only hypothesis, reason, and expected_impact are ever taken from the LLM."""
+    Only hypothesis and reason are ever taken (journeys stay deterministic) from the LLM."""
     by_id = {item["experiment_id"]: item for item in plan}
     applied = 0
     for out in llm.items:
@@ -233,9 +246,8 @@ def apply_llm_text(plan: list[dict], llm: LLMPlanText, cfg: dict) -> int:
         if item["planner"] == "llm":
             print(f"  dropped duplicate LLM text for {out.experiment_id}")
             continue
-        item["hypothesis"] = out.hypothesis.strip()
-        item["reason"] = out.reason.strip()
-        item["expected_impact"] = {"journeys": sorted(set(out.journeys))}
+        item["hypothesis"] = normalise_text(out.hypothesis).strip()
+        item["reason"] = normalise_text(out.reason).strip()
         item["planner"] = "llm"
         applied += 1
     missing = [i["experiment_id"] for i in plan if i["planner"] != "llm"]
@@ -262,7 +274,11 @@ def main() -> None:
     graph = json.load(open(GRAPH_PATH))
     entry_points = load_yaml(OVERRIDES_PATH).get("entry_points") or []
     members = journey_members(graph, cfg["journey_roots"], entry_points)
-    plan = build_plan(candidates, risks_by_id, catalog, members)
+    baseline = json.load(open(BASELINE_PATH)) if os.path.exists(BASELINE_PATH) else None
+    probes = load_yaml(EXECUTOR_CONFIG_PATH).get("journey_probes") or {} if os.path.exists(EXECUTOR_CONFIG_PATH) else {}
+    plan = build_plan(candidates, risks_by_id, catalog, members, baseline, probes, cfg.get("baseline"))
+    sources = "/".join(sorted({i["slo_source"] for i in plan}))
+    print(f"SLO source: {sources} ({BASELINE_PATH} {'used' if baseline else 'not found'})")
 
     if not args.deterministic and plan:
         llm = call_llm(llm_context(plan, candidates, risks_by_id, graph, cfg), cfg)

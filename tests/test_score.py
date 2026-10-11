@@ -41,6 +41,20 @@ def scores(plan, runs, risks=None, ranked=None, fixes=None):
 
 
 class ScoreTests(unittest.TestCase):
+    def test_uncovered_excludes_journeys_measured_in_later_repeat(self):
+        r1 = rec(journeys={"cart": {"A": 1.0, "L": 1.0}})
+        r1["uncovered_journeys"] = ["checkout"]
+        r2 = rec()  # measures checkout
+        e = scores([item(journeys=("checkout", "cart"))], [r1, r2])["experiments"][0]
+        self.assertEqual(e["uncovered_journeys"], [])
+
+    def test_uncovered_kept_when_never_measured(self):
+        r1 = rec(journeys={"cart": {"A": 1.0, "L": 1.0}})
+        r1["uncovered_journeys"] = ["checkout"]
+        r2 = rec(journeys={"cart": {"A": 1.0, "L": 1.0}})
+        e = scores([item(journeys=("cart",))], [r1, r2])["experiments"][0]
+        self.assertEqual(e["uncovered_journeys"], ["checkout"])
+
     def test_perfect_survived_run_is_100(self):
         out = scores([item()], [rec()])
         e = out["experiments"][0]
@@ -188,6 +202,94 @@ class ScoreTests(unittest.TestCase):
                          {"summary": "do it", "files": [{"path": "p.yaml", "apply": "kubectl apply -f p.yaml"}],
                           "manual": None})
         self.assertIsNone(out["findings"][1]["fix"])
+
+
+BAD = {"checkout": {"A": 0.5, "L": 1.0}}
+
+
+def lrec(label="fix-applied", t="2026-10-12T10:00:00+00:00", **kw):
+    r = rec(**kw)
+    r.update({"label": label, "t_start": t})
+    return r
+
+
+class FixTrackingTests(unittest.TestCase):
+    def plan(self):
+        return [item("exp-1"), item("exp-2", target="svc-b", risk_id="R-b")]
+
+    def test_labelled_records_do_not_touch_headline(self):
+        base = scores(self.plan(), [rec("exp-1", outcome="not_recovered", journeys=BAD)])
+        mixed = scores(self.plan(), [rec("exp-1", outcome="not_recovered", journeys=BAD), lrec(exp_id="exp-1")])
+        for k in ("resilience_score", "coverage", "categories", "experiments", "counts"):
+            self.assertEqual(base[k], mixed[k])
+        self.assertEqual(mixed["experiments"][0]["repeats_run"], 1)
+        self.assertEqual(base["comparisons"]["rows"], [])
+        self.assertIsNone(base["comparisons"]["after_fixes_score"])
+
+    def test_null_and_empty_labels_are_unlabelled(self):
+        r = rec("exp-1")
+        r["label"] = None
+        r2 = rec("exp-1")
+        r2["label"] = ""
+        self.assertEqual(scores(self.plan(), [r, r2])["experiments"][0]["repeats_run"], 2)
+
+    def test_comparison_rows_and_after_fixes_score(self):
+        runs = [rec("exp-1", outcome="not_recovered", journeys=BAD), rec("exp-2"),
+                lrec(exp_id="exp-1")]
+        out = scores(self.plan(), runs)
+        comp = out["comparisons"]
+        before = out["experiments"][0]["S"]
+        (row,) = comp["rows"]
+        self.assertEqual((row["experiment_id"], row["label"]), ("exp-1", "fix-applied"))
+        self.assertEqual(row["before"]["S"], before)
+        self.assertEqual(row["before"]["outcome"], "not_recovered")
+        self.assertEqual((row["after"]["S"], row["after"]["outcome"], row["after"]["repeats"]),
+                         (100.0, "survived", 1))
+        self.assertAlmostEqual(row["delta_S"], round(100.0 - before, 1))
+        self.assertEqual(comp["before_score"], out["resilience_score"])
+        self.assertEqual(comp["after_fixes_score"], 100.0)   # both experiments now 100
+        self.assertLess(out["resilience_score"], 100.0)
+        self.assertEqual(comp["labels_used"], {"exp-1": "fix-applied"})
+
+    def test_latest_label_wins_by_timestamp(self):
+        runs = [rec("exp-1", outcome="not_recovered", journeys=BAD),
+                lrec("old-fix", "2026-10-12T09:00:00+00:00", exp_id="exp-1"),
+                lrec("new-fix", "2026-10-12T11:00:00+00:00", exp_id="exp-1",
+                     outcome="degraded_recovered", impact=50)]
+        out = scores([item("exp-1")], runs)
+        self.assertEqual(len(out["comparisons"]["rows"]), 2)
+        self.assertEqual(out["comparisons"]["labels_used"], {"exp-1": "new-fix"})
+        new = next(r for r in out["comparisons"]["rows"] if r["label"] == "new-fix")
+        self.assertEqual(out["comparisons"]["after_fixes_score"], new["after"]["S"])
+
+    def test_inconclusive_after_keeps_before_score(self):
+        runs = [rec("exp-1"), lrec(exp_id="exp-1", outcome="inconclusive", journeys={})]
+        out = scores([item("exp-1")], runs)
+        self.assertIsNone(out["comparisons"]["rows"][0]["delta_S"])
+        self.assertEqual(out["comparisons"]["after_fixes_score"], out["resilience_score"])
+
+    def test_fix_verified_only_when_confirmed_and_all_survived(self):
+        weak = rec("exp-1", outcome="not_recovered", journeys=BAD)
+        out = scores([item("exp-1")], [weak, lrec(exp_id="exp-1"), lrec(exp_id="exp-1")])
+        f = out["findings"][0]
+        self.assertEqual((f["status"], f["fix_verified"], f["fix_verified_by"]),
+                         ("confirmed", True, "fix-applied"))
+        out = scores([item("exp-1")], [weak, lrec(exp_id="exp-1"),
+                                       lrec(exp_id="exp-1", outcome="degraded_recovered", impact=10)])
+        self.assertEqual(out["findings"][0]["status"], "confirmed")
+        self.assertFalse(out["findings"][0]["fix_verified"])
+        out = scores([item("exp-1")], [weak, lrec(exp_id="exp-1", aborted=True)])
+        self.assertFalse(out["findings"][0]["fix_verified"])
+        # a refuted risk (survived before) is never "fix verified"
+        out = scores([item("exp-1")], [rec("exp-1"), lrec(exp_id="exp-1")])
+        self.assertEqual(out["findings"][0]["status"], "refuted")
+        self.assertFalse(out["findings"][0]["fix_verified"])
+
+    def test_labelled_only_experiment_stays_unrun(self):
+        out = scores([item("exp-1")], [lrec(exp_id="exp-1")])
+        self.assertEqual(out["coverage"]["run"], 0)
+        self.assertEqual(out["score_status"], "not_scored")
+        self.assertEqual(out["comparisons"]["rows"][0]["before"]["outcome"], "not_run")
 
 
 if __name__ == "__main__":

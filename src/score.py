@@ -16,6 +16,21 @@ No LLM is involved: every number here comes from run records and config.
 Choices where the spec leaves room:
   - An experiment's R and C are taken from its worst scored repeat (worst outcome, then lowest S).
   - A tested finding's severity_value is (100 - S) x service criticality, banded by config.
+
+Before/after-fix tracking (Plan.md T2.1). A run record may carry a "label" (src.run --label, e.g.
+"fix-applied"). Rules:
+  - Records are grouped by (experiment_id, label). The headline resilience_score, coverage,
+    categories, experiments[] and finding status/severity use ONLY unlabelled records, i.e. the
+    "current state" before any fix. Labelled records never leak into them.
+  - "comparisons" holds one row per (experiment_id, label) with a non-null label:
+    before = unlabelled S/outcome/R/repeats, after = labelled S/outcome/R/repeats, delta_S =
+    after S - before S (None when either side has no score). It also holds "before_score" (= the
+    headline) and "after_fixes_score": the headline formula with each experiment's S replaced by
+    its labelled S where a scored labelled group exists; if an experiment has several labels, the
+    label whose latest run t_start is most recent wins ("labels_used" says which).
+  - A finding stays "confirmed" when its risk was confirmed before the fix (it was a real
+    weakness); if that experiment's most recent labelled group has scored runs that all survived
+    (none aborted), the finding gets fix_verified: true and fix_verified_by: <label>.
 """
 import glob
 import json
@@ -65,6 +80,15 @@ def load_run_records(pattern: str = RUNS_GLOB) -> list[dict]:
         if isinstance(data, dict) and "experiment_id" in data and "outcome" in data:
             records.append(data)
     return records
+
+
+def is_labelled(record: dict) -> bool:
+    return bool(record.get("label"))
+
+
+def unlabelled_records(records: list[dict]) -> list[dict]:
+    """Records of the current (pre-fix) state: label absent, null or empty."""
+    return [r for r in records if not is_labelled(r)]
 
 
 def mean(values: list[float]) -> float | None:
@@ -177,7 +201,9 @@ def score_experiment(item: dict, records: list[dict], graph_crit: dict, cfg: dic
     row["R"], row["C"] = r1(worst["R"], 3), r1(worst["C"], 3)
     row["recovery_s"] = r1(mean([s["recovery_s"] for s in scored if s["recovery_s"] is not None]))
     row["journeys"] = merge_journeys(scored)
-    row["uncovered_journeys"] = sorted({j for s in scored for j in s["uncovered"]})
+    # uncovered in some repeat, but never measured in any scored repeat (later repeats may have added a probe)
+    measured_any = {j for s in scored for j in s["journeys"]}
+    row["uncovered_journeys"] = sorted({j for s in scored for j in s["uncovered"]} - measured_any)
     row["severity_value"] = r1((100 - row["S"]) * graph_crit.get(row["target"], DEFAULT_CRITICALITY), 2)
     row["severity"] = severity_band((100 - row["S"]) * graph_crit.get(row["target"], DEFAULT_CRITICALITY),
                                     cfg["severity_bands"])
@@ -215,7 +241,9 @@ def fix_for(entry: dict | None) -> dict | None:
 
 
 def build_findings(risks: list[dict], experiments: list[dict], crit: dict, ranked: list[dict],
-                   fixes_index: list[dict]) -> list[dict]:
+                   fixes_index: list[dict], verified: dict | None = None) -> list[dict]:
+    """verified: {experiment_id: label} for experiments whose latest labelled runs all survived."""
+    verified = verified or {}
     by_risk: dict = {}
     for exp in experiments:
         rid = exp["risk_id"]
@@ -230,6 +258,7 @@ def build_findings(risks: list[dict], experiments: list[dict], crit: dict, ranke
         exp = by_risk.get(risk["risk_id"])
         status = risk_status(exp) if exp else "predicted"
         tested = status in ("confirmed", "refuted")
+        fix_label = verified.get(exp["experiment_id"]) if exp and status == "confirmed" else None
         findings.append({
             "risk_id": risk["risk_id"], "service": risk["service"], "check": risk["check"],
             "status": status, "basis": "tested" if tested else "predicted",
@@ -240,6 +269,7 @@ def build_findings(risks: list[dict], experiments: list[dict], crit: dict, ranke
             "S": exp["S"] if tested else None,
             "criticality": crit.get(risk["service"], DEFAULT_CRITICALITY),
             "fix": fix_for(fixes.get(risk["risk_id"])),
+            "fix_verified": fix_label is not None, "fix_verified_by": fix_label,
             "_audit": risk["severity"], "_rank": service_rank.get(risk["service"], 10**6),
         })
     findings.sort(key=finding_order)
@@ -278,17 +308,64 @@ def overall(experiments: list[dict]) -> float | None:
     return r1(weighted_mean([(e["weight"], e["S"]) for e in experiments if e["S"] is not None]))
 
 
+def after_side(row: dict) -> dict:
+    return {"S": row["S"], "outcome": row["outcome"], "R": row["R"], "repeats": row["repeats_run"]}
+
+
+def build_comparisons(plan: list[dict], runs: list[dict], experiments: list[dict], crit: dict,
+                      cfg: dict, headline: float | None) -> tuple[dict, dict]:
+    """(comparisons block, {experiment_id: label} of verified fixes). See the module docstring."""
+    exp_by_id = {e["experiment_id"]: e for e in experiments}
+    groups: dict = {}
+    for r in runs:
+        if is_labelled(r):
+            groups.setdefault((r["experiment_id"], str(r["label"])), []).append(r)
+    rows, latest = [], {}   # latest: experiment_id -> (latest t_start, label, scored after-row)
+    for item in plan:
+        eid = item["experiment_id"]
+        labels = sorted((k[1] for k in groups if k[0] == eid),
+                        key=lambda lb: (max(str(r.get("t_start") or "") for r in groups[(eid, lb)]), lb))
+        for label in labels:
+            recs = groups[(eid, label)]
+            after = score_experiment(item, recs, crit, cfg)
+            before = exp_by_id[eid]
+            delta = (r1(after["S"] - before["S"]) if after["S"] is not None and before["S"] is not None
+                     else None)
+            rows.append({"experiment_id": eid, "label": label, "target": before["target"],
+                         "risk_id": before["risk_id"], "before": after_side(before),
+                         "after": after_side(after), "delta_S": delta})
+            stamp = max(str(r.get("t_start") or "") for r in recs)
+            latest[eid] = (stamp, label, after)   # labels are iterated oldest -> newest
+    replaced, labels_used, verified = [], {}, {}
+    for e in experiments:
+        eid = e["experiment_id"]
+        if eid not in latest:
+            replaced.append((e["weight"], e["S"]))
+            continue
+        _, label, after = latest[eid]
+        labels_used[eid] = label
+        replaced.append((e["weight"], after["S"] if after["S"] is not None else e["S"]))
+        if (e["_scored"] and after["_scored"] and after["outcome"] == "survived"
+                and not any(s["aborted"] for s in after["_scored"])):
+            verified[eid] = label
+    after_score = r1(weighted_mean([(w, s) for w, s in replaced if s is not None]))
+    block = {"rows": rows, "before_score": headline,
+             "after_fixes_score": after_score if rows else None, "labels_used": labels_used}
+    return block, verified
+
+
 def build_scores(plan: list[dict], runs: list[dict], graph: dict, risks: list[dict],
                  ranked: list[dict], fixes_index: list[dict], cfg: dict) -> dict:
     crit = {n["name"]: n.get("criticality", DEFAULT_CRITICALITY) for n in graph.get("nodes", [])}
     runs_by_exp: dict = {}
-    for r in runs:
+    for r in unlabelled_records(runs):      # headline = current (unlabelled) state only
         runs_by_exp.setdefault(r["experiment_id"], []).append(r)
     experiments = [score_experiment(item, runs_by_exp.get(item["experiment_id"], []), crit, cfg)
                    for item in plan]
-    findings = build_findings(risks, experiments, crit, ranked, fixes_index)
-    coverage = coverage_of(len(plan), experiments)
     score = overall(experiments)
+    comparisons, verified = build_comparisons(plan, runs, experiments, crit, cfg, score)
+    findings = build_findings(risks, experiments, crit, ranked, fixes_index, verified)
+    coverage = coverage_of(len(plan), experiments)
     if score is not None:
         note = ("Journey-weighted per D-008: each experiment's S counts in proportion to the "
                 "criticality of the journeys it can affect (checkout 0.4, cart 0.3, browse 0.2, ads-recs 0.1).")
@@ -311,20 +388,27 @@ def build_scores(plan: list[dict], runs: list[dict], graph: dict, risks: list[di
         "score_status": "scored" if score is not None else "not_scored", "score_note": note,
         "weights": {"weights": cfg["weights"], "journey_weights": cfg["journey_weights"]},
         "categories": categories, "experiments": experiments, "findings": findings, "counts": counts,
+        "comparisons": comparisons,
     }
 
 
 def summary_line(scores: dict) -> str:
     cov, c = scores["coverage"], scores["counts"]
     if scores["score_status"] == "scored":
-        return (f"wrote {OUT_PATH}: resilience score {scores['resilience_score']}/100 "
+        line = (f"wrote {OUT_PATH}: resilience score {scores['resilience_score']}/100 "
                 f"({cov['text']}); findings: {c['confirmed']} confirmed, {c['refuted']} refuted, "
                 f"{c['predicted']} predicted")
-    n = len(scores["findings"])
-    tail = "all predicted" if c["predicted"] == n else (
-        f"{c['confirmed']} confirmed, {c['refuted']} refuted, {c['inconclusive']} inconclusive, "
-        f"{c['predicted']} predicted")
-    return f"wrote {OUT_PATH}: not scored - {cov['text']}; {n} findings ranked ({tail})"
+    else:
+        n = len(scores["findings"])
+        tail = "all predicted" if c["predicted"] == n else (
+            f"{c['confirmed']} confirmed, {c['refuted']} refuted, {c['inconclusive']} inconclusive, "
+            f"{c['predicted']} predicted")
+        line = f"wrote {OUT_PATH}: not scored - {cov['text']}; {n} findings ranked ({tail})"
+    comp = scores.get("comparisons") or {}
+    if comp.get("rows"):
+        line += (f"; after-fix comparisons: {len(comp['rows'])} "
+                 f"(score after fixes {comp['after_fixes_score']})")
+    return line
 
 
 def main() -> None:

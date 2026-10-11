@@ -1,14 +1,14 @@
 {
-  "generated_at": "2026-10-11T01:29:49.395926+00:00",
+  "generated_at": "2026-10-11T04:53:30.456091+00:00",
   "graph_generated_at": "2026-10-11T00:46:29.523548+00:00",
   "coverage": {
     "planned": 8,
-    "run": 3,
-    "scored": 3,
+    "run": 4,
+    "scored": 4,
     "inconclusive": 0,
-    "text": "3 of 8 planned experiments scored"
+    "text": "4 of 8 planned experiments scored"
   },
-  "resilience_score": 73.0,
+  "resilience_score": 73.2,
   "score_status": "scored",
   "score_note": "Journey-weighted per D-008: each experiment's S counts in proportion to the criticality of the journeys it can affect (checkout 0.4, cart 0.3, browse 0.2, ads-recs 0.1).",
   "weights": {
@@ -31,11 +31,11 @@
       "experiments": 1
     },
     "Dependency": {
-      "score": 100.0,
-      "experiments": 1
+      "score": 86.1,
+      "experiments": 2
     },
     "Capacity": {
-      "score": 19.1,
+      "score": 20.6,
       "experiments": 1
     }
   },
@@ -64,30 +64,33 @@
       "fault_type": "cpu_stress",
       "category": "Capacity",
       "risk_id": "R-product-catalog-no_liveness_probe",
-      "repeats_run": 1,
+      "repeats_run": 4,
       "outcome": "not_recovered",
-      "S": 19.1,
+      "S": 20.6,
       "R": 0.0,
       "C": null,
-      "recovery_s": null,
+      "recovery_s": 55.1,
       "journeys": {
         "ads-recs": {
-          "A": 0.25,
-          "L": 0.25,
-          "S": 19.1
+          "A": 0.278,
+          "L": 0.278,
+          "S": 25.5
         },
         "browse": {
-          "A": 0.25,
-          "L": 0.25,
-          "S": 19.1
+          "A": 0.278,
+          "L": 0.278,
+          "S": 25.5
+        },
+        "checkout": {
+          "A": 0.125,
+          "L": 0.125,
+          "S": 15.9
         }
       },
-      "uncovered_journeys": [
-        "checkout"
-      ],
+      "uncovered_journeys": [],
       "weight": 0.4,
       "severity": "High",
-      "severity_value": 24.27
+      "severity_value": 23.82
     },
     {
       "experiment_id": "exp-003",
@@ -95,17 +98,33 @@
       "fault_type": "network_delay",
       "category": "Dependency",
       "risk_id": "R-astronomy-db-no_hpa_shared_dependency",
-      "repeats_run": 0,
-      "outcome": "not_run",
-      "S": null,
-      "R": null,
+      "repeats_run": 3,
+      "outcome": "degraded_recovered",
+      "S": 72.3,
+      "R": 0.0,
       "C": null,
-      "recovery_s": null,
-      "journeys": {},
+      "recovery_s": 104.1,
+      "journeys": {
+        "ads-recs": {
+          "A": 0.936,
+          "L": 0.487,
+          "S": 67.2
+        },
+        "browse": {
+          "A": 0.967,
+          "L": 0.845,
+          "S": 77.2
+        },
+        "checkout": {
+          "A": 0.906,
+          "L": 0.726,
+          "S": 71.2
+        }
+      },
       "uncovered_journeys": [],
       "weight": 0.4,
-      "severity": null,
-      "severity_value": null
+      "severity": "Medium",
+      "severity_value": 8.31
     },
     {
       "experiment_id": "exp-004",
@@ -223,10 +242,10 @@
       "status": "confirmed",
       "basis": "tested",
       "severity": "High",
-      "severity_value": 24.27,
+      "severity_value": 23.82,
       "evidence": "has_liveness=False - a hung (not crashed) process won't be auto-restarted",
       "experiment_id": "exp-002",
-      "S": 19.1,
+      "S": 20.6,
       "criticality": 0.3,
       "fix": {
         "summary": "add a livenessProbe (gRPC health check on port 8080) to product-catalog",
@@ -237,10 +256,33 @@
           }
         ],
         "manual": null
-      }
+      },
+      "fix_verified": false,
+      "fix_verified_by": null
     },
     {
       "rank": 2,
+      "risk_id": "R-astronomy-db-no_hpa_shared_dependency",
+      "service": "astronomy-db",
+      "check": "no_hpa_shared_dependency",
+      "status": "confirmed",
+      "basis": "tested",
+      "severity": "Medium",
+      "severity_value": 8.31,
+      "evidence": "has_hpa=False, 2 callers - can't absorb a traffic or latency spike",
+      "experiment_id": "exp-003",
+      "S": 72.3,
+      "criticality": 0.3,
+      "fix": {
+        "summary": "absorb load spikes on astronomy-db",
+        "files": [],
+        "manual": "astronomy-db is a data store; horizontal autoscaling doesn't apply without replication."
+      },
+      "fix_verified": false,
+      "fix_verified_by": null
+    },
+    {
+      "rank": 3,
       "risk_id": "R-frontend-proxy-no_liveness_probe",
       "service": "frontend-proxy",
       "check": "no_liveness_probe",
@@ -261,10 +303,12 @@
           }
         ],
         "manual": null
-      }
+      },
+      "fix_verified": false,
+      "fix_verified_by": null
     },
     {
-      "rank": 3,
+      "rank": 4,
       "risk_id": "R-frontend-proxy-no_readiness_probe",
       "service": "frontend-proxy",
       "check": "no_readiness_probe",
@@ -285,10 +329,12 @@
           }
         ],
         "manual": null
-      }
+      },
+      "fix_verified": false,
+      "fix_verified_by": null
     },
     {
-      "rank": 4,
+      "rank": 5,
       "risk_id": "R-frontend-proxy-single_replica_no_pdb",
       "service": "frontend-proxy",
       "check": "single_replica_no_pdb",
@@ -313,10 +359,12 @@
           }
         ],
         "manual": null
-      }
+      },
+      "fix_verified": false,
+      "fix_verified_by": null
     },
     {
-      "rank": 5,
+      "rank": 6,
       "risk_id": "R-frontend-no_liveness_probe",
       "service": "frontend",
       "check": "no_liveness_probe",
@@ -337,10 +385,12 @@
           }
         ],
         "manual": null
-      }
+      },
+      "fix_verified": false,
+      "fix_verified_by": null
     },
     {
-      "rank": 6,
+      "rank": 7,
       "risk_id": "R-frontend-no_readiness_probe",
       "service": "frontend",
       "check": "no_readiness_probe",
@@ -361,10 +411,12 @@
           }
         ],
         "manual": null
-      }
+      },
+      "fix_verified": false,
+      "fix_verified_by": null
     },
     {
-      "rank": 7,
+      "rank": 8,
       "risk_id": "R-frontend-single_replica_no_pdb",
       "service": "frontend",
       "check": "single_replica_no_pdb",
@@ -389,10 +441,12 @@
           }
         ],
         "manual": null
-      }
+      },
+      "fix_verified": false,
+      "fix_verified_by": null
     },
     {
-      "rank": 8,
+      "rank": 9,
       "risk_id": "R-payment-no_liveness_probe",
       "service": "payment",
       "check": "no_liveness_probe",
@@ -413,10 +467,12 @@
           }
         ],
         "manual": null
-      }
+      },
+      "fix_verified": false,
+      "fix_verified_by": null
     },
     {
-      "rank": 9,
+      "rank": 10,
       "risk_id": "R-payment-no_readiness_probe",
       "service": "payment",
       "check": "no_readiness_probe",
@@ -437,10 +493,12 @@
           }
         ],
         "manual": null
-      }
+      },
+      "fix_verified": false,
+      "fix_verified_by": null
     },
     {
-      "rank": 10,
+      "rank": 11,
       "risk_id": "R-payment-single_replica_no_pdb",
       "service": "payment",
       "check": "single_replica_no_pdb",
@@ -465,10 +523,12 @@
           }
         ],
         "manual": null
-      }
+      },
+      "fix_verified": false,
+      "fix_verified_by": null
     },
     {
-      "rank": 11,
+      "rank": 12,
       "risk_id": "R-checkout-no_liveness_probe",
       "service": "checkout",
       "check": "no_liveness_probe",
@@ -489,10 +549,12 @@
           }
         ],
         "manual": null
-      }
+      },
+      "fix_verified": false,
+      "fix_verified_by": null
     },
     {
-      "rank": 12,
+      "rank": 13,
       "risk_id": "R-checkout-no_readiness_probe",
       "service": "checkout",
       "check": "no_readiness_probe",
@@ -513,10 +575,12 @@
           }
         ],
         "manual": null
-      }
+      },
+      "fix_verified": false,
+      "fix_verified_by": null
     },
     {
-      "rank": 13,
+      "rank": 14,
       "risk_id": "R-checkout-single_replica_no_pdb",
       "service": "checkout",
       "check": "single_replica_no_pdb",
@@ -541,10 +605,12 @@
           }
         ],
         "manual": null
-      }
+      },
+      "fix_verified": false,
+      "fix_verified_by": null
     },
     {
-      "rank": 14,
+      "rank": 15,
       "risk_id": "R-product-catalog-single_replica_no_pdb",
       "service": "product-catalog",
       "check": "single_replica_no_pdb",
@@ -569,10 +635,12 @@
           }
         ],
         "manual": null
-      }
+      },
+      "fix_verified": false,
+      "fix_verified_by": null
     },
     {
-      "rank": 15,
+      "rank": 16,
       "risk_id": "R-astronomy-db-stateful_single_replica",
       "service": "astronomy-db",
       "check": "stateful_single_replica",
@@ -588,10 +656,12 @@
         "summary": "make astronomy-db highly available",
         "files": [],
         "manual": "astronomy-db is a stateful single replica. Raising replicas without replication would split its data; real HA needs a replicated setup (e.g. a clustered Helm chart or operator). Not auto-generated."
-      }
+      },
+      "fix_verified": false,
+      "fix_verified_by": null
     },
     {
-      "rank": 16,
+      "rank": 17,
       "risk_id": "R-cart-single_replica_no_pdb",
       "service": "cart",
       "check": "single_replica_no_pdb",
@@ -616,10 +686,12 @@
           }
         ],
         "manual": null
-      }
+      },
+      "fix_verified": false,
+      "fix_verified_by": null
     },
     {
-      "rank": 17,
+      "rank": 18,
       "risk_id": "R-shipping-single_replica_no_pdb",
       "service": "shipping",
       "check": "single_replica_no_pdb",
@@ -644,10 +716,12 @@
           }
         ],
         "manual": null
-      }
+      },
+      "fix_verified": false,
+      "fix_verified_by": null
     },
     {
-      "rank": 18,
+      "rank": 19,
       "risk_id": "R-valkey-cart-stateful_single_replica",
       "service": "valkey-cart",
       "check": "stateful_single_replica",
@@ -663,10 +737,12 @@
         "summary": "make valkey-cart highly available",
         "files": [],
         "manual": "valkey-cart is a stateful single replica. Raising replicas without replication would split its data; real HA needs a replicated setup (e.g. a clustered Helm chart or operator). Not auto-generated."
-      }
+      },
+      "fix_verified": false,
+      "fix_verified_by": null
     },
     {
-      "rank": 19,
+      "rank": 20,
       "risk_id": "R-product-catalog-no_hpa_shared_dependency",
       "service": "product-catalog",
       "check": "no_hpa_shared_dependency",
@@ -687,10 +763,12 @@
           }
         ],
         "manual": null
-      }
+      },
+      "fix_verified": false,
+      "fix_verified_by": null
     },
     {
-      "rank": 20,
+      "rank": 21,
       "risk_id": "R-product-catalog-no_readiness_probe",
       "service": "product-catalog",
       "check": "no_readiness_probe",
@@ -711,26 +789,9 @@
           }
         ],
         "manual": null
-      }
-    },
-    {
-      "rank": 21,
-      "risk_id": "R-astronomy-db-no_hpa_shared_dependency",
-      "service": "astronomy-db",
-      "check": "no_hpa_shared_dependency",
-      "status": "predicted",
-      "basis": "predicted",
-      "severity": "Medium",
-      "severity_value": null,
-      "evidence": "has_hpa=False, 2 callers - can't absorb a traffic or latency spike",
-      "experiment_id": null,
-      "S": null,
-      "criticality": 0.3,
-      "fix": {
-        "summary": "absorb load spikes on astronomy-db",
-        "files": [],
-        "manual": "astronomy-db is a data store; horizontal autoscaling doesn't apply without replication."
-      }
+      },
+      "fix_verified": false,
+      "fix_verified_by": null
     },
     {
       "rank": 22,
@@ -754,7 +815,9 @@
           }
         ],
         "manual": null
-      }
+      },
+      "fix_verified": false,
+      "fix_verified_by": null
     },
     {
       "rank": 23,
@@ -778,7 +841,9 @@
           }
         ],
         "manual": null
-      }
+      },
+      "fix_verified": false,
+      "fix_verified_by": null
     },
     {
       "rank": 24,
@@ -802,7 +867,9 @@
           }
         ],
         "manual": null
-      }
+      },
+      "fix_verified": false,
+      "fix_verified_by": null
     },
     {
       "rank": 25,
@@ -826,7 +893,9 @@
           }
         ],
         "manual": null
-      }
+      },
+      "fix_verified": false,
+      "fix_verified_by": null
     },
     {
       "rank": 26,
@@ -850,7 +919,9 @@
           }
         ],
         "manual": null
-      }
+      },
+      "fix_verified": false,
+      "fix_verified_by": null
     },
     {
       "rank": 27,
@@ -874,7 +945,9 @@
           }
         ],
         "manual": null
-      }
+      },
+      "fix_verified": false,
+      "fix_verified_by": null
     },
     {
       "rank": 28,
@@ -898,7 +971,9 @@
           }
         ],
         "manual": null
-      }
+      },
+      "fix_verified": false,
+      "fix_verified_by": null
     },
     {
       "rank": 29,
@@ -922,7 +997,9 @@
           }
         ],
         "manual": null
-      }
+      },
+      "fix_verified": false,
+      "fix_verified_by": null
     },
     {
       "rank": 30,
@@ -946,7 +1023,9 @@
           }
         ],
         "manual": null
-      }
+      },
+      "fix_verified": false,
+      "fix_verified_by": null
     },
     {
       "rank": 31,
@@ -970,7 +1049,9 @@
           }
         ],
         "manual": null
-      }
+      },
+      "fix_verified": false,
+      "fix_verified_by": null
     },
     {
       "rank": 32,
@@ -994,7 +1075,9 @@
           }
         ],
         "manual": null
-      }
+      },
+      "fix_verified": false,
+      "fix_verified_by": null
     },
     {
       "rank": 33,
@@ -1018,7 +1101,9 @@
           }
         ],
         "manual": null
-      }
+      },
+      "fix_verified": false,
+      "fix_verified_by": null
     },
     {
       "rank": 34,
@@ -1042,7 +1127,9 @@
           }
         ],
         "manual": null
-      }
+      },
+      "fix_verified": false,
+      "fix_verified_by": null
     },
     {
       "rank": 35,
@@ -1066,7 +1153,9 @@
           }
         ],
         "manual": null
-      }
+      },
+      "fix_verified": false,
+      "fix_verified_by": null
     },
     {
       "rank": 36,
@@ -1094,7 +1183,9 @@
           }
         ],
         "manual": null
-      }
+      },
+      "fix_verified": false,
+      "fix_verified_by": null
     },
     {
       "rank": 37,
@@ -1118,7 +1209,9 @@
           }
         ],
         "manual": null
-      }
+      },
+      "fix_verified": false,
+      "fix_verified_by": null
     },
     {
       "rank": 38,
@@ -1142,7 +1235,9 @@
           }
         ],
         "manual": null
-      }
+      },
+      "fix_verified": false,
+      "fix_verified_by": null
     },
     {
       "rank": 39,
@@ -1170,7 +1265,9 @@
           }
         ],
         "manual": null
-      }
+      },
+      "fix_verified": false,
+      "fix_verified_by": null
     },
     {
       "rank": 40,
@@ -1194,7 +1291,9 @@
           }
         ],
         "manual": null
-      }
+      },
+      "fix_verified": false,
+      "fix_verified_by": null
     },
     {
       "rank": 41,
@@ -1218,7 +1317,9 @@
           }
         ],
         "manual": null
-      }
+      },
+      "fix_verified": false,
+      "fix_verified_by": null
     },
     {
       "rank": 42,
@@ -1246,7 +1347,9 @@
           }
         ],
         "manual": null
-      }
+      },
+      "fix_verified": false,
+      "fix_verified_by": null
     },
     {
       "rank": 43,
@@ -1265,7 +1368,9 @@
         "summary": "make kafka highly available",
         "files": [],
         "manual": "kafka is a stateful single replica. Raising replicas without replication would split its data; real HA needs a replicated setup (e.g. a clustered Helm chart or operator). Not auto-generated."
-      }
+      },
+      "fix_verified": false,
+      "fix_verified_by": null
     },
     {
       "rank": 44,
@@ -1284,7 +1389,9 @@
         "summary": "absorb load spikes on kafka",
         "files": [],
         "manual": "kafka is a data store; horizontal autoscaling doesn't apply without replication."
-      }
+      },
+      "fix_verified": false,
+      "fix_verified_by": null
     },
     {
       "rank": 45,
@@ -1308,7 +1415,9 @@
           }
         ],
         "manual": null
-      }
+      },
+      "fix_verified": false,
+      "fix_verified_by": null
     },
     {
       "rank": 46,
@@ -1332,7 +1441,9 @@
           }
         ],
         "manual": null
-      }
+      },
+      "fix_verified": false,
+      "fix_verified_by": null
     },
     {
       "rank": 47,
@@ -1356,7 +1467,9 @@
           }
         ],
         "manual": null
-      }
+      },
+      "fix_verified": false,
+      "fix_verified_by": null
     },
     {
       "rank": 48,
@@ -1380,7 +1493,9 @@
           }
         ],
         "manual": null
-      }
+      },
+      "fix_verified": false,
+      "fix_verified_by": null
     },
     {
       "rank": 49,
@@ -1408,7 +1523,9 @@
           }
         ],
         "manual": null
-      }
+      },
+      "fix_verified": false,
+      "fix_verified_by": null
     },
     {
       "rank": 50,
@@ -1432,7 +1549,9 @@
           }
         ],
         "manual": null
-      }
+      },
+      "fix_verified": false,
+      "fix_verified_by": null
     },
     {
       "rank": 51,
@@ -1456,7 +1575,9 @@
           }
         ],
         "manual": null
-      }
+      },
+      "fix_verified": false,
+      "fix_verified_by": null
     },
     {
       "rank": 52,
@@ -1484,7 +1605,9 @@
           }
         ],
         "manual": null
-      }
+      },
+      "fix_verified": false,
+      "fix_verified_by": null
     },
     {
       "rank": 53,
@@ -1503,7 +1626,9 @@
         "summary": "add a livenessProbe to accounting",
         "files": [],
         "manual": "accounting exposes no container port and no health endpoint (Kafka consumer), so no probe can be generated - needs an app-level health check."
-      }
+      },
+      "fix_verified": false,
+      "fix_verified_by": null
     },
     {
       "rank": 54,
@@ -1522,7 +1647,9 @@
         "summary": "add a readinessProbe to accounting",
         "files": [],
         "manual": "accounting exposes no container port and no health endpoint (Kafka consumer), so no probe can be generated - needs an app-level health check."
-      }
+      },
+      "fix_verified": false,
+      "fix_verified_by": null
     },
     {
       "rank": 55,
@@ -1550,7 +1677,9 @@
           }
         ],
         "manual": null
-      }
+      },
+      "fix_verified": false,
+      "fix_verified_by": null
     },
     {
       "rank": 56,
@@ -1569,7 +1698,9 @@
         "summary": "add a livenessProbe to fraud-detection",
         "files": [],
         "manual": "fraud-detection exposes no container port and no health endpoint (Kafka consumer), so no probe can be generated - needs an app-level health check."
-      }
+      },
+      "fix_verified": false,
+      "fix_verified_by": null
     },
     {
       "rank": 57,
@@ -1588,7 +1719,9 @@
         "summary": "add a readinessProbe to fraud-detection",
         "files": [],
         "manual": "fraud-detection exposes no container port and no health endpoint (Kafka consumer), so no probe can be generated - needs an app-level health check."
-      }
+      },
+      "fix_verified": false,
+      "fix_verified_by": null
     },
     {
       "rank": 58,
@@ -1616,7 +1749,9 @@
           }
         ],
         "manual": null
-      }
+      },
+      "fix_verified": false,
+      "fix_verified_by": null
     },
     {
       "rank": 59,
@@ -1644,7 +1779,9 @@
           }
         ],
         "manual": null
-      }
+      },
+      "fix_verified": false,
+      "fix_verified_by": null
     },
     {
       "rank": 60,
@@ -1668,13 +1805,43 @@
           }
         ],
         "manual": null
-      }
+      },
+      "fix_verified": false,
+      "fix_verified_by": null
     }
   ],
   "counts": {
-    "confirmed": 1,
+    "confirmed": 2,
     "refuted": 2,
     "inconclusive": 0,
-    "predicted": 57
+    "predicted": 56
+  },
+  "comparisons": {
+    "rows": [
+      {
+        "experiment_id": "exp-002",
+        "label": "fix-applied",
+        "target": "product-catalog",
+        "risk_id": "R-product-catalog-no_liveness_probe",
+        "before": {
+          "S": 20.6,
+          "outcome": "not_recovered",
+          "R": 0.0,
+          "repeats": 4
+        },
+        "after": {
+          "S": 10.9,
+          "outcome": "not_recovered",
+          "R": 0.0,
+          "repeats": 3
+        },
+        "delta_S": -9.7
+      }
+    ],
+    "before_score": 73.2,
+    "after_fixes_score": 70.8,
+    "labels_used": {
+      "exp-002": "fix-applied"
+    }
   }
 }
