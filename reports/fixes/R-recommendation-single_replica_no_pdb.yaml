@@ -1,5 +1,5 @@
 # Fix for R-recommendation-single_replica_no_pdb (medium, status=predicted)
-# Evidence: replicas=1, has_pdb=False, stateful=False, fan_in=1
+# Evidence: replicas=1, has_pdb=False, stateful=False, fan_in=0
 # Apply:    kubectl -n otel-demo patch deployment recommendation --patch-file reports/fixes/R-recommendation-single_replica_no_pdb.yaml
 # Not applied automatically (Decisions.md D-007).
 spec:

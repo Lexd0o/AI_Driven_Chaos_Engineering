@@ -1,5 +1,5 @@
-# Fix for R-shipping-single_replica_no_pdb (high, status=predicted)
-# Evidence: replicas=1, has_pdb=False, stateful=False, fan_in=2
+# Fix for R-shipping-single_replica_no_pdb (medium, status=predicted)
+# Evidence: replicas=1, has_pdb=False, stateful=False, fan_in=1
 # Apply:    kubectl apply -f reports/fixes/R-shipping-single_replica_no_pdb.pdb.yaml
 # Not applied automatically (Decisions.md D-007).
 apiVersion: policy/v1

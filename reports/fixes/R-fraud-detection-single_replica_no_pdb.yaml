@@ -1,6 +1,0 @@
-# Fix for R-fraud-detection-single_replica_no_pdb (low, status=predicted)
-# Evidence: replicas=1, has_pdb=False, stateful=False, fan_in=0
-# Apply:    kubectl -n otel-demo patch deployment fraud-detection --patch-file reports/fixes/R-fraud-detection-single_replica_no_pdb.yaml
-# Not applied automatically (Decisions.md D-007).
-spec:
-  replicas: 2

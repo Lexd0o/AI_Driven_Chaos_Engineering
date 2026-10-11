@@ -33,12 +33,13 @@ ACTIONS = {
     "cache_fallback": "Serve cached or degraded responses when the target is slow or unavailable.",
     "add_replicas": "Run at least 2 replicas of the target with pod anti-affinity and a PodDisruptionBudget.",
     "tune_readiness": "Tune readiness/startup probes and resource requests so replacement pods become Ready quickly.",
+    "cpu_headroom": "Set CPU requests and limits and add an autoscaler on the target so a CPU-saturated pod cannot starve its own requests.",
 }
 FINDING_ACTIONS = {
-    "error_rate": ["set_timeouts", "circuit_breaker", "bounded_retries", "cache_fallback"],
-    "slo_breach": ["set_timeouts", "cache_fallback", "circuit_breaker"],
-    "latency_inflation": ["set_timeouts", "cache_fallback", "circuit_breaker"],
-    "slow_recovery": ["tune_readiness", "add_replicas"],
+    "error_rate": ["set_timeouts", "circuit_breaker", "bounded_retries", "cache_fallback", "cpu_headroom"],
+    "slo_breach": ["set_timeouts", "cache_fallback", "circuit_breaker", "cpu_headroom"],
+    "latency_inflation": ["set_timeouts", "cache_fallback", "circuit_breaker", "cpu_headroom"],
+    "slow_recovery": ["tune_readiness", "add_replicas", "cpu_headroom"],
     "single_replica": ["add_replicas", "tune_readiness"],
 }
 TITLES = {
@@ -173,6 +174,13 @@ def _manifest_matches(report):
             problems.append("kind/action mismatch")
         if fault == "pod_failure" and spec.get("duration") != f"{plan['duration_seconds']}s":
             problems.append("duration mismatch")
+    elif fault == "cpu_stress":
+        if manifest.get("kind") != "StressChaos":
+            problems.append("kind mismatch")
+        if spec.get("duration") != f"{plan['duration_seconds']}s":
+            problems.append("duration mismatch")
+        if spec.get("stressors", {}).get("cpu", {}).get("workers") != plan.get("cpu_workers"):
+            problems.append("cpu workers mismatch")
     else:
         if manifest.get("kind") != "NetworkChaos":
             problems.append("kind mismatch")

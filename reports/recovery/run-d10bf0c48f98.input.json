@@ -1,0 +1,400 @@
+{
+  "run_id": "run-d10bf0c48f98",
+  "mode": "execute",
+  "plan": {
+    "target_service": "kafka",
+    "fault_type": "pod_kill",
+    "hypothesis": "kafka: stateful single replica (replicas=1, has_pdb=False, stateful=True, fan_in=3) - expect kafka's callers to see errors or latency until the fault clears.",
+    "duration_seconds": 0,
+    "latency_ms": 0,
+    "loss_percent": 0,
+    "cpu_workers": 0
+  },
+  "manifest": {
+    "apiVersion": "chaos-mesh.org/v1alpha1",
+    "kind": "PodChaos",
+    "metadata": {
+      "name": "reslab-run-d10bf0c48f98",
+      "namespace": "otel-demo",
+      "labels": {
+        "reslab-run-id": "run-d10bf0c48f98"
+      }
+    },
+    "spec": {
+      "mode": "one",
+      "selector": {
+        "namespaces": [
+          "otel-demo"
+        ],
+        "labelSelectors": {
+          "opentelemetry.io/name": "kafka"
+        }
+      },
+      "action": "pod-kill"
+    }
+  },
+  "resource": {
+    "name": "reslab-run-d10bf0c48f98"
+  },
+  "events": [
+    {
+      "stage": "using_plan_item",
+      "observed_at": "2026-10-11T09:02:08.432336+00:00"
+    },
+    {
+      "stage": "checking_deployment",
+      "observed_at": "2026-10-11T09:02:08.436346+00:00"
+    },
+    {
+      "stage": "server_validation",
+      "observed_at": "2026-10-11T09:02:08.570732+00:00"
+    },
+    {
+      "stage": "checking_guard_baseline",
+      "observed_at": "2026-10-11T09:02:09.022895+00:00"
+    },
+    {
+      "stage": "checking_other_samplers",
+      "observed_at": "2026-10-11T09:02:09.034378+00:00"
+    },
+    {
+      "stage": "starting_sampler",
+      "observed_at": "2026-10-11T09:02:09.045427+00:00"
+    },
+    {
+      "stage": "pre_observation",
+      "observed_at": "2026-10-11T09:02:09.053827+00:00"
+    },
+    {
+      "stage": "checking_shop_health",
+      "observed_at": "2026-10-11T09:02:39.076097+00:00"
+    },
+    {
+      "stage": "arming_watchdog",
+      "observed_at": "2026-10-11T09:02:39.122402+00:00"
+    },
+    {
+      "stage": "submitting",
+      "observed_at": "2026-10-11T09:02:39.668120+00:00"
+    },
+    {
+      "stage": "waiting_for_injection",
+      "observed_at": "2026-10-11T09:02:39.973863+00:00"
+    },
+    {
+      "stage": "injection_confirmed",
+      "observed_at": "2026-10-11T09:02:40.118723+00:00"
+    },
+    {
+      "stage": "guarding",
+      "observed_at": "2026-10-11T09:02:40.120908+00:00"
+    },
+    {
+      "stage": "guard_finished",
+      "observed_at": "2026-10-11T09:02:53.327063+00:00"
+    },
+    {
+      "stage": "cleanup",
+      "observed_at": "2026-10-11T09:02:53.328686+00:00"
+    },
+    {
+      "stage": "post_observation",
+      "observed_at": "2026-10-11T09:02:53.697475+00:00"
+    }
+  ],
+  "started_at": "2026-10-11T09:02:08.432336+00:00",
+  "fault_injected": true,
+  "fault_confirmed_at": "2026-10-11T09:02:40.118723+00:00",
+  "cleanup_confirmed": true,
+  "cleanup_observed_at": "2026-10-11T09:02:53.570515+00:00",
+  "stop_reason": "completed",
+  "post_cleanup_probe_recovery_seconds": 8.7,
+  "samples": [
+    {
+      "observed_at": "2026-10-11T09:02:09.065597+00:00",
+      "ok": true,
+      "latency_ms": 100.0,
+      "error": null,
+      "stage": "baseline"
+    },
+    {
+      "observed_at": "2026-10-11T09:02:11.077446+00:00",
+      "ok": true,
+      "latency_ms": 123.5,
+      "error": null,
+      "stage": "baseline"
+    },
+    {
+      "observed_at": "2026-10-11T09:02:13.082156+00:00",
+      "ok": true,
+      "latency_ms": 77.6,
+      "error": null,
+      "stage": "baseline"
+    },
+    {
+      "observed_at": "2026-10-11T09:02:15.084098+00:00",
+      "ok": true,
+      "latency_ms": 109.7,
+      "error": null,
+      "stage": "baseline"
+    },
+    {
+      "observed_at": "2026-10-11T09:02:17.090986+00:00",
+      "ok": true,
+      "latency_ms": 87.2,
+      "error": null,
+      "stage": "baseline"
+    },
+    {
+      "observed_at": "2026-10-11T09:02:19.097925+00:00",
+      "ok": true,
+      "latency_ms": 109.4,
+      "error": null,
+      "stage": "baseline"
+    },
+    {
+      "observed_at": "2026-10-11T09:02:21.099936+00:00",
+      "ok": true,
+      "latency_ms": 113.1,
+      "error": null,
+      "stage": "baseline"
+    },
+    {
+      "observed_at": "2026-10-11T09:02:23.113799+00:00",
+      "ok": true,
+      "latency_ms": 81.6,
+      "error": null,
+      "stage": "baseline"
+    },
+    {
+      "observed_at": "2026-10-11T09:02:25.120828+00:00",
+      "ok": true,
+      "latency_ms": 73.6,
+      "error": null,
+      "stage": "baseline"
+    },
+    {
+      "observed_at": "2026-10-11T09:02:27.132811+00:00",
+      "ok": true,
+      "latency_ms": 120.2,
+      "error": null,
+      "stage": "baseline"
+    },
+    {
+      "observed_at": "2026-10-11T09:02:29.139661+00:00",
+      "ok": true,
+      "latency_ms": 124.9,
+      "error": null,
+      "stage": "baseline"
+    },
+    {
+      "observed_at": "2026-10-11T09:02:31.140617+00:00",
+      "ok": true,
+      "latency_ms": 120.2,
+      "error": null,
+      "stage": "baseline"
+    },
+    {
+      "observed_at": "2026-10-11T09:02:33.150599+00:00",
+      "ok": true,
+      "latency_ms": 82.4,
+      "error": null,
+      "stage": "baseline"
+    },
+    {
+      "observed_at": "2026-10-11T09:02:35.165073+00:00",
+      "ok": true,
+      "latency_ms": 131.4,
+      "error": null,
+      "stage": "baseline"
+    },
+    {
+      "observed_at": "2026-10-11T09:02:37.169423+00:00",
+      "ok": true,
+      "latency_ms": 128.5,
+      "error": null,
+      "stage": "baseline"
+    },
+    {
+      "observed_at": "2026-10-11T09:02:39.170186+00:00",
+      "ok": true,
+      "latency_ms": 85.4,
+      "error": null,
+      "stage": "baseline"
+    },
+    {
+      "observed_at": "2026-10-11T09:02:41.180560+00:00",
+      "ok": true,
+      "latency_ms": 110.3,
+      "error": null,
+      "stage": "during_fault"
+    },
+    {
+      "observed_at": "2026-10-11T09:02:43.183496+00:00",
+      "ok": true,
+      "latency_ms": 128.8,
+      "error": null,
+      "stage": "during_fault"
+    },
+    {
+      "observed_at": "2026-10-11T09:02:45.188715+00:00",
+      "ok": true,
+      "latency_ms": 183.9,
+      "error": null,
+      "stage": "after_cleanup"
+    },
+    {
+      "observed_at": "2026-10-11T09:02:47.197136+00:00",
+      "ok": true,
+      "latency_ms": 117.7,
+      "error": null,
+      "stage": "after_cleanup"
+    },
+    {
+      "observed_at": "2026-10-11T09:02:49.211321+00:00",
+      "ok": true,
+      "latency_ms": 106.6,
+      "error": null,
+      "stage": "after_cleanup"
+    },
+    {
+      "observed_at": "2026-10-11T09:02:51.221556+00:00",
+      "ok": true,
+      "latency_ms": 102.5,
+      "error": null,
+      "stage": "after_cleanup"
+    },
+    {
+      "observed_at": "2026-10-11T09:02:53.223427+00:00",
+      "ok": true,
+      "latency_ms": 79.1,
+      "error": null,
+      "stage": "after_cleanup"
+    },
+    {
+      "observed_at": "2026-10-11T09:02:55.223475+00:00",
+      "ok": true,
+      "latency_ms": 93.5,
+      "error": null,
+      "stage": "after_cleanup"
+    },
+    {
+      "observed_at": "2026-10-11T09:02:57.228530+00:00",
+      "ok": true,
+      "latency_ms": 146.8,
+      "error": null,
+      "stage": "after_cleanup"
+    },
+    {
+      "observed_at": "2026-10-11T09:02:59.230008+00:00",
+      "ok": true,
+      "latency_ms": 123.3,
+      "error": null,
+      "stage": "after_cleanup"
+    },
+    {
+      "observed_at": "2026-10-11T09:03:01.241591+00:00",
+      "ok": true,
+      "latency_ms": 77.9,
+      "error": null,
+      "stage": "after_cleanup"
+    },
+    {
+      "observed_at": "2026-10-11T09:03:03.243046+00:00",
+      "ok": true,
+      "latency_ms": 137.7,
+      "error": null,
+      "stage": "after_cleanup"
+    },
+    {
+      "observed_at": "2026-10-11T09:03:05.250792+00:00",
+      "ok": true,
+      "latency_ms": 124.2,
+      "error": null,
+      "stage": "after_cleanup"
+    },
+    {
+      "observed_at": "2026-10-11T09:03:07.257813+00:00",
+      "ok": true,
+      "latency_ms": 176.6,
+      "error": null,
+      "stage": "after_cleanup"
+    },
+    {
+      "observed_at": "2026-10-11T09:03:09.261207+00:00",
+      "ok": true,
+      "latency_ms": 134.6,
+      "error": null,
+      "stage": "after_cleanup"
+    }
+  ],
+  "snapshot": {
+    "data_source": "data/graph.json",
+    "services": [
+      {
+        "id": "ad",
+        "replicas": 1
+      },
+      {
+        "id": "astronomy-db",
+        "replicas": 1
+      },
+      {
+        "id": "cart",
+        "replicas": 1
+      },
+      {
+        "id": "checkout",
+        "replicas": 1
+      },
+      {
+        "id": "currency",
+        "replicas": 1
+      },
+      {
+        "id": "email",
+        "replicas": 1
+      },
+      {
+        "id": "frontend",
+        "replicas": 1
+      },
+      {
+        "id": "frontend-proxy",
+        "replicas": 1
+      },
+      {
+        "id": "image-provider",
+        "replicas": 1
+      },
+      {
+        "id": "kafka",
+        "replicas": 1
+      },
+      {
+        "id": "payment",
+        "replicas": 1
+      },
+      {
+        "id": "product-catalog",
+        "replicas": 1
+      },
+      {
+        "id": "quote",
+        "replicas": 1
+      },
+      {
+        "id": "recommendation",
+        "replicas": 1
+      },
+      {
+        "id": "shipping",
+        "replicas": 1
+      },
+      {
+        "id": "valkey-cart",
+        "replicas": 1
+      }
+    ]
+  }
+}

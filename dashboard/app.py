@@ -21,7 +21,8 @@ import streamlit as st
 
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
-from dashboard import control  # noqa: E402
+from dashboard import control
+from dashboard.graphview import normalise_edges  # noqa: E402
 from src.observe import find_breach, find_healthy  # noqa: E402
 from src.telemetry import edges_from_traces, load_config  # noqa: E402
 
@@ -269,9 +270,7 @@ def render_map() -> None:
         st.info("No dependency data yet. P3 writes `data/graph.json`, or load edges from Jaeger once it is reachable.")
         return
     # accept both formats: P3 contract (from/to) and Jaeger helper (source/target)
-    edges = [{"source": e.get("source", e.get("from")), "target": e.get("target", e.get("to")),
-              **{k: v for k, v in e.items() if k not in ("source", "target", "from", "to")}} for e in edges]
-    edges = [e for e in edges if e["source"] and e["target"]]
+    edges = normalise_edges(edges)
     st.caption(f"Source: {source}")
     nodes = sorted({e["source"] for e in edges} | {e["target"] for e in edges})
     pos = {n: (math.cos(2 * math.pi * i / len(nodes)), math.sin(2 * math.pi * i / len(nodes))) for i, n in enumerate(nodes)}

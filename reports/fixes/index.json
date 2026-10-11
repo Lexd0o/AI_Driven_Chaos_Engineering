@@ -78,40 +78,6 @@
     "manual": null
   },
   {
-    "risk_id": "R-currency-single_replica_no_pdb",
-    "service": "currency",
-    "check": "single_replica_no_pdb",
-    "severity": "high",
-    "status": "predicted",
-    "summary": "scale currency to 2 replicas and add a PDB (minAvailable=1)",
-    "files": [
-      {
-        "path": "reports/fixes/R-currency-single_replica_no_pdb.yaml",
-        "apply": "kubectl -n otel-demo patch deployment currency --patch-file reports/fixes/R-currency-single_replica_no_pdb.yaml"
-      },
-      {
-        "path": "reports/fixes/R-currency-single_replica_no_pdb.pdb.yaml",
-        "apply": "kubectl apply -f reports/fixes/R-currency-single_replica_no_pdb.pdb.yaml"
-      }
-    ],
-    "manual": null
-  },
-  {
-    "risk_id": "R-frontend-no_liveness_probe",
-    "service": "frontend",
-    "check": "no_liveness_probe",
-    "severity": "high",
-    "status": "predicted",
-    "summary": "add a livenessProbe (tcpSocket on port 'service') to frontend",
-    "files": [
-      {
-        "path": "reports/fixes/R-frontend-no_liveness_probe.yaml",
-        "apply": "kubectl -n otel-demo patch deployment frontend --patch-file reports/fixes/R-frontend-no_liveness_probe.yaml"
-      }
-    ],
-    "manual": null
-  },
-  {
     "risk_id": "R-frontend-no_readiness_probe",
     "service": "frontend",
     "check": "no_readiness_probe",
@@ -263,25 +229,6 @@
     "manual": null
   },
   {
-    "risk_id": "R-shipping-single_replica_no_pdb",
-    "service": "shipping",
-    "check": "single_replica_no_pdb",
-    "severity": "high",
-    "status": "predicted",
-    "summary": "scale shipping to 2 replicas and add a PDB (minAvailable=1)",
-    "files": [
-      {
-        "path": "reports/fixes/R-shipping-single_replica_no_pdb.yaml",
-        "apply": "kubectl -n otel-demo patch deployment shipping --patch-file reports/fixes/R-shipping-single_replica_no_pdb.yaml"
-      },
-      {
-        "path": "reports/fixes/R-shipping-single_replica_no_pdb.pdb.yaml",
-        "apply": "kubectl apply -f reports/fixes/R-shipping-single_replica_no_pdb.pdb.yaml"
-      }
-    ],
-    "manual": null
-  },
-  {
     "risk_id": "R-valkey-cart-stateful_single_replica",
     "service": "valkey-cart",
     "check": "stateful_single_replica",
@@ -351,21 +298,6 @@
     "manual": "astronomy-db is a data store; horizontal autoscaling doesn't apply without replication."
   },
   {
-    "risk_id": "R-astronomy-db-no_liveness_probe",
-    "service": "astronomy-db",
-    "check": "no_liveness_probe",
-    "severity": "medium",
-    "status": "predicted",
-    "summary": "add a livenessProbe (command `pg_isready`) to astronomy-db",
-    "files": [
-      {
-        "path": "reports/fixes/R-astronomy-db-no_liveness_probe.yaml",
-        "apply": "kubectl -n otel-demo patch deployment astronomy-db --patch-file reports/fixes/R-astronomy-db-no_liveness_probe.yaml"
-      }
-    ],
-    "manual": null
-  },
-  {
     "risk_id": "R-astronomy-db-no_readiness_probe",
     "service": "astronomy-db",
     "check": "no_readiness_probe",
@@ -396,21 +328,6 @@
     "manual": null
   },
   {
-    "risk_id": "R-cart-no_liveness_probe",
-    "service": "cart",
-    "check": "no_liveness_probe",
-    "severity": "medium",
-    "status": "predicted",
-    "summary": "add a livenessProbe (gRPC health check on port 8080) to cart",
-    "files": [
-      {
-        "path": "reports/fixes/R-cart-no_liveness_probe.yaml",
-        "apply": "kubectl -n otel-demo patch deployment cart --patch-file reports/fixes/R-cart-no_liveness_probe.yaml"
-      }
-    ],
-    "manual": null
-  },
-  {
     "risk_id": "R-cart-no_readiness_probe",
     "service": "cart",
     "check": "no_readiness_probe",
@@ -421,21 +338,6 @@
       {
         "path": "reports/fixes/R-cart-no_readiness_probe.yaml",
         "apply": "kubectl -n otel-demo patch deployment cart --patch-file reports/fixes/R-cart-no_readiness_probe.yaml"
-      }
-    ],
-    "manual": null
-  },
-  {
-    "risk_id": "R-currency-no_hpa_shared_dependency",
-    "service": "currency",
-    "check": "no_hpa_shared_dependency",
-    "severity": "medium",
-    "status": "predicted",
-    "summary": "autoscale currency 2-4 replicas at 70% CPU (needs metrics-server)",
-    "files": [
-      {
-        "path": "reports/fixes/R-currency-no_hpa_shared_dependency.hpa.yaml",
-        "apply": "kubectl apply -f reports/fixes/R-currency-no_hpa_shared_dependency.hpa.yaml"
       }
     ],
     "manual": null
@@ -466,6 +368,25 @@
       {
         "path": "reports/fixes/R-currency-no_readiness_probe.yaml",
         "apply": "kubectl -n otel-demo patch deployment currency --patch-file reports/fixes/R-currency-no_readiness_probe.yaml"
+      }
+    ],
+    "manual": null
+  },
+  {
+    "risk_id": "R-currency-single_replica_no_pdb",
+    "service": "currency",
+    "check": "single_replica_no_pdb",
+    "severity": "medium",
+    "status": "predicted",
+    "summary": "scale currency to 2 replicas and add a PDB (minAvailable=1)",
+    "files": [
+      {
+        "path": "reports/fixes/R-currency-single_replica_no_pdb.yaml",
+        "apply": "kubectl -n otel-demo patch deployment currency --patch-file reports/fixes/R-currency-single_replica_no_pdb.yaml"
+      },
+      {
+        "path": "reports/fixes/R-currency-single_replica_no_pdb.pdb.yaml",
+        "apply": "kubectl apply -f reports/fixes/R-currency-single_replica_no_pdb.pdb.yaml"
       }
     ],
     "manual": null
@@ -545,21 +466,6 @@
     "manual": null
   },
   {
-    "risk_id": "R-product-catalog-no_liveness_probe",
-    "service": "product-catalog",
-    "check": "no_liveness_probe",
-    "severity": "medium",
-    "status": "predicted",
-    "summary": "add a livenessProbe (gRPC health check on port 8080) to product-catalog",
-    "files": [
-      {
-        "path": "reports/fixes/R-product-catalog-no_liveness_probe.yaml",
-        "apply": "kubectl -n otel-demo patch deployment product-catalog --patch-file reports/fixes/R-product-catalog-no_liveness_probe.yaml"
-      }
-    ],
-    "manual": null
-  },
-  {
     "risk_id": "R-product-catalog-no_readiness_probe",
     "service": "product-catalog",
     "check": "no_readiness_probe",
@@ -624,21 +530,6 @@
     "manual": null
   },
   {
-    "risk_id": "R-shipping-no_hpa_shared_dependency",
-    "service": "shipping",
-    "check": "no_hpa_shared_dependency",
-    "severity": "medium",
-    "status": "predicted",
-    "summary": "autoscale shipping 2-4 replicas at 70% CPU (needs metrics-server)",
-    "files": [
-      {
-        "path": "reports/fixes/R-shipping-no_hpa_shared_dependency.hpa.yaml",
-        "apply": "kubectl apply -f reports/fixes/R-shipping-no_hpa_shared_dependency.hpa.yaml"
-      }
-    ],
-    "manual": null
-  },
-  {
     "risk_id": "R-shipping-no_liveness_probe",
     "service": "shipping",
     "check": "no_liveness_probe",
@@ -669,6 +560,25 @@
     "manual": null
   },
   {
+    "risk_id": "R-shipping-single_replica_no_pdb",
+    "service": "shipping",
+    "check": "single_replica_no_pdb",
+    "severity": "medium",
+    "status": "predicted",
+    "summary": "scale shipping to 2 replicas and add a PDB (minAvailable=1)",
+    "files": [
+      {
+        "path": "reports/fixes/R-shipping-single_replica_no_pdb.yaml",
+        "apply": "kubectl -n otel-demo patch deployment shipping --patch-file reports/fixes/R-shipping-single_replica_no_pdb.yaml"
+      },
+      {
+        "path": "reports/fixes/R-shipping-single_replica_no_pdb.pdb.yaml",
+        "apply": "kubectl apply -f reports/fixes/R-shipping-single_replica_no_pdb.pdb.yaml"
+      }
+    ],
+    "manual": null
+  },
+  {
     "risk_id": "R-valkey-cart-no_liveness_probe",
     "service": "valkey-cart",
     "check": "no_liveness_probe",
@@ -694,84 +604,6 @@
       {
         "path": "reports/fixes/R-valkey-cart-no_readiness_probe.yaml",
         "apply": "kubectl -n otel-demo patch deployment valkey-cart --patch-file reports/fixes/R-valkey-cart-no_readiness_probe.yaml"
-      }
-    ],
-    "manual": null
-  },
-  {
-    "risk_id": "R-accounting-no_liveness_probe",
-    "service": "accounting",
-    "check": "no_liveness_probe",
-    "severity": "low",
-    "status": "predicted",
-    "summary": "add a livenessProbe to accounting",
-    "files": [],
-    "manual": "accounting exposes no container port and no health endpoint (Kafka consumer), so no probe can be generated - needs an app-level health check."
-  },
-  {
-    "risk_id": "R-accounting-no_readiness_probe",
-    "service": "accounting",
-    "check": "no_readiness_probe",
-    "severity": "low",
-    "status": "predicted",
-    "summary": "add a readinessProbe to accounting",
-    "files": [],
-    "manual": "accounting exposes no container port and no health endpoint (Kafka consumer), so no probe can be generated - needs an app-level health check."
-  },
-  {
-    "risk_id": "R-accounting-single_replica_no_pdb",
-    "service": "accounting",
-    "check": "single_replica_no_pdb",
-    "severity": "low",
-    "status": "predicted",
-    "summary": "scale accounting to 2 replicas and add a PDB (minAvailable=1)",
-    "files": [
-      {
-        "path": "reports/fixes/R-accounting-single_replica_no_pdb.yaml",
-        "apply": "kubectl -n otel-demo patch deployment accounting --patch-file reports/fixes/R-accounting-single_replica_no_pdb.yaml"
-      },
-      {
-        "path": "reports/fixes/R-accounting-single_replica_no_pdb.pdb.yaml",
-        "apply": "kubectl apply -f reports/fixes/R-accounting-single_replica_no_pdb.pdb.yaml"
-      }
-    ],
-    "manual": null
-  },
-  {
-    "risk_id": "R-fraud-detection-no_liveness_probe",
-    "service": "fraud-detection",
-    "check": "no_liveness_probe",
-    "severity": "low",
-    "status": "predicted",
-    "summary": "add a livenessProbe to fraud-detection",
-    "files": [],
-    "manual": "fraud-detection exposes no container port and no health endpoint (Kafka consumer), so no probe can be generated - needs an app-level health check."
-  },
-  {
-    "risk_id": "R-fraud-detection-no_readiness_probe",
-    "service": "fraud-detection",
-    "check": "no_readiness_probe",
-    "severity": "low",
-    "status": "predicted",
-    "summary": "add a readinessProbe to fraud-detection",
-    "files": [],
-    "manual": "fraud-detection exposes no container port and no health endpoint (Kafka consumer), so no probe can be generated - needs an app-level health check."
-  },
-  {
-    "risk_id": "R-fraud-detection-single_replica_no_pdb",
-    "service": "fraud-detection",
-    "check": "single_replica_no_pdb",
-    "severity": "low",
-    "status": "predicted",
-    "summary": "scale fraud-detection to 2 replicas and add a PDB (minAvailable=1)",
-    "files": [
-      {
-        "path": "reports/fixes/R-fraud-detection-single_replica_no_pdb.yaml",
-        "apply": "kubectl -n otel-demo patch deployment fraud-detection --patch-file reports/fixes/R-fraud-detection-single_replica_no_pdb.yaml"
-      },
-      {
-        "path": "reports/fixes/R-fraud-detection-single_replica_no_pdb.pdb.yaml",
-        "apply": "kubectl apply -f reports/fixes/R-fraud-detection-single_replica_no_pdb.pdb.yaml"
       }
     ],
     "manual": null

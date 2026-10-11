@@ -4,7 +4,7 @@ Everything that touches the cluster goes through the same commands used on the c
   start   python -m src.run --exp <id> --execute   (src.run + controller: policy, pre-checks, guardian, kill switch)
   recall  python -m src.run --stop-all             (STOP file + delete every chaos object)
   fixes   the kubectl command listed in reports/fixes/index.json, nothing else
-No LLM is involved in any of it. Two typed words guard the two actions that change the cluster:
+The only LLM here is the remediation agent (section 5), which suggests and never acts. Two typed words guard the two actions that change the cluster:
   reslab-experiment  before a real fault, apply-fix  before a fix is applied or rolled back.
 The pure functions below are tested in tests/test_dashboard_control.py; render() is the Streamlit layer.
 """
@@ -517,6 +517,101 @@ def render(st, slot: RunSlot, auto_refresh: bool = True) -> None:
             for f in fix.get("files") or []:
                 render_fix_file(st, slot, fix, f)
 
+    render_agent(st, slot)
+    render_recovery(st)
+
+
+def render_agent(st, slot: RunSlot) -> None:
+    """Section 5: the remediation agent suggests; applying still goes through render_fix_file's typed gate."""
+    from src import remediate
+
+    st.subheader("5. Remediation agent")
+    st.caption("An LLM agent reads the audit findings and the measured experiment scores, decides which weaknesses "
+               "are real, picks the fix for each from the generated patches and names the experiment that proves it. "
+               "It never touches the cluster: you still dry-run, type `apply-fix`, and can roll back.")
+    if st.button("Run the agent", key="ctl_agent_run"):
+        with st.spinner("Agent working..."):
+            try:
+                remediate.run()
+            except SystemExit as e:
+                st.error(str(e))
+    report = load_json(remediate.OUT_PATH, None)
+    if not report:
+        st.info("The agent has not run yet.")
+        return
+    st.markdown(f"**Agent:** `{report['agent']}` · {report['generated_at']}"
+                + ("" if report["agent"].startswith("llm") else " · no LLM answer, deterministic ranking used"))
+    for d in report.get("dropped") or []:
+        st.caption(f"Dropped an invalid suggestion: {d}")
+    verdicts = {v["risk_id"]: v for v in remediate.verify(report, load_json(SCORES_PATH, {}))}
+    for it in report["items"]:
+        v = verdicts.get(it["risk_id"])
+        tag = f" · re-test: S {v['before']} -> {v['after']} ({v['verdict']})" if v else ""
+        with st.expander(f"{it['priority']}. {it['audit_severity'].upper()} · {it['service']} · {it['fix_summary']}{tag}"):
+            st.markdown(f"**Diagnosis:** {it['diagnosis']}")
+            st.markdown(f"**Why this fix:** {it['why_this_fix']}")
+            if it.get("verify_with"):
+                st.markdown(f"**Prove it with:** `{it['verify_with']}` (run it again after applying; score before: {it['before']['S']})")
+            if it.get("manual"):
+                st.info(f"Manual: {it['manual']}")
+            for f in it.get("files") or []:
+                render_fix_file(st, slot, it, f, scope="agent_")
+
+
+def latest_recovery(out_dir: Path | None = None) -> dict | None:
+    folder = out_dir or ROOT / "reports" / "recovery"
+    files = sorted(Path(folder).glob("run-*.recovery.json"), key=lambda p: p.stat().st_mtime)
+    return load_json(files[-1], None) if files else None
+
+
+def render_recovery(st) -> None:
+    """Section 6: the Recovery agent explains the failure that was injected. Read-only, separate from the chaos agent."""
+    st.subheader("6. Recovery agent: what happened and how to fix it")
+    st.caption("After a run, this agent reads only the run's report and recorded probe data (it never talks to the chaos "
+               "agent or the cluster). It verifies the fault really was injected, explains what the shop did, lists "
+               "findings and proposes fixes for that specific failure.")
+    c1, c2 = st.columns(2)
+    if c1.button("Analyze the latest run", key="ctl_rec_run"):
+        with st.spinner("Recovery agent working..."):
+            try:
+                from src import recover
+                recover.analyze(recover.find_report(None))
+            except SystemExit as e:
+                st.error(str(e))
+            except Exception as e:  # noqa: BLE001
+                st.error(f"{type(e).__name__}: {e}")
+    if c2.button("Analyze latest run without the LLM", key="ctl_rec_run_nollm"):
+        try:
+            from src import recover
+            recover.analyze(recover.find_report(None), use_llm=False)
+        except SystemExit as e:
+            st.error(str(e))
+        except Exception as e:  # noqa: BLE001
+            st.error(f"{type(e).__name__}: {e}")
+    a = latest_recovery()
+    if not a:
+        st.info("No analysis yet. Run an experiment, then analyze it.")
+        return
+    v, e = a["verification"], a["experiment"]
+    st.markdown(f"**Run:** `{a['experiment_id']}` · {e['fault_type']} on `{e['target']}` · "
+                f"**Injection verdict: {v['verdict']}** · narrative: `{a['narrative']['source']}`")
+    st.dataframe([{"check": c["name"], "passed": c["passed"], "detail": c["detail"]} for c in v["checks"]],
+                 width="stretch", hide_index=True)
+    if v["verdict"] == "UNCONFIRMED":
+        st.warning("The injection could not be confirmed, so the agent stopped. Nothing below is claimed.")
+        return
+    st.markdown(f"**Explanation:** {a.get('summary', '')}")
+    score = (a.get("resilience_score") or {}).get("total")
+    st.markdown(f"**Resilience score for this experiment:** {score if score is not None else 'not computed (too few samples)'}")
+    for f in a.get("findings") or []:
+        st.markdown(f"- **[{f['severity']}] {f['title']}**: {f.get('explanation', '')}")
+    for r in a.get("recommendations") or []:
+        st.markdown(f"**Solution - {r['action_id']}:** {r['action']}  \n_{r['rationale']}_")
+        for p in r.get("patches") or []:
+            st.caption(f"Generated patch: {p['summary']} ({', '.join(p['files']) or p.get('manual') or 'manual'}) - apply it in section 4 or 5.")
+    if a["narrative"].get("fallback_reason"):
+        st.caption(f"Template text used: {a['narrative']['fallback_reason']}")
+
 
 def render_run_panel(st, slot: RunSlot) -> None:
     if slot.proc is None:
@@ -531,8 +626,9 @@ def render_run_panel(st, slot: RunSlot) -> None:
     st.code(log_text or "(no output yet)")
 
 
-def render_fix_file(st, slot: RunSlot, fix: dict, f: dict) -> None:
-    key = f["path"].replace("/", "_")
+def render_fix_file(st, slot: RunSlot, fix: dict, f: dict, scope: str = "") -> None:
+    """scope keeps widget keys unique when the same patch is shown in two sections."""
+    key = scope + f["path"].replace("/", "_")
     try:
         parsed = parse_apply(f["apply"])
     except ValueError as e:
