@@ -1,8 +1,8 @@
 # progress.md — Live status board
 
-**Current phase:** Integration done offline — one hybrid run path on branch `integration` (P3 plan → `src.run` → P1 controller + guardian + P4 watchdog → P2 measurement → `runs` row; D-033). Stage 2 proven live on Joy's cluster (G3 + one survived run). Next: live end-to-end run of P3's plan items, then G4 runs, scoring and report. Presentation 10:00.
-**Last updated:** 11 Oct 2026, 04:20 IST · by: Joy (P2, integrating)
-**Next gate:** G4 (≥3 fault types recorded) · then CP3 (report v1 from DB)
+**Current phase:** Live on branch `integration`: 10 real runs across 3 fault types, scored and reported (`src.score`, `src.report`, `src.benchmark`); dashboard shows scores; STOP works. Left: P4 safety veto, merge, second-machine run, demo video, submission. Presentation 10:00.
+**Last updated:** 11 Oct 2026, 06:45 IST · by: Joy (P2, integrating)
+**Next gate:** CP4 / G6 freeze (T−3h) · then CP5 submit (~09:30)
 
 Update rule: move a task when you start/finish it; add a log line; flag blockers immediately.
 
@@ -40,11 +40,11 @@ Update rule: move a task when you start/finish it; add a log line; flag blockers
 | ID | When | Condition | Status |
 |---|---|---|---|
 | CP0 | D1 H0:30 | Kick-off done, schemas agreed | ⏳ |
-| CP1 / G1 | D1 ~H2:00 | Shop loads; Chaos Mesh PodChaos works | 🟡 Shop loads on P1's and Joy's local clusters; Chaos Mesh installed on both; live PodChaos not shown yet |
-| G2 | D1 ~H2:30 | NetworkChaos delay works | 🟡 NetworkChaos live on Joy's cluster (10 % loss, 30 s, run-44239ec5d896, guarded + measured); delay not shown yet |
+| CP1 / G1 | D1 ~H2:00 | Shop loads; Chaos Mesh PodChaos works | ✅ PodChaos live via `src.run` (exp-004 cart pod_kill, 2 runs, 11 Oct) |
+| G2 | D1 ~H2:30 | NetworkChaos delay works | ✅ 200 ms delay live (exp-003, 2 runs, degraded_recovered) |
 | CP2 / G3 | D1 H4:30 (limit H5:00) | Baseline, failure observed, guardrail proven by deliberate breach, demo | ✅ G3: run-01b2e2ad3337 (`--force-breach`): breach → kill switch verified gone → row stored inconclusive (Joy's cluster, 11 Oct 03:19) |
-| G4 | D2 H2 | ≥3 fault types recorded | ⏳ |
-| CP3 | D2 H4 | Report v1 generated from DB | ⏳ |
+| G4 | D2 H2 | ≥3 fault types recorded | ✅ pod_kill, network_delay, cpu_stress: 10 real runs, 7 of 8 approved experiments run (exp-001 refused by design; top-2 ×3 repeats not met, 2 repeats) |
+| CP3 | D2 H4 | Report v1 generated from DB | ✅ `reports/findings_report.md` from run files + stored samples |
 | G5 | D2 H6 | Tier 0 + Tier 1 complete → Tier 2 allowed | ⏳ |
 | CP4 / G6 | T−3h | Freeze | ⏳ |
 | CP5 | T−30m | Submitted | ⏳ |
@@ -92,11 +92,11 @@ Update rule: move a task when you start/finish it; add a log line; flag blockers
 - [ ] P5 · Final video ≤3 min; architecture page; team form; submit at T−30m
 
 ### DOING
-- [ ] Joy · Live end-to-end on branch `integration`: `python -m src.run --exp exp-004 --execute` (pod_kill = G1), then a network_delay and a cpu_stress item (G2, G4)
-- [ ] P4 · Veto check: `src/chaos/guardian.py` changes + hybrid safety path (watchdog, can-i, STOP; D-033)
-- [ ] P5 · Scoring + findings report from the `runs` table / `data/runs/*.json` (D-008)
-- [ ] P2 · Dashboard: Runs tab reads the `runs` table; STOP button runs `python -m src.run --stop-all`
-- [ ] P2 · Evidence: read Jaeger directly (`svc/jaeger` 16686) instead of through frontend-proxy (P3 found the proxy path OOMs Jaeger) **[verify v3 path]**
+- [ ] Joy · Open PR `integration` → main; team message; live-test manual STOP and Ctrl+C (self-review labelled "reviewed by Joy, not P4"); merge by 08:30
+- [ ] P4 · Veto check: `src/chaos/guardian.py`, removed duplicate guardian/lifecycle in `agents/chaos_agent_expanded`, gate re-check in `controller.py` (pre-injection only)
+- [ ] P1 · Second-machine clean run from README (fresh install from `config/otel-demo-values.yaml`) **[verify]**
+- [ ] Joy · 3-minute video + backup; one-page architecture picture; submission form (~09:30)
+- [ ] P2 · Evidence: read Jaeger directly (`svc/jaeger` 16686) instead of through frontend-proxy **[verify v3 path]**
 
 ### DONE
 - [x] Problem statement analysed; plan finalised (trimmed hybrid) — 10 Oct
@@ -128,6 +128,13 @@ Update rule: move a task when you start/finish it; add a log line; flag blockers
 - [x] Joy · Cluster fixed + pinned (D-034): collector logs → `[debug]` (opensearch disabled broke quote → checkout); 7 optional services disabled; `config/otel-demo-values.yaml` (helm revision 6) — 11 Oct
 - [x] Joy · cart ↔ product-catalog verified in Jaeger (`GET /api/cart` calls product-catalog) → `target_journeys` product-catalog = browse, cart, checkout — 11 Oct
 - [x] Joy · Integration (D-033): branch `integration` = `integrate-chaos` + P3 pipeline + hybrid run path; docs merged (P3's D-012..D-016 → D-028..D-032); tests: stage2 44, run 20, guardian 12, chaos_port 7, P2 16, runmetrics 8 — 11 Oct
+
+- [x] Joy · Live runs on the hybrid path (11 Oct 04:30–06:20): exp-002 survived; exp-003 ×2 degraded_recovered (S 80.6 / 83.4); exp-004 ×2 degraded_recovered (S 32.66, High); exp-005 survived; exp-006 ×2 survived; exp-007 aborted by guardian (n=2, inconclusive); exp-008 survived. Overall 86.5 / 100, coverage 6 of 8
+- [x] Joy · `runmetrics` fix: a breach later than t_clear + SLO window is a blip, not fault impact (`late_breach_ts`); exp-006 r1 was mislabelled — 11 Oct 04:50
+- [x] Joy · Shop gate re-check (`shop_gate_with_retry`, up to 2 more 20 s windows) after three refusals from a lone fast 503 (background blip, cause unknown). Pre-injection only; needs P4 veto — 11 Oct 05:15
+- [x] Joy · `src/score.py`, `src/report.py` (+ trace-ID evidence), `src/benchmark.py` + tests (101 passing); D-035 — 11 Oct 06:00
+- [x] Joy · Dashboard Runs tab shows scores; STOP = `python -m src.run --stop-all`, STOP file warning in sidebar — 11 Oct 06:33
+- [x] Joy · README + `Requirementsandsetup.md` steps 3–4 (install from values file, never `--reuse-values`) — 11 Oct
 
 ---
 
@@ -180,3 +187,8 @@ Update rule: move a task when you start/finish it; add a log line; flag blockers
 - 11 Oct 03:19 — G3 passed live (run-01b2e2ad3337). 03:27 — first normal live run run-44239ec5d896: survived, quality ok.
 - 11 Oct 03:47 — cart ↔ product-catalog confirmed in Jaeger.
 - 11 Oct 04:00–04:20 — Integration (D-033): one hybrid run path; P3 docs merged with renumbered decisions; `integration` branch built and tested offline.
+- 11 Oct 04:50 — P2: runmetrics fix (late breach = blip, not impact); exp-006 r1 re-labelled survived.
+- 11 Oct 05:10 — P2/P1: hybrid run path live: pod_kill, network_delay, cpu_stress each recorded (G1, G2, G4).
+- 11 Oct 05:15–05:20 — Three gate refusals from a lone fast 503 (checkout 0.89 / cart 0.89 / checkout 0.90). No cause found in Envoy/frontend logs; 200 plain GETs all 200. Gate re-check added; worked live (exp-003 r2).
+- 11 Oct 06:00 — Scoring, report and ranking benchmark done. Ranked order only barely beats random (small sample); no Critical finding; CPU stress effect unverified (no CPU metric).
+- 11 Oct 06:33 — Dashboard shows scores; STOP button verified (STOP file created, chaos objects removed).

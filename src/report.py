@@ -51,6 +51,19 @@ def run_line(run):
     return "- " + " - ".join(parts)
 
 
+def evidence_line(run, show_ids=3):
+    """What backs a measured run: the traces and queries the collector recorded. Says so when there are none."""
+    evidence = run.get("evidence")
+    if not evidence:
+        return f"  - Evidence for r{run['repeat']}: none recorded."
+    ids = evidence.get("trace_ids") or []
+    queries = evidence.get("prom_queries") or []
+    shown = ", ".join(f"`{i}`" for i in ids[:show_ids]) if ids else "no failed or slow traces in the window"
+    more = f" (+{len(ids) - show_ids} more in the run file)" if len(ids) > show_ids else ""
+    return (f"  - Evidence for r{run['repeat']} (collector quality: {evidence.get('quality') or 'unknown'}): "
+            f"{len(ids)} trace(s): {shown}{more}; {len(queries)} Prometheus queries recorded.")
+
+
 def fix_lines(risk_id, fixes):
     entry = fixes.get(risk_id)
     if not entry:
@@ -115,7 +128,7 @@ def build_report(scores, fixes, generated_at=None):
                 f"**Predicted:** {e['hypothesis']}", "",
                 f"**Prediction status:** {e['prediction']}. Expected journeys: {', '.join(e['expected_journeys'])}.", "",
                 "**Measured:**"]
-        out += [run_line(r) for r in e["runs"]]
+        out += [line for r in e["runs"] for line in (run_line(r), evidence_line(r))]
         out += ["", "**Recommendation:**"] + fix_lines(e["risk_id"], fixes) + [""]
 
     tolerated = [e for e in exps if e["prediction"].startswith("not confirmed")]
@@ -162,7 +175,9 @@ def build_report(scores, fixes, generated_at=None):
             "- A short unrelated failure after a fault ended is listed on the run as a blip and is not scored; the shop "
             "shows a low background error rate even with no fault running (source not yet found).",
             "- Runs that were stopped on purpose to test the kill switch (forced breach) are not part of this report.",
-            "- Fix files in `reports/fixes/` are suggestions; nothing was applied to the cluster.", ""]
+            "- Fix files in `reports/fixes/` are suggestions; nothing was applied to the cluster.",
+            "- Trace IDs open at `/jaeger/ui/trace/<id>` on the Jaeger the run used. Jaeger keeps traces in memory, so "
+            "an ID stops resolving after Jaeger restarts; the IDs and queries stay in `data/runs/*.json`.", ""]
     return "\n".join(out)
 
 
