@@ -1,6 +1,6 @@
 # ChaosPilot findings report
 
-Generated 2026-10-11 04:50 UTC by `python -m src.report` from the run files and stored samples. Every number is computed by code; the LLM did not touch the cluster or the scores.
+Generated 2026-10-11 04:55 UTC by `python -m src.report` from the run files and stored samples. Every number is computed by code; the LLM did not touch the cluster or the scores.
 
 ## Summary
 
