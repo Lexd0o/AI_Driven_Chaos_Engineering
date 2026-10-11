@@ -1,0 +1,215 @@
+{
+  "schema_version": 1,
+  "experiment_id": "run-dd9f4e6c53cf",
+  "analyzed_at": "2026-10-11T09:22:42.323133+00:00",
+  "data_provenance": {
+    "source_report": "C:\\Users\\Joy Mandal\\Desktop\\ChaosMonkeys Observability\\AI_Driven_Chaos_Engineering\\reports\\recovery\\run-dd9f4e6c53cf.input.json",
+    "synthetic": false,
+    "snapshot_source": "data/graph.json",
+    "notes": []
+  },
+  "experiment": {
+    "target": "astronomy-db",
+    "fault_type": "network_delay",
+    "parameters": {
+      "duration_seconds": 60,
+      "latency_ms": 200,
+      "loss_percent": 0
+    },
+    "hypothesis": "astronomy-db: no hpa shared dependency (has_hpa=False, 2 callers - can't absorb a traffic or latency spike) - expect astronomy-db's callers to see errors or latency until the fault clears.",
+    "started_at": "2026-10-11T09:15:23.546511+00:00",
+    "fault_confirmed_at": "2026-10-11T09:16:08.678541+00:00",
+    "stop_reason": "completed",
+    "cleanup_confirmed": true
+  },
+  "verification": {
+    "verdict": "CONFIRMED",
+    "checks": [
+      {
+        "name": "live_execute_run",
+        "passed": true,
+        "detail": "mode=execute"
+      },
+      {
+        "name": "controller_confirmed_injection",
+        "passed": true,
+        "detail": "fault_injected=True, fault_confirmed_at=2026-10-11T09:16:08.678541+00:00, event=True"
+      },
+      {
+        "name": "timeline_consistent",
+        "passed": true,
+        "detail": "submitting=2026-10-11T09:16:07.208167+00:00, confirmed=2026-10-11T09:16:08.678541+00:00, cleanup=2026-10-11T09:17:15.811413+00:00"
+      },
+      {
+        "name": "manifest_matches_plan",
+        "passed": true,
+        "detail": "manifest matches plan"
+      },
+      {
+        "name": "probe_effect_observed",
+        "passed": true,
+        "detail": "latency_effect=True, error_effect=False"
+      }
+    ],
+    "effect": {
+      "assessable": true,
+      "latency": true,
+      "errors": false,
+      "any": true,
+      "fault_p95_ms": 1730.1,
+      "degrade_threshold_ms": 212.9,
+      "fault_failure_rate": 0.0
+    }
+  },
+  "limitations": [
+    "Evidence is one HTTP business probe (sequential, ~poll interval); no per-service metrics or traces.",
+    "Latency percentiles use successful probes only; with few samples p95 is close to the maximum.",
+    "Network faults hit one whole pod, not a single dependency edge.",
+    "Single run: the score is heuristic and applies to this experiment only.",
+    "Recommendations are proposals; none were applied or verified."
+  ],
+  "windows": {
+    "baseline": {
+      "n": 32,
+      "ok": 32,
+      "failed": 0,
+      "success_rate": 1.0,
+      "failure_rate": 0.0,
+      "p50_ms": 57.3,
+      "p95_ms": 141.9,
+      "max_ms": 147.9,
+      "slow_ok": 0,
+      "errors": {},
+      "first_at": "2026-10-11T09:15:36.630640+00:00",
+      "last_at": "2026-10-11T09:16:06.771721+00:00",
+      "duration_seconds": 30.14
+    },
+    "fault": {
+      "n": 60,
+      "ok": 60,
+      "failed": 0,
+      "success_rate": 1.0,
+      "failure_rate": 0.0,
+      "p50_ms": 471.7,
+      "p95_ms": 1730.1,
+      "max_ms": 1787.7,
+      "slow_ok": 0,
+      "errors": {},
+      "first_at": "2026-10-11T09:16:08.777425+00:00",
+      "last_at": "2026-10-11T09:17:07.033482+00:00",
+      "duration_seconds": 58.26
+    },
+    "recovery": {
+      "n": 150,
+      "ok": 150,
+      "failed": 0,
+      "success_rate": 1.0,
+      "failure_rate": 0.0,
+      "p50_ms": 60.1,
+      "p95_ms": 132.6,
+      "max_ms": 145.4,
+      "slow_ok": 0,
+      "errors": {},
+      "first_at": "2026-10-11T09:17:09.046733+00:00",
+      "last_at": "2026-10-11T09:19:37.746359+00:00",
+      "duration_seconds": 148.7
+    },
+    "injection_pending_samples_excluded": 0
+  },
+  "findings": [
+    {
+      "id": "latency_inflation",
+      "title": "Latency inflated versus baseline",
+      "severity": "high",
+      "penalty": 15.0,
+      "evidence": {
+        "baseline_p95_ms": 141.9,
+        "fault_p95_ms": 1730.1,
+        "ratio": 12.19,
+        "delta_ms": 1588.2,
+        "injected_latency_ms": 200,
+        "p50_delta_ms": 414.4,
+        "amplification": 2.07
+      },
+      "explanation": "During the fault window the p95 latency increased from 141.9 ms to 1730.1 ms, a ratio of 12.19 and a delta of 1588.2 ms, while the injected latency was 200 ms. The amplification factor of 2.07 indicates that the observed latency was more than twice the injected delay, confirming significant latency inflation."
+    }
+  ],
+  "resilience_score": {
+    "label": "Resilience score for this experiment (heuristic)",
+    "total": 85.0,
+    "components": [
+      {
+        "id": "error_rate",
+        "weight": 35,
+        "normalized": 0.0,
+        "penalty": 0.0,
+        "triggered": false
+      },
+      {
+        "id": "slo_breach",
+        "weight": 20,
+        "normalized": 0.0,
+        "penalty": 0.0,
+        "triggered": false
+      },
+      {
+        "id": "slow_recovery",
+        "weight": 20,
+        "normalized": 0.0,
+        "penalty": 0.0,
+        "triggered": false
+      },
+      {
+        "id": "latency_inflation",
+        "weight": 15,
+        "normalized": 1.0,
+        "penalty": 15.0,
+        "triggered": true
+      },
+      {
+        "id": "single_replica",
+        "weight": 10,
+        "normalized": 0.0,
+        "penalty": 0.0,
+        "triggered": false
+      }
+    ]
+  },
+  "recovery": {
+    "applicable": true,
+    "recovered": true,
+    "seconds": 0.0,
+    "reset_at": "2026-10-11T09:17:16.056863+00:00",
+    "recovered_at": "2026-10-11T09:17:16.056863+00:00",
+    "reference": "cleanup_observed_at",
+    "time_to_first_impact_seconds": 0.1,
+    "fault_active_seconds": 67.13,
+    "controller_reported_seconds": 8.6,
+    "reason": "first of 150 consecutive healthy samples after the last degraded sample"
+  },
+  "recommendations": [
+    {
+      "finding_id": "latency_inflation",
+      "action_id": "circuit_breaker",
+      "action": "Add a circuit breaker around calls to the target so repeated failures stop hitting it.",
+      "rationale": "The measured amplification and high p95 latency suggest that a circuit breaker could prevent cascading delays by short‑circuiting calls when latency exceeds acceptable thresholds.",
+      "status": "proposed - not applied or verified",
+      "patches": []
+    },
+    {
+      "finding_id": "latency_inflation",
+      "action_id": "set_timeouts",
+      "action": "Set explicit client timeouts/deadlines on calls to the target so slow dependencies fail fast.",
+      "rationale": "Setting shorter timeouts would limit the impact of inflated latency on callers, ensuring they fail fast rather than waiting for the extended response times.",
+      "status": "proposed - not applied or verified",
+      "patches": []
+    }
+  ],
+  "summary": "The experiment confirmed that a 200 ms network delay caused a high‑severity latency inflation, with the fault p95 rising to 1730.1 ms from a baseline of 141.9 ms, yet no errors were observed and recovery was immediate. The overall score was 85.0, with the latency inflation component contributing a penalty of 15.0.",
+  "narrative": {
+    "source": "llm",
+    "attempts": 1,
+    "model": "openai/gpt-oss-20b",
+    "fallback_reason": null
+  }
+}

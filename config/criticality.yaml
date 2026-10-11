@@ -1,0 +1,29 @@
+# Per-service criticality (0-1).
+# Derived from the demo's OWN tag in compose.yaml: OTEL_RESOURCE_ATTRIBUTES service.criticality=...
+#   critical -> 0.4   high -> 0.3   medium -> 0.2   low -> 0.1
+# (same numbers as the journey weights in Decisions.md D-008). Team may override any value.
+default: 0.1
+services:
+  # critical
+  frontend: 0.4
+  frontend-proxy: 0.4
+  checkout: 0.4
+  payment: 0.4
+  # high
+  cart: 0.3
+  currency: 0.3
+  product-catalog: 0.3
+  shipping: 0.3
+  # medium
+  ad: 0.2
+  email: 0.2
+  recommendation: 0.2
+  # low (explicit for clarity)
+  image-provider: 0.1
+  quote: 0.1
+  kafka: 0.1
+  accounting: 0.1
+  fraud-detection: 0.1
+  # data stores take the criticality of what depends on them (team decision, not from the repo)
+  valkey-cart: 0.3
+  astronomy-db: 0.3

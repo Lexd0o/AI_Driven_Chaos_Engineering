@@ -1,0 +1,6 @@
+# Fix for R-email-single_replica_no_pdb (medium, status=predicted)
+# Evidence: replicas=1, has_pdb=False, stateful=False, fan_in=1
+# Apply:    kubectl -n otel-demo patch deployment email --patch-file reports/fixes/R-email-single_replica_no_pdb.yaml
+# Not applied automatically (Decisions.md D-007).
+spec:
+  replicas: 2

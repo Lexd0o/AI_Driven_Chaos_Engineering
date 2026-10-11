@@ -1,0 +1,16 @@
+# Fix for R-frontend-proxy-no_liveness_probe (high, status=predicted)
+# Evidence: has_liveness=False - a hung (not crashed) process won't be auto-restarted
+# Apply:    kubectl -n otel-demo patch deployment frontend-proxy --patch-file reports/fixes/R-frontend-proxy-no_liveness_probe.yaml
+# Not applied automatically (Decisions.md D-007).
+spec:
+  template:
+    spec:
+      containers:
+      - name: frontend-proxy
+        livenessProbe:
+          tcpSocket:
+            port: service
+          initialDelaySeconds: 30
+          periodSeconds: 20
+          timeoutSeconds: 3
+          failureThreshold: 3

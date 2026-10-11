@@ -1,0 +1,5 @@
+python-dotenv>=1,<2
+pydantic>=2.10,<3
+langgraph>=1.0,<2
+langchain-core>=1.0,<2
+langchain-groq>=1.0,<2

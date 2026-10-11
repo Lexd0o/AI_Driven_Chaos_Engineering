@@ -1,0 +1,28 @@
+{
+  "context": "docker-desktop",
+  "namespace": "otel-demo",
+  "targets": {
+    "catalog": "product-catalog"
+  },
+  "target_journeys": {
+    "catalog": [
+      "browse",
+      "cart",
+      "checkout"
+    ],
+    "product-catalog": [
+      "browse",
+      "cart",
+      "checkout"
+    ]
+  },
+  "safety": {
+    "latency_multiplier": 3,
+    "latency_floor_ms": 1500,
+    "error_ratio_max": 0.05,
+    "consecutive_breaches": 3,
+    "max_experiment_seconds": 90,
+    "recovery_timeout_seconds": 180,
+    "recovery_healthy_probes": 5
+  }
+}

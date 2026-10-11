@@ -1,0 +1,61 @@
+How the mapping works
+
+The map has two parts: nodes (the services) and edges (who calls whom). We get them from three sources, because no single one is complete.
+
+1. Nodes come from the Kubernetes API. discover.py lists the Deployments and StatefulSets in the otel-demo namespace. For each one it records:
+
+replica count
+whether it is stateful
+whether it has readiness and liveness probes
+whether it has resource limits, a PDB, or an HPA
+a criticality weight from criticality.yaml
+
+2. Edges come from Jaeger traces. Each trace is a tree of spans. When a span in service A has a child span in service B, that means A called B. The script counts these pairs across recent traces and keeps an edge only if it was seen at least 3 times, to filter noise. It also records the protocol (gRPC or HTTP) from the span tags.
+
+3. The override file fills the gaps. Traces often miss databases, Valkey, Kafka messaging, and routing done by the proxy. Those edges are added by hand and tagged override, so we always know what was observed and what we added. The same file removes infrastructure like flagd, the load generator, and the observability stack so they don’t distort the ranking.
+
+Validation. After the graph is built, the script checks it against expected_edges, a list of 16 edges taken from the demo’s configuration. If an expected edge is missing, it prints a warning. It also checks that no edge points to an unknown service and that cart has at least 2 callers.
+
+How I built the test graph. I haven’t run it on the cluster yet. Instead I read the demo’s compose.yaml and followed each service’s environment variables, such as CART_ADDR, PAYMENT_ADDR, KAFKA_ADDR, VALKEY_ADDR, and DB_CONNECTION_STRING. These show who each service talks to. I ignored depends_on, because it only controls startup order. The fixture holds 15 call edges, and the override file adds 8 more (Kafka, databases, quote, image-provider), which makes 23.
+
+All 23 dependencies
+
+Arrows read “caller depends on callee”.
+
+Caller	Calls	What it means
+frontend-proxy	frontend, image-provider	Entry point. It routes page traffic to frontend and serves product images from image-provider.
+frontend	ad, cart, checkout, currency, product-catalog, recommendation, shipping	The hub for browsing. It calls 7 services to build pages.
+checkout	cart, currency, email, payment, product-catalog, shipping, kafka	The hub for buying. It calls 6 services and publishes an order event to Kafka.
+recommendation	product-catalog	Looks up products to suggest.
+shipping	quote	Gets a shipping price.
+cart	valkey-cart	Stores cart contents in Valkey.
+product-catalog	astronomy-db	Reads product data from Postgres.
+accounting	kafka, astronomy-db	Consumes order events and writes them to Postgres.
+fraud-detection	kafka	Consumes order events.
+
+That gives 2 + 7 + 7 + 1 + 1 + 1 + 1 + 2 + 1 = 23 edges.
+
+What the structure shows
+
+Hubs. frontend and checkout each call 7 services, so a failure there reaches many others.
+
+Shared dependencies.
+
+product-catalog and kafka have 3 callers each.
+cart, currency, shipping, and astronomy-db have 2 each.
+The more callers a service has, the larger the damage when it fails.
+
+Three paths worth following.
+
+Cart path: frontend and checkout both call cart, which calls valkey-cart. A Valkey failure cascades through cart to both callers.
+Catalog path: frontend, checkout, and recommendation all call product-catalog, which reads from astronomy-db. The database sits behind everything that needs product data.
+Order path: checkout publishes to Kafka, and accounting and fraud-detection consume from it. These consumers are asynchronous, so a Kafka fault should show up as lag, not as failed page loads. That is a testable hypothesis, not a known result.
+
+Leaf services. ad, currency, email, payment, quote, and image-provider call no other service in the map. payment has few dependencies of its own, but it is critical because checkout can’t finish without it.
+
+What’s confirmed and what isn’t
+Part of the map	Status
+Which services call which	From the demo’s compose files. Plausible, but not yet checked against live traces.
+Replicas, probes, PDB, HPA	Placeholders in the fixture. The live run fills in real values.
+HTTP vs gRPC	Written from memory and marked [verify]. Jaeger overwrites it.
+Service names	Compose names. The Helm chart may differ, for example postgresql instead of astronomy-db.

@@ -1,0 +1,19 @@
+# ChaosPilot Python dependencies. Install: pip install -r requirements.txt
+# Versions are not pinned yet (open decision O-4, P1) [verify].
+
+# P2 observability: probes, sampler, telemetry, baseline, run metrics
+numpy
+requests
+pyyaml
+
+# Dashboard
+streamlit
+pandas
+plotly
+
+# Chaos run path (src/chaos, src/run.py) + P3 pipeline (src/discover..fixes, pydantic validation)
+pydantic
+python-dotenv
+
+# Optional: P3's LLM planner writes hypothesis text only (D-028); without it plan.py keeps template text
+anthropic

@@ -1,0 +1,34 @@
+{
+  "generated_at": "2026-10-11T14:53:03",
+  "agent": "llm:openai/gpt-oss-120b",
+  "dropped": [],
+  "items": [
+    {
+      "priority": 1,
+      "risk_id": "R-cart-single_replica_no_pdb",
+      "service": "cart",
+      "check": "single_replica_no_pdb",
+      "audit_severity": "high",
+      "diagnosis": "Cart runs with a single replica and no PDB, yielding a low resilience score (32.3) in experiment exp-004, indicating it would break under pod loss.",
+      "fix_summary": "scale cart to 2 replicas and add a PDB (minAvailable=1)",
+      "why_this_fix": "Scaling to 2 replicas and adding a minAvailable=1 PDB provides redundancy and safe disruption handling.",
+      "files": [
+        {
+          "path": "reports/fixes/R-cart-single_replica_no_pdb.yaml",
+          "apply": "kubectl -n otel-demo patch deployment cart --patch-file reports/fixes/R-cart-single_replica_no_pdb.yaml"
+        },
+        {
+          "path": "reports/fixes/R-cart-single_replica_no_pdb.pdb.yaml",
+          "apply": "kubectl apply -f reports/fixes/R-cart-single_replica_no_pdb.pdb.yaml"
+        }
+      ],
+      "manual": null,
+      "verify_with": "exp-004",
+      "before": {
+        "S": 32.32153384685517,
+        "severity": "High"
+      }
+    }
+  ],
+  "note": "Suggestions only. Nothing here is applied; use the Control tab (dry-run, typed apply-fix, roll back)."
+}

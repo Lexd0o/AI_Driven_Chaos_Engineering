@@ -1,0 +1,236 @@
+[
+  {
+    "experiment_id": "exp-001",
+    "rank": 1,
+    "risk_id": "R-frontend-proxy-single_replica_no_pdb",
+    "fault_type": "pod_kill",
+    "mechanism": "chaosmesh",
+    "target": {
+      "namespace": "otel-demo",
+      "service": "frontend-proxy"
+    },
+    "params": {
+      "duration_s": 60
+    },
+    "hypothesis": "While the frontend-proxy pod is killed, users performing the browse journey will see HTTP errors or increased latency on the homepage, and normal response times will resume after the pod is recreated.",
+    "reason": "The service has only one replica, no pod disruption budget, and zero fan\u2011in, so killing it directly impacts all callers of the entry point.",
+    "expected_impact": {
+      "journeys": [
+        "browse"
+      ]
+    },
+    "slo": {
+      "success_rate_min": 0.95,
+      "p95_ms_max": 1500
+    },
+    "recovery_budget_s": 120,
+    "planner": "llm",
+    "planner_model": "openai/gpt-oss-120b"
+  },
+  {
+    "experiment_id": "exp-002",
+    "rank": 2,
+    "risk_id": "R-product-catalog-no_liveness_probe",
+    "fault_type": "cpu_stress",
+    "mechanism": "chaosmesh",
+    "target": {
+      "namespace": "otel-demo",
+      "service": "product-catalog"
+    },
+    "params": {
+      "duration_s": 60,
+      "cpu_workers": 2
+    },
+    "hypothesis": "During the 60\u2011second CPU stress on product\u2011catalog, checkout and browse requests will experience errors or added latency from product\u2011catalog, and normal performance will return after the stress ends.",
+    "reason": "Product\u2011catalog has three callers, a blast radius of 4, and lacks a liveness probe, so a hung instance can degrade multiple downstream journeys.",
+    "expected_impact": {
+      "journeys": [
+        "browse",
+        "checkout"
+      ]
+    },
+    "slo": {
+      "success_rate_min": 0.95,
+      "p95_ms_max": 1500
+    },
+    "recovery_budget_s": 120,
+    "planner": "llm",
+    "planner_model": "openai/gpt-oss-120b"
+  },
+  {
+    "experiment_id": "exp-003",
+    "rank": 3,
+    "risk_id": "R-astronomy-db-no_hpa_shared_dependency",
+    "fault_type": "network_delay",
+    "mechanism": "chaosmesh",
+    "target": {
+      "namespace": "otel-demo",
+      "service": "astronomy-db"
+    },
+    "params": {
+      "duration_s": 60,
+      "latency_ms": 200
+    },
+    "hypothesis": "When a 200\u202fms artificial delay is added to astronomy-db, calls from product\u2011catalog (affecting browse and checkout) will incur at least 200\u202fms extra latency, observable as slower page loads, and latency will drop back after the delay ends.",
+    "reason": "Astronomy\u2011db has two callers, no HPA, and a blast radius of 6, making added latency likely to propagate to high\u2011volume checkout and browsing paths.",
+    "expected_impact": {
+      "journeys": [
+        "browse",
+        "checkout"
+      ]
+    },
+    "slo": {
+      "success_rate_min": 0.95,
+      "p95_ms_max": 1500
+    },
+    "recovery_budget_s": 120,
+    "planner": "llm",
+    "planner_model": "openai/gpt-oss-120b"
+  },
+  {
+    "experiment_id": "exp-004",
+    "rank": 4,
+    "risk_id": "R-cart-single_replica_no_pdb",
+    "fault_type": "pod_kill",
+    "mechanism": "chaosmesh",
+    "target": {
+      "namespace": "otel-demo",
+      "service": "cart"
+    },
+    "params": {
+      "duration_s": 60
+    },
+    "hypothesis": "Killing the sole cart pod will cause add\u2011to\u2011cart and checkout steps to return errors or time out, and cart functionality will resume once the pod restarts.",
+    "reason": "Cart runs a single replica with no pdb and serves two callers (checkout and frontend), so its loss can break the cart and checkout journeys.",
+    "expected_impact": {
+      "journeys": [
+        "cart",
+        "checkout"
+      ]
+    },
+    "slo": {
+      "success_rate_min": 0.95,
+      "p95_ms_max": 1500
+    },
+    "recovery_budget_s": 120,
+    "planner": "llm",
+    "planner_model": "openai/gpt-oss-120b"
+  },
+  {
+    "experiment_id": "exp-005",
+    "rank": 5,
+    "risk_id": "R-currency-no_liveness_probe",
+    "fault_type": "cpu_stress",
+    "mechanism": "chaosmesh",
+    "target": {
+      "namespace": "otel-demo",
+      "service": "currency"
+    },
+    "params": {
+      "duration_s": 60,
+      "cpu_workers": 2
+    },
+    "hypothesis": "CPU\u2011stress on currency will make price\u2011conversion calls during checkout and browsing slow or fail, and normal price\u2011lookup latency will recover after the stress period.",
+    "reason": "Currency is called by checkout and frontend, has two callers and no liveness probe, so CPU stress can stall price conversion for many requests.",
+    "expected_impact": {
+      "journeys": [
+        "browse",
+        "checkout"
+      ]
+    },
+    "slo": {
+      "success_rate_min": 0.95,
+      "p95_ms_max": 1500
+    },
+    "recovery_budget_s": 120,
+    "planner": "llm",
+    "planner_model": "openai/gpt-oss-120b"
+  },
+  {
+    "experiment_id": "exp-006",
+    "rank": 6,
+    "risk_id": "R-shipping-no_hpa_shared_dependency",
+    "fault_type": "network_delay",
+    "mechanism": "chaosmesh",
+    "target": {
+      "namespace": "otel-demo",
+      "service": "shipping"
+    },
+    "params": {
+      "duration_s": 60,
+      "latency_ms": 200
+    },
+    "hypothesis": "Injecting a 200\u202fms network delay into shipping will add latency to shipping\u2011quote retrieval during checkout, causing slower checkout completion, and latency will return to baseline after the delay ends.",
+    "reason": "Shipping has two callers, no HPA, and a blast radius of 3, so network delay can affect checkout latency noticeably.",
+    "expected_impact": {
+      "journeys": [
+        "checkout"
+      ]
+    },
+    "slo": {
+      "success_rate_min": 0.95,
+      "p95_ms_max": 1500
+    },
+    "recovery_budget_s": 120,
+    "planner": "llm",
+    "planner_model": "openai/gpt-oss-120b"
+  },
+  {
+    "experiment_id": "exp-007",
+    "rank": 7,
+    "risk_id": "R-frontend-single_replica_no_pdb",
+    "fault_type": "pod_kill",
+    "mechanism": "chaosmesh",
+    "target": {
+      "namespace": "otel-demo",
+      "service": "frontend"
+    },
+    "params": {
+      "duration_s": 60
+    },
+    "hypothesis": "Killing the only frontend pod will cause the UI for the browse journey and the ad/recommendation sections to fail with errors or high latency, and normal page rendering will resume after the pod is restored.",
+    "reason": "Frontend is a single\u2011replica pod without pdb and is the sole consumer of frontend\u2011proxy, so its termination can break the browse and ad/recommendation experiences.",
+    "expected_impact": {
+      "journeys": [
+        "ads-recs",
+        "browse"
+      ]
+    },
+    "slo": {
+      "success_rate_min": 0.95,
+      "p95_ms_max": 1500
+    },
+    "recovery_budget_s": 120,
+    "planner": "llm",
+    "planner_model": "openai/gpt-oss-120b"
+  },
+  {
+    "experiment_id": "exp-008",
+    "rank": 8,
+    "risk_id": "R-payment-no_liveness_probe",
+    "fault_type": "cpu_stress",
+    "mechanism": "chaosmesh",
+    "target": {
+      "namespace": "otel-demo",
+      "service": "payment"
+    },
+    "params": {
+      "duration_s": 60,
+      "cpu_workers": 2
+    },
+    "hypothesis": "CPU stress on payment will cause payment processing during checkout to error or be delayed, and successful payment responses will return once the stress stops.",
+    "reason": "Payment is invoked only by checkout, has no liveness probe, and a blast radius of 3, making it a critical point for checkout success.",
+    "expected_impact": {
+      "journeys": [
+        "checkout"
+      ]
+    },
+    "slo": {
+      "success_rate_min": 0.95,
+      "p95_ms_max": 1500
+    },
+    "recovery_budget_s": 120,
+    "planner": "llm",
+    "planner_model": "openai/gpt-oss-120b"
+  }
+]
